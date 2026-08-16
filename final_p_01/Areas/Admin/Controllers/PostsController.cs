@@ -185,28 +185,31 @@ namespace final_p_01.Areas.Admin.Controllers
             return RedirectToAction("Index");
         }
 
-        // 🚀 متد جدید: آپلود مستقیم عکس از داخل ویرایشگر متن (CKEditor)
+        // 🚀 متد اصلاح شده: هماهنگ با استانداردهای آپلود TinyMCE
         [HttpPost]
-        public IActionResult UploadArticleImage(IFormFile upload)
+        public IActionResult UploadArticleImage(IFormFile file) // 💡 پارامتر باید file باشد
         {
-            if (upload != null && upload.Length > 0)
+            if (file != null && file.Length > 0)
             {
                 string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "article-images");
                 if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
-                string uniqueFileName = Guid.NewGuid().ToString() + "_" + upload.FileName;
+                string uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
                 string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
-                    upload.CopyTo(fileStream);
+                    file.CopyTo(fileStream);
                 }
 
                 string url = "/uploads/article-images/" + uniqueFileName;
 
-                return Json(new { uploaded = 1, fileName = uniqueFileName, url = url });
+                // 💡 فرمت JSON استاندارد برای ادیتور TinyMCE
+                return Json(new { location = url });
             }
-            return Json(new { uploaded = 0, error = new { message = "خطا در آپلود عکس." } });
+
+            // 💡 برگشت خطای استاندارد در صورت عدم ارسال فایل
+            return BadRequest(new { error = "خطا در آپلود عکس." });
         }
     }
 }

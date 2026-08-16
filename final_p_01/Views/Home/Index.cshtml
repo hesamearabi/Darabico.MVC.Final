@@ -2,7 +2,7 @@
 @using System.Linq
 
 @{
-    ViewData["Title"] = "صفحه اصلی";
+    ViewData["Title"] = "مرجع تخصصی ساخت و تجهیز زمین های پدل | دارابی کو";
 }
 
 @section Head {
@@ -591,8 +591,16 @@
                 <span class="d-block">در ایران</span>
             </h1>
             <p class="hero-subtitle">از تولید شیشه تا اجرای کامل با ضمانت کیفیت و استاندارد جهانی</p>
-            <div class="hero-actions">
+
+            <div class="hero-actions" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
                 <a asp-controller="home" asp-action="contact" class="hero-consult-btn">مشاوره رایگان ساخت</a>
+
+                <a asp-controller="Home" asp-action="Post" asp-route-slug="padel-court-construction-guide"
+                   style="padding: 12px 30px; background: rgba(255,255,255,0.1); color:#fff; border: 2px solid #fff; border-radius:50px; text-decoration:none; font-weight:bold; backdrop-filter: blur(5px); transition: 0.3s;"
+                   onmouseover="this.style.background='#fff'; this.style.color='var(--primary-blue)';"
+                   onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#fff';">
+                    راهنمای جامع 0 تا 100 ساخت زمین پدل
+                </a>
             </div>
         </div>
     </div>
@@ -602,22 +610,22 @@
     <div class="about__container">
         <div class="about__media">
             <figure class="about__image-box">
-                <img src="@Url.Content("~/H-IMG/222.webp")" alt="بازیکن پدل" class="about__image" width="800" height="600" loading="lazy" />
+                <img src="@Url.Content("~/H-IMG/222.webp")" alt="بازیکن پدل در زمین دارابی کو" class="about__image" width="800" height="600" loading="lazy" />
                 <figcaption class="about__caption">
-                    <p class="about__caption-text">کیفیت و امنیت در زمین‌های پدل دارابی</p>
+                    <p class="about__caption-text">کیفیت و امنیت در زمین‌های پدل دارابی کو</p>
                     <a asp-controller="Home" asp-action="About" class="about__caption-link">مشاهده داستان ما →</a>
                 </figcaption>
             </figure>
         </div>
         <div class="about__content">
             <div class="about__tag"><span class="about__tag-dot"></span> درباره ما</div>
-            <h2 class="about__title">گروه تولیدی هلدینگ دارابی؛<br>تلفیق ۵۰ سال تجربه شیشه با هیجان پدل</h2>
+            <h2 class="about__title">گروه تولیدی دارابی کو؛<br>تلفیق ۵۰ سال تجربه شیشه با هیجان پدل</h2>
 
             <p class="about__desc">
-                گروه تولیدی هلدینگ دارابی با پشتوانه نیم‌قرن تجربه در صنعت شیشه، اکنون به عنوان <strong>مجری تخصصی ساخت زمین پدل</strong> در سراسر ایران شناخته می‌شود. ما تنها مجموعه‌ای هستیم که <strong>شیشه زمین پدل</strong> را با ضخامت ۱۰ و ۱۲ میل سکوریت و مطابق با استانداردهای فدراسیون جهانی (FIP) در کارخانه اختصاصی خود تولید می‌کنیم.
+                گروه تولیدی دارابی کو با پشتوانه نیم‌قرن تجربه در صنعت شیشه، اکنون به عنوان <strong>مجری تخصصی ساخت زمین پدل</strong> در سراسر ایران شناخته می‌شود. ما تنها مجموعه‌ای هستیم که <strong>شیشه زمین پدل</strong> را با ضخامت ۱۰ و ۱۲ میل سکوریت و مطابق با استانداردهای فدراسیون جهانی (FIP) در کارخانه اختصاصی خود تولید می‌کنیم.
             </p>
             <p class="about__desc">
-                تیم مهندسی ما با ارائه <strong>مشاوره رایگان ساخت زمین پدل</strong>، از مرحله برآورد هزینه‌ها و انتخاب زمین مناسب تا اجرای دقیق <strong>ابعاد استاندارد زمین پدل</strong>   همراه شماست. اگر قصد <strong>سرمایه‌گذاری در پدل</strong> را دارید، ما با حذف واسطه‌ها و تولید مستقیم سازه و شیشه، <strong>هزینه ساخت زمین پدل</strong> را برای شما بهینه کرده و پروژه‌ای با گارانتی معتبر و کیفیت صادراتی تحویل می‌دهیم.
+                تیم مهندسی ما با ارائه <strong>مشاوره رایگان ساخت زمین پدل</strong>، از مرحله برآورد هزینه‌ها و انتخاب زمین مناسب تا اجرای دقیق <strong>ابعاد استاندارد زمین پدل</strong> همراه شماست. اگر قصد <strong>سرمایه‌گذاری در پدل</strong> را دارید، ما با حذف واسطه‌ها و تولید مستقیم سازه و شیشه، <strong>هزینه ساخت زمین پدل</strong> را برای شما بهینه کرده و پروژه‌ای با گارانتی معتبر و کیفیت صادراتی تحویل می‌دهیم.
             </p>
 
             <div class="about__stats">
@@ -628,7 +636,7 @@
 
             <div style="margin-top: 30px;">
                 <a asp-controller="Home" asp-action="About" class="btn-primary-glow" style="display:inline-block; padding: 12px 30px; background:var(--primary-blue); color:#fff; border-radius:50px; text-decoration:none; font-weight:bold; font-size:0.9rem;">
-                    بیشتر درباره هلدینگ بدانید
+                    بیشتر درباره دارابی کو بدانید
                 </a>
             </div>
         </div>
@@ -639,7 +647,7 @@
     <div class="services-container">
         <div class="services-header">
             <div class="header-left">
-                <h2 class="title">خدمات هلدینگ دارابی</h2>
+                <h2 class="title">خدمات دارابی کو</h2>
             </div>
             <a asp-controller="home" asp-action="contact" class="view-all">مشاوره فنی <span>➜</span></a>
         </div>
@@ -647,7 +655,7 @@
 
             <a asp-controller="home" asp-action="blog" class="service-card">
                 <span class="service-number">01</span>
-                <img src="@Url.Content("~/H-IMG/02-compressed (2).webp")" alt="ساخت زمین پدل" class="service-img" />
+                <img src="@Url.Content("~/H-IMG/02-compressed (2).webp")" alt="ساخت زمین پدل" class="service-img" loading="lazy" />
                 <div class="service-overlay"></div>
                 <div class="service-info">
                     <h3>ساخت و احداث زمین</h3>
@@ -657,7 +665,7 @@
 
             <a asp-controller="home" asp-action="blog" class="service-card">
                 <span class="service-number">02</span>
-                <img src="@Url.Content("~/H-IMG/05-compressed.webp")" alt="خدمات پس از فروش" class="service-img" />
+                <img src="@Url.Content("~/H-IMG/05-compressed.webp")" alt="خدمات پس از فروش" class="service-img" loading="lazy" />
                 <div class="service-overlay"></div>
                 <div class="service-info">
                     <h3>نگهداری و آموزش</h3>
@@ -667,7 +675,7 @@
 
             <a asp-controller="home" asp-action="blog" class="service-card">
                 <span class="service-number">03</span>
-                <img src="@Url.Content("~/H-IMG/003-compressed.webp")" alt="تجهیزات پدل" class="service-img" />
+                <img src="@Url.Content("~/H-IMG/003-compressed.webp")" alt="تجهیزات پدل" class="service-img" loading="lazy" />
                 <div class="service-overlay"></div>
                 <div class="service-info">
                     <h3>تجهیزات تخصصی کورت</h3>
@@ -677,7 +685,7 @@
 
             <a asp-controller="home" asp-action="blog" class="service-card">
                 <span class="service-number">04</span>
-                <img src="@Url.Content("~/H-IMG/04-compressed.webp")" alt="رزرو و سرمایه گذاری" class="service-img" />
+                <img src="@Url.Content("~/H-IMG/04-compressed.webp")" alt="رزرو و سرمایه گذاری" class="service-img" loading="lazy" />
                 <div class="service-overlay"></div>
                 <div class="service-info">
                     <h3>طرح‌های سرمایه‌گذاری</h3>
@@ -692,11 +700,11 @@
 <section class="community-section-wrap">
     <div class="community-grid">
         <div class="community-media">
-            <div class="community-img-box"><img src="@Url.Content("~/H-IMG/11-compressed.webp")" alt="راکت پدل" class="community-img" /></div>
+            <div class="community-img-box"><img src="@Url.Content("~/H-IMG/11-compressed.webp")" alt="راکت پدل" class="community-img" loading="lazy" /></div>
             <div class="community-promo-card"><h3>سرمایه‌گذاری مطمئن<br>در صنعت ورزش پدل</h3><a asp-controller="home" asp-action="contact" class="promo-link">دریافت مشاوره تخصصی ➜</a></div>
         </div>
         <div class="community-content">
-            <div class="community-label"><span class="dot"></span> هلدینگ دارابی؛ فراتر از یک پیمانکار</div>
+            <div class="community-label"><span class="dot"></span> دارابی کو؛ فراتر از یک پیمانکار</div>
             <h2 class="community-title">از خط تولید شیشه تا<br>هیجان بازی در زمین پدل</h2>
             <div class="features-list">
                 <div class="feature-item"><div class="feature-icon-box">📱</div><div class="feature-content"><h4>شفافیت در اجرا</h4><p>مشاهده آنلاین فیلم‌های <strong>تست مقاومت شیشه‌ها</strong> و گزارش مراحل ساخت.</p></div></div>
@@ -717,17 +725,17 @@
     <div class="blog-cards">
         @if (Model != null && Model.Any())
         {
-            @foreach (var post in Model)
+            @foreach (var post in Model.OrderByDescending(p => p.Id).Take(3))
             {
                 <a asp-controller="Home" asp-action="Post" asp-route-slug="@post.Slug" class="blog-card">
                     <div class="blog-img">
                         @if (!string.IsNullOrEmpty(post.CoverImagePath))
                         {
-                            <img src="@post.CoverImagePath" alt="@post.Title">
+                            <img src="@post.CoverImagePath" alt="@post.Title" loading="lazy">
                         }
                         else
                         {
-                            <img src="@Url.Content("~/H-IMG/133.webp")" alt="@post.Title">
+                            <img src="@Url.Content("~/H-IMG/133.webp")" alt="@post.Title" loading="lazy">
                         }
                     </div>
                     <div class="blog-info">
@@ -758,7 +766,7 @@
             <img src="@Url.Content("~/H-IMG/166.webp")" alt="اجرای زمین پدل استاندارد" loading="lazy">
             <div class="gallery-overlay">
                 <div class="gallery-content">
-                    <p>اجرای  کورت استاندارد با شیشه ۱۲ میل سکوریت</p>
+                    <p>اجرای کورت استاندارد با شیشه ۱۲ میل سکوریت</p>
                 </div>
             </div>
         </div>
@@ -773,10 +781,10 @@
         </div>
 
         <div class="gallery-item">
-            <img src="@Url.Content("~/H-IMG/225.webp")" alt="طراحی و اجرای زمین پدل با برند دارابیکو" loading="lazy">
+            <img src="@Url.Content("~/H-IMG/225.webp")" alt="طراحی و اجرای زمین پدل با برند دارابی کو" loading="lazy">
             <div class="gallery-overlay">
                 <div class="gallery-content">
-                    <p>طراحی و اجرای زمین پدل با برند دارابیکو</p>
+                    <p>طراحی و اجرای زمین پدل با برند دارابی کو</p>
                 </div>
             </div>
         </div>
@@ -785,15 +793,16 @@
             <img src="@Url.Content("~/H-IMG/666.webp")" alt="تجهیز کامل زمین پدل" loading="lazy">
             <div class="gallery-overlay">
                 <div class="gallery-content">
-                    <p>تجهیز کامل زمین پدل </p>
+                    <p>تجهیز کامل زمین پدل</p>
                 </div>
             </div>
         </div>
+
         <div class="gallery-item">
             <img src="@Url.Content("~/H-IMG/16.webp")" alt="نصب چمن کورت" loading="lazy">
             <div class="gallery-overlay">
                 <div class="gallery-content">
-                    <p>نصب چمن کورت </p>
+                    <p>نصب چمن کورت</p>
                 </div>
             </div>
         </div>

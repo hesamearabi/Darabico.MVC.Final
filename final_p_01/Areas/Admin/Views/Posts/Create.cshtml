@@ -62,12 +62,6 @@
             background: #d11e32;
             color: #fff;
         }
-
-    .ck-editor__editable_inline {
-        min-height: 400px;
-        font-size: 1.1rem;
-        line-height: 1.8;
-    }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -142,55 +136,147 @@
 </div>
 
 @section Scripts {
-    <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
-    <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/translations/fa.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
 
     <script>
-        ClassicEditor
-            .create(document.querySelector('#Content'), {
-                language: 'fa',
-                toolbar: [
-                    'heading', '|',
-                    'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', '|',
-                    'imageUpload', 'mediaEmbed', 'insertTable', '|',
-                    'undo', 'redo'
-                ],
-                ckfinder: {
-                    uploadUrl: '/Admin/Posts/UploadArticleImage'
-                },
-                mediaEmbed: {
-                    previewsInData: false,
-                    providers: [
-                        {
-                            name: 'aparat',
-                            url: [ /^aparat\.com\/v\/([\w-]+)/, /^www\.aparat\.com\/v\/([\w-]+)/ ],
-                            html: match => {
-                                const id = match[1];
-                                return (
-                                    '<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 18px; margin: 30px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">' +
-                                    `<iframe src="https://www.aparat.com/video/video/embed/videohash/${id}/vt/frame" ` +
-                                    'style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" ' +
-                                    'allowFullScreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>' +
-                                    '</div>'
-                                );
-                            }
-                        }
-                    ]
-                }
-            })
-            .then(editor => {
-                editor.model.document.on('change:data', () => { document.querySelector('#Content').value = editor.getData(); });
-            })
-            .catch(error => { console.error(error); });
+        // 💡 تابع استخراج کد یا ساخت iframe سالم آپارات
+        function getAparatEmbedHtml(input) {
+            if (!input) return '';
+            input = input.trim();
 
-        let faqCounter = 0;
-        document.getElementById('btn-add-faq').addEventListener('click', function () {
+            if (input.includes('<iframe') || input.includes('<div')) {
+                return '<div class="aparat-video-container" style="position: relative; display: block; width: 100%; padding-top: 56.25%; margin: 25px 0; border-radius: 12px; overflow: hidden; background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.15);">' +
+                       input +
+                       '</div><p><br></p>';
+            }
+
+            var hash = '';
+            if (input.indexOf('aparat.com/v/') !== -1) {
+                hash = input.split('aparat.com/v/')[1].split('/')[0].split('?')[0].split('#')[0];
+            } else if (input.indexOf('videohash/') !== -1) {
+                hash = input.split('videohash/')[1].split('/')[0].split('?')[0].split('#')[0];
+            } else {
+                hash = input.replace(/[^a-zA-Z0-9]/g, '');
+            }
+
+            if (!hash) return '';
+
+            return '<div class="aparat-video-container" style="position: relative; display: block; width: 100%; padding-top: 56.25%; margin: 25px 0; border-radius: 12px; overflow: hidden; background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.15);">' +
+                   '<iframe src="https://www.aparat.com/video/video/embed/videohash/' + hash + '/vt/frame" ' +
+                   'style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" ' +
+                   'allowFullScreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>' +
+                   '</div><p><br></p>';
+        }
+
+        tinymce.init({
+            selector: '#Content',
+            directionality: 'rtl',
+            height: 600,
+            plugins: 'preview importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media table charmap pagebreak nonbreaking anchor insertdatetime advlist lists wordcount help charmap quickbars emoticons',
+
+            // اضافه شدن دکمه اختصاصی aparat به نوار ابزار
+            toolbar: 'undo redo | aparat | bold italic underline strikethrough | fontfamily fontsize blocks | alignleft aligncenter alignright alignjustify | outdent indent | numlist bullist | forecolor backcolor removeformat | pagebreak | charmap emoticons | fullscreen preview save print | insertfile image media template link anchor | ltr rtl | code',
+            toolbar_mode: 'sliding',
+            image_title: true,
+            automatic_uploads: true,
+            images_upload_url: '/Admin/Posts/UploadArticleImage',
+            file_picker_types: 'image media',
+            media_live_embeds: false,
+
+            // مجاز کردن کامل تگ‌های آی‌فریم و ویدیویی
+            extended_valid_elements: 'iframe[*],video[*],source[*],div[*],p[*]',
+
+            content_style: 'body { font-family: Tahoma, Arial, sans-serif; font-size: 16px; line-height: 1.8; } .aparat-video-container { position: relative; display: block; width: 100%; padding-top: 56.25%; margin: 20px 0; border-radius: 12px; overflow: hidden; background: #000; } .aparat-video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }',
+
+            setup: function (editor) {
+                // دکمه اختصاصی آپارات
+                editor.ui.registry.addButton('aparat', {
+                    icon: 'embed',
+                    tooltip: 'افزودن ویدیوی آپارات',
+                    onAction: function (_) {
+                        editor.windowManager.open({
+                            title: 'درج ویدیوی آپارات',
+                            body: {
+                                type: 'panel',
+                                items: [
+                                    {
+                                        type: 'textarea',
+                                        name: 'aparatInput',
+                                        label: 'لینک ویدیو یا کد امبد آپارات را وارد کنید:'
+                                    }
+                                ]
+                            },
+                            buttons: [
+                                { type: 'cancel', text: 'انصراف' },
+                                { type: 'submit', text: 'تایید و قرار دادن ویدیو', primary: true }
+                            ],
+                            onSubmit: function (api) {
+                                var data = api.getData();
+                                var html = getAparatEmbedHtml(data.aparatInput);
+                                if (html) {
+                                    editor.insertContent(html);
+                                } else {
+                                    alert('لینک یا کد آپارات نامعتبر است.');
+                                }
+                                api.close();
+                            }
+                        });
+                    }
+                });
+
+                editor.on('change', function () {
+                    tinymce.triggerSave();
+                });
+            },
+
+            // سیستم آپلود فایل مستقیم (MP4)
+            file_picker_callback: function (cb, value, meta) {
+                if (meta.filetype === 'media') {
+                    var input = document.createElement('input');
+                    input.setAttribute('type', 'file');
+                    input.setAttribute('accept', 'video/mp4,video/webm,video/ogg');
+
+                    input.onchange = function () {
+                        var file = this.files[0];
+                        var formData = new FormData();
+                        formData.append('file', file);
+
+                        cb('در حال آپلود...', { title: 'لطفاً صبر کنید' });
+
+                        fetch('/Admin/Posts/UploadArticleVideo', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => {
+                            if (!response.ok) throw new Error("خطا در آپلود");
+                            return response.json();
+                        })
+                        .then(result => {
+                            var videoHtml = '<div style="text-align: center; margin: 20px 0;">' +
+                                            '<video controls="controls" style="width: 100%; max-width: 800px; height: auto; border-radius: 12px; display: block; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); background:#000;">' +
+                                            '<source src="' + result.location + '" type="video/mp4" />' +
+                                            '</video>' +
+                                            '</div><p><br></p>';
+                            editor.insertContent(videoHtml);
+                        })
+                        .catch(error => {
+                            alert('خطا در آپلود ویدیو. لطفاً حجم ویدیو را بررسی کنید.');
+                        });
+                    };
+                    input.click();
+                }
+            }
+        });
+
+        // مدیریت FAQ
+        let faqCounter = document.querySelectorAll('.faq-item-row').length || 0;
+        document.getElementById('btn-add-faq')?.addEventListener('click', function () {
             const wrapper = document.getElementById('faq-wrapper');
             const faqTemplate = `
                 <div class="faq-item-row p-3 mb-3 position-relative" id="faq-row-${faqCounter}" style="background: #fff; border: 1px dashed #CBD5E1; border-radius: 8px;">
                     <button type="button" class="btn btn-sm btn-danger position-absolute" style="top: 10px; left: 10px; z-index: 10;" onclick="removeFaqRow(${faqCounter})"><i class="bi bi-trash3"></i> حذف</button>
                     <div class="mb-3 pr-4">
-                        <label class="form-label small text-muted">پرسش מתداول:</label>
+                        <label class="form-label small text-muted">پرسش متداول:</label>
                         <input type="text" class="form-control faq-question" required />
                     </div>
                     <div class="mb-0">
@@ -207,7 +293,7 @@
             if (row) row.remove();
         }
 
-        document.querySelector('form').addEventListener('submit', function (e) {
+        document.querySelector('form')?.addEventListener('submit', function (e) {
             const rows = document.querySelectorAll('.faq-item-row');
             rows.forEach((row, index) => {
                 row.querySelector('.faq-question').setAttribute('name', `Faqs[${index}].Question`);

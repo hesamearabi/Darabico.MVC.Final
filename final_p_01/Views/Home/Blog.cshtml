@@ -2,7 +2,8 @@
 @using System.Linq
 
 @{
-    ViewData["Title"] = "مقالات آموزشی و راهنمای ساخت پدل - هلدینگ دارابی";
+    // 🚀 اصلاح سئو: کلمه "دارابی کو |" حذف شد چون لی‌اوت به صورت اتوماتیک آن را اضافه می‌کند
+    ViewData["Title"] = "مقالات و راهنمای تخصصی ساخت و تجهیز زمین پدل";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -210,12 +211,12 @@
             {
                 <div class="article-card">
                     <div class="article-thumb">
-                        <img src="@(post.CoverImagePath ?? "/H-IMG/133.webp")" alt="@post.Title" loading="lazy">
+                        <img src="@(!string.IsNullOrWhiteSpace(post.CoverImagePath) ? post.CoverImagePath : "/H-IMG/133.webp")" alt="@post.Title" loading="lazy">
                     </div>
                     <div class="article-content">
                         <div class="article-meta">
                             <span class="date">@post.CreatedAt.ToString("yyyy/MM/dd")</span>
-                            <span class="category">@post.Category?.Name</span>
+                            <span class="category">@(post.Category?.Name ?? "بدون دسته‌بندی")</span>
                         </div>
                         <h2 class="article-title">@post.Title</h2>
                         <p class="article-excerpt">

@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="هلدینگ دارابی، مجری تخصصی ساخت زمین پدل و تولیدکننده شیشه‌های استاندارد پدل با ۵۰ سال تجربه. مشاوره رایگان هزینه ساخت در سراسر ایران.">
-    <meta name="keywords" content="ساخت زمین پدل, هزینه ساخت زمین پدل, شیشه زمین پدل, ابعاد زمین پدل, هلدینگ دارابی">
+    <meta name="description" content="دارابی کو، مجری تخصصی ساخت زمین پدل و تولیدکننده شیشه‌های استاندارد پدل با ۵۰ سال تجربه. مشاوره رایگان هزینه ساخت در سراسر ایران.">
+    <meta name="keywords" content="ساخت زمین پدل, هزینه ساخت زمین پدل, شیشه زمین پدل, ابعاد زمین پدل, دارابی کو">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="@($"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}")" />
 
-    <meta property="og:site_name" content="هلدینگ دارابی">
-    <meta property="og:title" content="@(ViewData["Title"] ?? "ساخت تخصصی زمین پدل | هلدینگ دارابی")">
+    <meta property="og:site_name" content="دارابی کو">
+    <meta property="og:title" content="دارابی کو | @(ViewData["Title"] ?? "مرجع تخصصی ساخت و تجهیز زمین های پدل")">
     <meta property="og:type" content="website">
     <meta property="og:description" content="صفر تا صد ساخت زمین پدل با شیشه‌های نشکن استاندارد جهانی.">
-    <meta property="og:image" content="~/siteLOGO/sitelogo.png">
+
+    <meta property="og:image" content="@($"{Context.Request.Scheme}://{Context.Request.Host}/siteLOGO/sitelogo.png")">
     <meta property="og:url" content="@($"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}")">
 
-    <title>@ViewData["Title"] | هلدینگ دارابی</title>
+    <title>دارابی کو | @(ViewData["Title"] ?? "مرجع تخصصی ساخت و تجهیز زمین های پدل")</title>
 
-    <link rel="icon" type="image/png" href="~/siteLOGO/favicon.png" asp-append-version="true">
-    <link rel="apple-touch-icon" href="~/siteLOGO/favicon.png">
+    <link rel="icon" type="image/png" href="/siteLOGO/favicon.png" asp-append-version="true">
+    <link rel="apple-touch-icon" href="/siteLOGO/favicon.png">
 
-    <link rel="stylesheet" href="~/CSS-SOURCE/layouts.css" asp-append-version="true">
+    <link rel="stylesheet" href="/CSS-SOURCE/layouts.css" asp-append-version="true">
 
     <style>
-        /* 1. تعریف انیمیشن‌ها (Keyframes) */
+        /* تعریف انیمیشن‌ها (استفاده از @@ برای جلوگیری از خطای Razor) */
         @@keyframes pulse-logo {
             0% {
                 transform: scale(1);
@@ -55,7 +56,7 @@
             }
         }
 
-        /* 2. استایل بدنه لودر */
+        /* استایل بدنه لودر */
         #brand-loader {
             position: fixed;
             top: 0;
@@ -109,13 +110,71 @@
         body.loading-state {
             overflow: hidden !important;
         }
+
+        /* استایل دکمه‌های بخش Hero */
+        .hero-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 25px;
+            z-index: 10;
+            position: relative;
+        }
+
+        .hero-guide-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+            .hero-guide-btn:hover {
+                background-color: #ffffff;
+                color: #0056b3;
+                transform: translateY(-3px);
+                box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            }
+
+        .sub-footer {
+            background: #0a0c12;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding: 1rem;
+            text-align: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+            .sub-footer a.dev-linkedin-link {
+                color: #e2e8f0;
+                text-decoration: none;
+                font-weight: 700;
+                margin-right: 4px;
+                transition: all 0.3s ease;
+            }
+
+                .sub-footer a.dev-linkedin-link:hover {
+                    color: #0a66c2;
+                    text-decoration: none;
+                    text-shadow: 0 0 8px rgba(10, 102, 194, 0.4);
+                }
     </style>
 
     <script type="application/ld+json">
         {
           "@@context": "https://schema.org",
           "@@type": "GeneralContractor",
-          "name": "هلدینگ دارابی",
+          "name": "دارابی کو",
           "url": "@($"{Context.Request.Scheme}://{Context.Request.Host}")",
           "logo": "@($"{Context.Request.Scheme}://{Context.Request.Host}/siteLOGO/sitelogo.png")",
           "contactPoint": {
@@ -134,7 +193,7 @@
 
     <div id="brand-loader">
         <div class="loader-content">
-            <img src="~/siteLOGO/sitelogo.png" alt="Darabi Holding Loader" class="loader-logo">
+            <img src="/siteLOGO/sitelogo.png" alt="DarabiCo Loader" class="loader-logo">
             <div class="loading-bar-container">
                 <div class="loading-bar"></div>
             </div>
@@ -145,7 +204,7 @@
         <div class="header-container">
             <div class="logo">
                 <a href="/">
-                    <span class="logo-text">هلدینگ <span>دارابی</span></span>
+                    <span class="logo-text">دارابی <span>کو</span></span>
                 </a>
             </div>
 
@@ -154,12 +213,12 @@
                     <li><a href="/#about1" class="nav-link">درباره ما</a></li>
                     <li><a href="/#services-section" class="nav-link">خدمات</a></li>
                     <li><a href="/#projects-section" class="nav-link">پروژه‌ها</a></li>
-                    <li><a asp-controller="home" asp-action="blog" class="nav-link">مقالات</a></li>
+                    <li><a asp-controller="Home" asp-action="Blog" class="nav-link">مقالات</a></li>
                 </ul>
             </nav>
 
             <div class="header-actions">
-                <a asp-controller="home" asp-action="contact" class="header-cta-btn">مشاوره رایگان</a>
+                <a asp-controller="Home" asp-action="Contact" class="header-cta-btn">مشاوره رایگان</a>
                 <button class="hamburger" id="hamburger-btn" aria-label="منو">
                     <span></span><span></span><span></span>
                 </button>
@@ -174,15 +233,15 @@
 
             <nav>
                 <ul>
-                    <li><a asp-controller="home" asp-action="about" class="mobile-link">درباره ما</a></li>
+                    <li><a asp-controller="Home" asp-action="About" class="mobile-link">درباره ما</a></li>
                     <li><a href="/#services-section" class="mobile-link">خدمات ما</a></li>
                     <li><a href="/#projects-section" class="mobile-link">نمونه کارها</a></li>
-                    <li><a asp-controller="home" asp-action="blog" class="mobile-link">وبلاگ آموزشی</a></li>
+                    <li><a asp-controller="Home" asp-action="Blog" class="mobile-link">وبلاگ آموزشی</a></li>
                 </ul>
             </nav>
 
             <div class="mobile-menu-footer">
-                <a asp-controller="home" asp-action="contact" class="mobile-cta">درخواست بازدید پروژه</a>
+                <a asp-controller="Home" asp-action="Contact" class="mobile-cta">درخواست بازدید پروژه</a>
             </div>
         </div>
         <div class="mobile-overlay" id="mobile-overlay"></div>
@@ -203,7 +262,14 @@
                     <span>با استانداردهای جهانی</span>
                 </h1>
                 <p class="hero-subtitle">تولیدکننده انحصاری شیشه‌های نشکن پدل و مجری صفر تا صد پروژه‌های ورزشی در ایران</p>
-                <a asp-controller="home" asp-action="contact" class="hero-consult-btn">دریافت مشاوره و قیمت</a>
+
+                <div class="hero-actions">
+                    <a asp-controller="Home" asp-action="Contact" class="hero-consult-btn">دریافت مشاوره و قیمت</a>
+                    <!-- لینک زیر اصلاح شد تا به درستی به صفحه مقاله هدایت شود -->
+                    <a asp-controller="Home" asp-action="Post" asp-route-slug="padel-court-construction-guide" class="hero-guide-btn" title="راهنمای جامع صفر تا صد ساخت زمین پدل">
+                        راهنمای ۰ تا ۱۰۰ ساخت پدل
+                    </a>
+                </div>
             </div>
 
             <div class="scroll-indicator">
@@ -223,13 +289,13 @@
             <div class="footer-top">
                 <a href="#" class="go-top-btn">
                     <span>بازگشت به بالا</span>
-                    <img src="~/footerimg/1037792-200.png" alt="بازگشت به بالا" width="24" height="24" loading="lazy">
+                    <img src="/footerimg/1037792-200.png" alt="بازگشت به بالا" width="24" height="24" loading="lazy">
                 </a>
             </div>
 
             <div class="footer-bottom">
                 <div class="footer-col">
-                    <h3 class="footer-title">هلدینگ تولیدی دارابی</h3>
+                    <h3 class="footer-title">دارابی کو</h3>
                     <p class="footer-desc">
                         با ۵۰ سال تجربه در صنعت شیشه، اکنون تخصصی‌ترین مرجع <strong>ساخت زمین پدل</strong> در ایران هستیم. هدف ما ترکیب امنیت <strong>شیشه‌های نشکن</strong> با استانداردهای جهانی برای ساخت زمینی ماندگار است.
                     </p>
@@ -238,39 +304,41 @@
                 <div class="footer-col">
                     <h3 class="footer-title">دسترسی سریع</h3>
                     <ul class="quick-links">
-                        <li><a asp-controller="home" asp-action="index">صفحه اصلی</a></li>
-                        <li><a asp-controller="home" asp-action="blog">مجله آموزشی پدل</a></li>
-                        <li><a asp-controller="home" asp-action="about">درباره ما</a></li>
-                        <li><a asp-controller="home" asp-action="contact">ارتباط با ما</a></li>
+                        <li><a asp-controller="Home" asp-action="Index">صفحه اصلی</a></li>
+                        <li><a asp-controller="Home" asp-action="Blog">مجله آموزشی پدل</a></li>
+                        <li><a asp-controller="Home" asp-action="About">درباره ما</a></li>
+                        <li><a asp-controller="Home" asp-action="Contact">ارتباط با ما</a></li>
+                        <!-- لینک زیر اصلاح شد تا به درستی به صفحه مقاله هدایت شود -->
+                        <li><a asp-controller="Home" asp-action="Post" asp-route-slug="padel-court-construction-guide">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
                     </ul>
                 </div>
 
                 <div class="footer-col">
                     <h3 class="footer-title">ارتباط با ما</h3>
                     <div class="contact-item">
-                        <img src="~/footerimg/location-map-pin-3.svg" alt="آدرس">
+                        <img src="/footerimg/location-map-pin-3.svg" alt="آدرس">
                         <span>
                             دفتر مرکزی: ساری، بلوار خزر، خیابان دریا ۴ , فروشگاه دارابی
                         </span>
                     </div>
                     <div class="contact-item">
-                        <img src="~/footerimg/location-map-pin-3.svg" alt="کارخانه">
+                        <img src="/footerimg/location-map-pin-3.svg" alt="کارخانه">
                         <span>کارخانه: ساری , کیلومتر 20 جاده فرح آباد , شهرک صنعتی شماره ۲، قطعه D5</span>
                     </div>
                     <div class="contact-item">
-                        <img src="~/footerimg/phone.png" alt="تلفن">
-                        <a href="tel:09111515971">09111515971</a>
+                        <img src="/footerimg/phone.png" alt="تلفن">
+                        <a href="tel:09111515971" dir="ltr">09111515971</a>
                     </div>
                     <div class="contact-item">
-                        <img src="~/footerimg/phone.png" alt="تلفن">
-                        <a href="tel:09121729882">09121729882</a>
+                        <img src="/footerimg/phone.png" alt="تلفن">
+                        <a href="tel:09121729882" dir="ltr">09121729882</a>
                     </div>
                     <div class="social-links">
                         <a href="https://instagram.com/darabicopadel" title="اینستاگرام">
-                            <img src="~/footerimg/logo-instagram.svg" alt="Instagram">
+                            <img src="/footerimg/logo-instagram.svg" alt="Instagram">
                         </a>
                         <a href="https://t.me/DarabiHolding" title="تلگرام">
-                            <img src="~/footerimg/4701496.png" alt="Telegram">
+                            <img src="/footerimg/4701496.png" alt="Telegram">
                         </a>
                     </div>
                 </div>
@@ -284,34 +352,8 @@
         </div>
     </div>
 
-    <style>
-        .sub-footer {
-            background: #0a0c12;
-            border-top: 1px solid rgba(255,255,255,0.05); /* مرز بسیار نرم و مدرن */
-            padding: 1rem;
-            text-align: center;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            font-size: 0.85rem;
-            color: #94a3b8;
-        }
-
-            .sub-footer a.dev-linkedin-link {
-                color: #e2e8f0;
-                text-decoration: none;
-                font-weight: 700;
-                margin-right: 4px;
-                transition: all 0.3s ease;
-            }
-
-                .sub-footer a.dev-linkedin-link:hover {
-                    color: #0a66c2; /* رنگ آبی اختصاصی لینکدین */
-                    text-decoration: none;
-                    text-shadow: 0 0 8px rgba(10, 102, 194, 0.4); /* افکت درخشش ظریف */
-                }
-    </style>
-
-    <script src="~/JS-SOURCE/minislider.js" asp-append-version="true"></script>
-    <script src="~/JS-SOURCE/slider-body.js" asp-append-version="true"></script>
+    <script src="/JS-SOURCE/minislider.js" asp-append-version="true"></script>
+    <script src="/JS-SOURCE/slider-body.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 
     <script>
@@ -346,7 +388,6 @@
             if (closeMenuBtn) closeMenuBtn.onclick = () => toggleMenu(false);
             if (overlay) overlay.onclick = () => toggleMenu(false);
 
-            // بستن منو بعد از کلیک روی لینک‌ها
             if (mobileLinks) {
                 mobileLinks.forEach(l => {
                     l.onclick = () => toggleMenu(false);
