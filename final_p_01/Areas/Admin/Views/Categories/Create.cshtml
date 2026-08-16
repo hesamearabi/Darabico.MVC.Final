@@ -1,0 +1,42 @@
+﻿@model final_p_01.Domain.Entities.Category
+@{
+    ViewData["Title"] = "افزودن دسته‌بندی";
+}
+
+<h2>افزودن دسته‌بندی جدید</h2>
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create" method="post">
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label">نام دسته‌بندی</label>
+                <input asp-for="Name" id="txtName" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Slug" class="form-label">اسلاگ سئو (آدرس URL)</label>
+                <input asp-for="Slug" id="txtSlug" class="form-control" dir="ltr" />
+                <span asp-validation-for="Slug" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-success">ذخیره رکورد</button>
+            <a asp-action="Index" class="btn btn-secondary">بازگشت به لیست</a>
+        </form>
+        <div asp-validation-summary="All" class="alert-danger p-2 mb-3 rounded" style="display: @(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ساخت خودکار اسلاگ استاندارد با تایپ کاربر
+        document.getElementById("txtName").addEventListener("input", function () {
+            let text = this.value;
+            let slug = text.toLowerCase()
+                .replace(/[^a-z0-9آ-ی\s]/g, '') // حذف کاراکترهای غیرمجاز
+                .replace(/\s+/g, '-'); // جایگزینی اسپیس با خط تیره
+            document.getElementById("txtSlug").value = slug;
+        });
+    </script>
+}

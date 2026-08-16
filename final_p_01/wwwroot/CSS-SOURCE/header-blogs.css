@@ -1,0 +1,359 @@
+/* Webfont: Yekan */ /*WEBSITE FONT PERSIAN*/       
+@font-face {
+font-family: 'Yekan';
+src:	url('./Yekan-Font-master/Yekan.eot'); /* IE9 Compat Modes */
+src:	url('./Yekan-Font-master/Yekan.eot') format('embedded-opentype'), /* IE6-IE8 */
+      url('./Yekan-Font-master/Yekan.woff2') format('woff2'), /* Modern Browsers */
+      url('./Yekan-Font-master/Yekan.woff') format('woff'), /* Modern Browsers */
+      url('./Yekan-Font-master/Yekan.otf') format('opentype'), /* Open Type Font */	
+      url('./Yekan-Font-master/Yekan.ttf') format('truetype'); /* Safari, Android, iOS */
+font-weight: normal;
+font-style: normal;
+text-rendering: optimizeLegibility;
+font-display: auto;
+}
+
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  /* font-family: "Yekan"; */
+  scroll-behavior: smooth;
+  
+}
+body{
+  font-size: 14px;
+  direction:rtl;
+}
+body > header > #container > #header {
+  width: 100%;
+  height: 15vh;
+  background-image: url(/siteLOGO/AD9QPHP.jpg);
+  /* background-color: rgb(190, 208, 107); */
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+   box-shadow: 0 20px 30px 10px rgba(124, 122, 122, 0.3);
+
+}
+body >header > #container > #header > #header-Topbox {
+  width: 100%;
+  height: 100px;
+  /* background-color: red; */
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+/*CONTACT US STYLE*/
+
+body > header > #container > #header > #header-Topbox > #contactus-BTN {
+  width: 150px;
+  height: 50px;
+  border-radius: 35px;
+  background-color: white;
+  transition: 0.2s linear;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+body > header > #container > #header > #header-Topbox > #contactus-BTN:hover {
+  background-color: black;
+  cursor: pointer;
+  background: rgba(201, 200, 200, 0.3);
+  backdrop-filter: blur(2px); /* افکت شیشه‌ای */
+  -webkit-backdrop-filter: blur(2px); /* برای مرورگرهای WebKit */
+}
+
+body > header > #container > #header > #header-Topbox > #contactus-BTN:hover > span {
+  /* color: rgb(83, 226, 43); */
+  color: white;
+}
+
+body > header > #container > #header > #header-Topbox > #contactus-BTN > span {
+  font-weight: 700;
+  color: black;
+}
+
+/* NAVIGATION BAR STYLE*/
+
+body > header > #container > #header > #header-Topbox > #navigation-Bar {
+  width: 500px;
+  height: 45px;
+  border-radius: 50px;
+  background: rgba(201, 200, 200, 0.3);
+  padding: 20px;
+  backdrop-filter: blur(2px); /* افکت شیشه‌ای */
+  -webkit-backdrop-filter: blur(2px); /* برای مرورگرهای WebKit */
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* transition: 0.3s; */
+}
+
+body 
+  > header > #container
+  > #header
+  > #header-Topbox
+  > #navigation-Bar
+  > .navbar-items
+  > a {
+  color: white;
+  text-decoration: none;
+  transition: 0.3s linear;
+  font-weight: 500;
+}
+
+body
+  > header > #container
+  > #header
+  > #header-Topbox
+  > #navigation-Bar
+  > .navbar-items
+  > a:hover {
+  /* color: rgb(83, 226, 43); */
+  color: white;
+}
+.navbar-items a {
+  position: relative;
+  text-decoration: none;
+  transition: 0.2s linear;
+  color: #333;
+  display: inline-block; /* فقط اندازه متن */
+  padding: 10px 0; /* فقط فاصله عمودی */
+}
+.navbar-items a:hover {
+  transform: scale(115%);
+}
+
+/* خط زیر متن */
+.navbar-items a::after {
+  content: "";
+  position: absolute;
+  left: 50%; /* وسط متن */
+  bottom: 2px;
+  width: 0;
+  height: 2px;
+  /* background-color: rgb(83, 226, 43); */
+  background-color: white;
+  transition: all 0.3s ease;
+}
+
+/* هنگام هاور خط از وسط متن گسترش پیدا کنه */
+.navbar-items a:hover::after {
+  left: 0;
+  width: 100%;
+}
+
+/*LOGO STYLE*/
+
+body > header > #container > #header > #header-Topbox > a > #company-Logo {
+  width: 150px;
+  height: 50px;
+  border-radius: 10px;
+  background-color: white;
+  transition: 0.3s linear;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 900;
+}
+/* body > header > #container > #header > #header-Topbox > #company-Logo:hover {
+  border-radius: 35px;
+} */
+
+body > header > #container > #header > #header-bottombox {
+  width: 100%;
+  height: calc(100vh - 100px);
+  /* background-color: red; */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+body > header > #container > #header > #header-bottombox > #header-bottombox-left {
+  width: 50%;
+  height: 100%;
+  /* background-color: antiquewhite; */
+  display: flex;
+  flex-direction: column;
+  justify-content:center ;
+  align-items: center;
+}
+
+body > header > #container > #header > #header-bottombox > #header-bottombox-left > #minislider-info {
+  width: 65%;
+  height: auto;
+  /* background-color: red; */
+  color: white;
+  font-size: 16px;
+  direction: ltr;
+  margin-bottom: 50px;
+}
+body > header > #container > #header > #header-bottombox > #header-bottombox-left > #minislider-box{
+  background-color: aqua;
+  width:500px;
+  height: 200px;
+  position: relative;
+  top: 100px;
+  /* display: flex; */
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+  overflow: hidden;
+
+
+}#minislider-gallery{
+ width: 500%;
+ height:100% ;
+ position: relative;
+ background-color: blue;
+ left: 0;
+ transition: 0.3s ease-in-out;
+ /* background-color: aquamarine; */
+            
+}
+#minislider-gallery > .minislider-items > img{
+  width: 500px;
+  height: 200px;
+
+}
+#minislider-gallery > .minislider-items {
+  float: left;
+
+}
+
+
+
+
+body > header > #container > #header > #header-bottombox > #header-bottombox-right {
+  width: 50%;
+  height: 100%;
+  min-width: 500px;
+  /* background-color: rgb(11, 122, 1); */
+}
+body
+  >header > #container
+  > #header
+  > #header-bottombox
+  > #header-bottombox-right
+  > #info-box {
+  width: 100%;
+  height: 60%;
+  /* background-color: red; */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+body
+  > header > #container
+  > #header
+  > #header-bottombox
+  > #header-bottombox-right
+  > #info-box
+  > :nth-child(1) {
+  width: 100%;
+  font-size: 40px;
+  font-weight: 900;
+  color: white;
+}
+
+#container
+  > #header
+  > #header-bottombox
+  > #header-bottombox-right
+  > #info-box
+  > :nth-child(2) {
+  width: 100%;
+  font-size: 14px;
+  font-weight: 400;
+  color: white;
+}
+body
+  > header > #container
+  > #header
+  > #header-bottombox
+  > #header-bottombox-right
+  > #reservation {
+  width: 100%;
+  height: 40%;
+  /* background-color: rgb(46, 13, 91); */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+body
+  > header > #container
+  > #header
+  > #header-bottombox
+  > #header-bottombox-right
+  > #reservation
+  > #paddle-info {
+  width: 50%;
+  height: auto;
+  /* background-color: aqua; */
+  display: block;
+  text-align: center;
+  color: white;
+}
+body
+  > header > #container
+  > #header
+  > #header-bottombox
+  > #header-bottombox-right
+  > #reservation
+  > #paddle-info-button {
+  width: 150px;
+  height: 50px;
+  border-radius: 35px;
+  background-color: white;
+  transition: 0.2s linear;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  display: none;
+}
+body
+  >header > #container
+  > #header
+  > #header-bottombox
+  > #header-bottombox-right
+  > #reservation
+  > #paddle-info-button:hover {
+  background-color: black;
+  cursor: pointer;
+  background: rgba(201, 200, 200, 0.3);
+  backdrop-filter: blur(2px); /* افکت شیشه‌ای */
+  -webkit-backdrop-filter: blur(2px); /* برای مرورگرهای WebKit */
+}
+body
+  >header > #container
+  > #header
+  > #header-bottombox
+  > #header-bottombox-right
+  > #reservation
+  > #paddle-info-button
+  > span {
+  color: black;
+  font-weight: 700;
+}
+body
+  >header > #container
+  > #header
+  > #header-bottombox
+  > #header-bottombox-right
+  > #reservation
+  > #paddle-info-button:hover
+  > span {
+  color: white;
+}
+
+.fixed{
+  position: fixed;
+}
+

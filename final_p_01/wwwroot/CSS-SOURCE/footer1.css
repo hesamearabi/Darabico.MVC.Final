@@ -1,0 +1,292 @@
+/* ریست اولیه */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* متغیرهای رنگ */
+:root {
+    --primary-color: #ccff00;     /* زرد فسفری نئونی */
+    --primary-hover: #aaff00;    /* کمی تیره‌تر برای hover */
+}
+
+.site-footer {
+    font-family: 'Vazir', Tahoma, sans-serif;
+    direction: rtl;
+    color: #fff;
+    /* margin-top: 50px; */
+}
+
+.footer-container {
+    background-size: cover;
+    background-position: center;
+    padding: 50px 20px;
+    position: relative;
+    /* box-shadow: inset 10px 10px gray; */
+    box-shadow: 0 -20px 30px -10px rgba(124, 122, 122, 0.6);
+
+}
+
+.footer-container::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6); /* سایه تیره برای خوانایی */
+    z-index: 1;
+}
+
+.footer-top,
+.footer-bottom {
+    position: relative;
+    z-index: 2;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* --- بخش بالا: Flex --- */
+.footer-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.newsletter-form {
+    display: flex;
+    gap: 10px;
+    max-width: 350px;
+}
+
+.newsletter-input {
+    flex: 1;
+    padding: 12px 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.newsletter-btn {
+    padding: 12px 20px;
+    background: var(--primary-color);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.newsletter-btn:hover {
+    background: var(--primary-hover);
+}
+
+.go-top-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: 0.3s;
+}
+
+.go-top-btn img {
+    width: 24px;
+    filter: brightness(0) invert(1);
+}
+
+.go-top-btn:hover {
+    color: var(--primary-color);
+}
+
+/* --- بخش پایین: سه ستونه با Flex --- */
+.footer-bottom {
+    /* width: 900%; */
+    display: flex;
+    flex-wrap: wrap;
+    /* justify-content: space-between; */
+    justify-content: space-around;
+    gap: 100px;
+    text-align: right;
+}
+
+.footer-col {
+    flex: 1 1 300px; /* حداقل عرض 300px، فلکس می‌شه */
+    min-width: 250px;
+    padding-top:160px;
+}
+
+.footer-title {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: var(--primary-color);
+}
+
+.footer-desc {
+    line-height: 1.8;
+    font-size: 0.95rem;
+}
+
+/* --- دسترسی سریع: دو ستونه با Flex --- */
+.quick-links {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: flex-start; /* راست‌چین */
+}
+
+.quick-links li {
+    flex: 0 1 calc(50% - 6px); /* دو ستونه: 50% منهای گپ */
+}
+
+.quick-links a {
+    display: block;
+    color: #ddd;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: 0.3s;
+}
+
+.quick-links a:hover {
+    color: var(--primary-color);
+}
+
+/* --- تماس --- */
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+}
+
+.contact-item img {
+    width: 20px;
+    filter: brightness(0) invert(1);
+}
+
+.contact-item a {
+    color: #ddd;
+    text-decoration: none;
+}
+
+.contact-item a:hover {
+    color: var(--primary-color);
+}
+
+.social-links {
+    display: flex;
+    gap: 15px;
+    flex-wrap: nwrap;
+    margin-top: 15px;
+}
+
+.social-links a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ddd;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.social-links img {
+    width: 22px;
+    filter: brightness(0) invert(1);
+}
+
+.social-links a:hover {
+    color: var(--primary-color);
+}
+
+/* --- ریسپانسیو با Flex --- */
+@media (max-width: 992px) {
+    .footer-bottom {
+        justify-content: center;
+        text-align: center;
+    }
+    
+    .footer-col {
+        flex: 1 1 100%; /* هر ستون تمام عرض */
+    }
+    
+    .quick-links {
+        justify-content: center; /* وسط‌چین */
+    }
+    
+    .quick-links li {
+        flex: 0 1 calc(50% - 6px); /* همچنان دو ستونه */
+    }
+    
+    .contact-item, 
+    .social-links {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .footer-top {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .newsletter-form {
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    .go-top-btn {
+        justify-content: center;
+    }
+    
+    .quick-links li {
+        flex: 0 1 calc(50% - 6px); /* دو ستونه */
+    }
+}
+
+@media (max-width: 480px) {
+    .newsletter-form {
+        flex-direction: column;
+    }
+    
+    .newsletter-btn {
+        width: 100%;
+    }
+    
+    .quick-links li {
+        flex: 0 1 100%; /* فقط تو خیلی کوچیک تک ستونه */
+    }
+    .footer-col {
+        padding: 0;
+    }
+}
+/* --- زیر 480px: همچنان دو ستونه + چسبیده --- */
+@media (max-width: 480px) {
+    .newsletter-form {
+        flex-direction: column;
+    }
+
+    .newsletter-btn {
+        width: 100%;
+    }
+
+    /* دسترسی سریع: همیشه دو ستونه، حتی تو موبایل کوچیک */
+    .quick-links {
+        gap: 10px 6px; /* گپ کوچکتر برای جا شدن */
+        justify-content: center;
+    }
+
+    .quick-links li {
+        flex: 0 1 calc(50% - 3px); /* دقیقاً دو ستونه - بدون تک ستون */
+    }
+
+    .quick-links a {
+        font-size: 0.85rem; /* فونت کوچکتر که جا بشه */
+        padding: 4px 0; /* کمی پدینگ عمودی */
+    }
+}

@@ -1,0 +1,301 @@
+﻿@model final_p_01.Domain.Entities.Post
+
+@{
+    ViewData["Title"] = $"{Model.Title} - هلدینگ دارابی";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var currentUrl = "https://darabico.com/Home/Post?slug=" + Model.Slug;
+    var imageUrl = string.IsNullOrEmpty(Model.CoverImagePath) ? "https://darabico.com/H-IMG/133.webp" : "https://darabico.com" + Model.CoverImagePath;
+    var isoDate = Model.CreatedAt.ToString("yyyy-MM-ddTHH:mm:sszzz");
+}
+
+@section Head {
+    <meta name="description" content="@Model.MetaDescription" />
+    <link rel="canonical" href="@currentUrl" />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="@currentUrl" />
+    <meta property="og:title" content="@Model.Title" />
+    <meta property="og:description" content="@Model.MetaDescription" />
+    <meta property="og:image" content="@imageUrl" />
+    <meta property="og:site_name" content="هلدینگ دارابی" />
+    <meta property="article:published_time" content="@isoDate" />
+
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "Article",
+      "mainEntityOfPage": { "@@type": "WebPage", "@@id": "@currentUrl" },
+      "headline": "@Model.Title",
+      "image": [ "@imageUrl" ],
+      "datePublished": "@isoDate",
+      "dateModified": "@isoDate",
+      "author": { "@@type": "Organization", "name": "تحریریه دارابی", "url": "https://darabico.com" }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@@type": "ListItem", "position": 1, "name": "خانه", "item": "https://darabico.com/" },
+        { "@@type": "ListItem", "position": 2, "name": "مجله پدل", "item": "https://darabico.com/Home/Blog" },
+        { "@@type": "ListItem", "position": 3, "name": "@Model.Title" }
+      ]
+    }
+    </script>
+
+    <style>
+        /* پایه و تایپوگرافی عمومی سایت */
+        body { background-color: #f5f5f7; color: #1d1d1f; }
+        .hero, .hero-overlay, .hero-content { display: none !important; }
+        .magazine-layout-wrapper { padding-top: 130px; padding-bottom: 80px; max-width: 1200px; margin: 0 auto; padding-left: 15px; padding-right: 15px; }
+        .reading-progress-bar { position: fixed; top: 0; left: 0; width: 0%; height: 4px; background: #0066cc; z-index: 99999; transition: width 0.1s ease-out; }
+        .post-layout { display: flex; gap: 40px; align-items: flex-start; }
+        .main-content-col { flex: 1; min-width: 0; }
+        .sidebar-col { width: 340px; flex-shrink: 0; }
+
+        /* باکس اصلی مقاله */
+        .article-main-box { background: #ffffff; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); padding: 45px; margin-bottom: 30px; }
+        .breadcrumb-strip { font-size: 0.85rem; color: #86868b; margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .breadcrumb-strip a { color: #0066cc; text-decoration: none; font-weight: 600; transition: color 0.2s; }
+        .breadcrumb-strip a:hover { color: #004499; }
+        .article-main-title { font-size: clamp(1.8rem, 3.5vw, 2.6rem); font-weight: 800; letter-spacing: -0.015em; color: #1d1d1f; line-height: 1.4; margin-bottom: 25px; }
+        
+        .meta-container-row { display: flex; align-items: center; flex-wrap: wrap; gap: 25px; padding-bottom: 25px; border-bottom: 1px solid #d2d2d7; margin-bottom: 35px; font-size: 0.95rem; color: #86868b; }
+        .meta-item { display: flex; align-items: center; gap: 8px; }
+        .meta-item i { color: #1d1d1f; font-size: 1.1rem; }
+        .cat-badge { background: #f5f5f7; color: #1d1d1f; padding: 6px 16px; border-radius: 20px; font-weight: 700; font-size: 0.85rem; margin-right: auto; }
+        .article-hero-cover { width: 100%; height: auto; max-height: 550px; object-fit: cover; border-radius: 18px; margin-bottom: 40px; }
+
+        /* استایل متون مقاله */
+        .article-dynamic-content { font-size: 1.15rem; line-height: 2.2; color: #1d1d1f; white-space: pre-wrap; text-align: justify; }
+        .article-dynamic-content p { margin-bottom: 1.8rem; }
+        .article-dynamic-content h2 { font-size: 1.7rem; font-weight: 800; color: #1d1d1f; margin: 50px 0 25px; }
+        .article-dynamic-content h3 { font-size: 1.4rem; font-weight: 700; color: #1d1d1f; margin: 40px 0 20px; }
+        .article-dynamic-content a { color: #0066cc; text-decoration: none; font-weight: 600; }
+        .article-dynamic-content blockquote { background: #f5f5f7; border-radius: 12px; padding: 25px 30px; margin: 35px 0; color: #424245; font-style: italic; border-right: 4px solid #d2d2d7; }
+        
+        /* 🚀 مدیا و ویدیوها (استایل‌های فوق‌لوکس اپل) */
+        .article-dynamic-content img { max-width: 100%; height: auto; border-radius: 18px; margin: 35px 0; box-shadow: 0 10px 40px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.03); }
+        .article-dynamic-content figure.media { margin: 40px 0; width: 100%; display: block; }
+        .article-dynamic-content figure.media oembed { display: none; } /* مخفی کردن تگ خام پیش از رندر */
+        
+        .video-wrapper-apple {
+            position: relative; 
+            padding-bottom: 56.25%; /* نسبت 16:9 */
+            height: 0; 
+            overflow: hidden; 
+            border-radius: 18px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.06); 
+            border: 1px solid rgba(0,0,0,0.03); 
+            width: 100%;
+            background: #000;
+        }
+        .video-wrapper-apple iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+        /* سوالات متداول */
+        .mac-faq-container { margin-top: 70px; padding-top: 40px; border-top: 1px solid rgba(0,0,0,0.08); }
+        .mac-faq-heading { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; color: #1d1d1f; margin-bottom: 30px; text-align: center; }
+        .mac-faq-list { background: #ffffff; border-radius: 24px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04); overflow: hidden; border: 1px solid rgba(0,0,0,0.04); }
+        .mac-faq-item { border-bottom: 1px solid #e5e5ea; }
+        .mac-faq-item:last-child { border-bottom: none; }
+        .mac-faq-button { width: 100%; text-align: right; background: transparent; border: none; padding: 24px 30px; display: flex; align-items: center; justify-content: space-between; font-size: 1.15rem; font-weight: 600; color: #1d1d1f; cursor: pointer; transition: background-color 0.3s; }
+        .mac-faq-button:hover { background-color: #fbfbfd; }
+        .mac-faq-icon { color: #86868b; font-size: 1.2rem; transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
+        .mac-faq-button:not(.collapsed) { color: #0066cc; }
+        .mac-faq-button:not(.collapsed) .mac-faq-icon { transform: rotate(180deg); color: #0066cc; }
+        .mac-faq-answer { padding: 0 30px 30px 30px; font-size: 1.05rem; line-height: 1.9; color: #515154; }
+
+        /* سایدبار */
+        .sidebar-widget { background: #ffffff; border-radius: 24px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); margin-bottom: 30px; }
+        .widget-title { font-size: 1.2rem; font-weight: 800; color: #1d1d1f; margin-bottom: 25px; }
+        .recent-post-item { display: flex; gap: 15px; align-items: center; text-decoration: none; color: inherit; margin-bottom: 20px; transition: opacity 0.3s; }
+        .recent-post-item:hover { opacity: 0.7; }
+        .recent-post-img { width: 75px; height: 75px; border-radius: 14px; object-fit: cover; background: #f5f5f7; }
+        .recent-post-info { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+        .recent-post-title { font-size: 0.95rem; font-weight: 700; color: #1d1d1f; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        .social-media-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .sm-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 10px; border-radius: 14px; color: #fff !important; text-decoration: none !important; font-weight: 700; font-size: 0.9rem; transition: transform 0.2s, filter 0.2s; }
+        .sm-btn:hover { filter: brightness(1.1); transform: scale(0.97); }
+        .sm-btn.call { background: #1d1d1f; } .sm-btn.wa { background: #34c759; } .sm-btn.tg { background: #007aff; } .sm-btn.ig { background: #ff2d55; }
+
+        .sidebar-sticky-banner { position: sticky; top: 140px; }
+        .mag-banner { background: #000; border-radius: 24px; padding: 40px 30px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.15); color: #f5f5f7; }
+        .mag-banner-icon { font-size: 3.5rem; margin-bottom: 15px; }
+        .mag-banner h3 { font-size: 1.4rem; font-weight: 800; margin-bottom: 15px; color: #fff; }
+        .mag-banner p { font-size: 0.95rem; color: #86868b; line-height: 1.7; margin-bottom: 30px; }
+        .mag-banner-btn { display: block; background: #fff; color: #000; padding: 16px; border-radius: 100px; font-weight: 700; text-decoration: none; transition: 0.3s; }
+        .mag-banner-btn:hover { background: #e8e8ed; transform: scale(0.97); }
+
+        @@media (max-width: 992px) { .post-layout { flex-direction: column; } .sidebar-col { width: 100%; } .sidebar-sticky-banner { position: static; } .article-main-box { padding: 30px 20px; border-radius: 20px; } }
+    </style>
+}
+
+<div class="reading-progress-bar" id="progressBar"></div>
+
+<main class="magazine-layout-wrapper" dir="rtl">
+    <div class="post-layout">
+        
+        <div class="main-content-col">
+            <article class="article-main-box">
+
+                <nav class="breadcrumb-strip">
+                    <a asp-controller="Home" asp-action="Index">خانه</a>
+                    <i class="bi bi-chevron-left" style="font-size:0.7rem;"></i>
+                    <a asp-controller="Home" asp-action="Blog">مجله پدل</a>
+                    <i class="bi bi-chevron-left" style="font-size:0.7rem;"></i>
+                    <span style="color: #1d1d1f;">@Model.Title</span>
+                </nav>
+
+                <header>
+                    <h1 class="article-main-title">@Model.Title</h1>
+                    <div class="meta-container-row">
+                        <div class="meta-item"><i class="bi bi-person-fill"></i><span>تحریریه دارابی</span></div>
+                        <div class="meta-item"><i class="bi bi-calendar"></i><time datetime="@isoDate">@Model.CreatedAt.ToString("yyyy/MM/dd")</time></div>
+                        <div class="cat-badge">@Model.Category?.Name</div>
+                    </div>
+                </header>
+
+                <img src="@(string.IsNullOrEmpty(Model.CoverImagePath) ? Url.Content("~/H-IMG/133.webp") : Model.CoverImagePath)" alt="@Model.Title" class="article-hero-cover" loading="eager" />
+
+                <div class="article-dynamic-content">
+                    @Html.Raw(Model.Content)
+                </div>
+
+                @if (Model.Faqs != null && Model.Faqs.Any())
+                {
+                    var faqList = Model.Faqs.ToList();
+                    
+                    <div class="mac-faq-container">
+                        <h3 class="mac-faq-heading">سوالات پرتکرار</h3>
+                        <div class="mac-faq-list" id="postFaqAccordion">
+                            @for (int i = 0; i < faqList.Count; i++)
+                            {
+                                var faq = faqList[i];
+                                var collapseId = $"collapse{i}";
+
+                                <div class="mac-faq-item">
+                                    <button class="mac-faq-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="false">
+                                        <span class="mac-faq-text">@faq.Question</span>
+                                        <span class="mac-faq-icon"><i class="bi bi-chevron-down"></i></span>
+                                    </button>
+                                    <div id="@collapseId" class="collapse" data-bs-parent="#postFaqAccordion">
+                                        <div class="mac-faq-answer">@Html.Raw(faq.Answer)</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <script type="application/ld+json">
+                    {
+                      "@@context": "https://schema.org",
+                      "@@type": "FAQPage",
+                      "mainEntity": [
+                        @for (int j = 0; j < faqList.Count; j++)
+                        {
+                            var faq = faqList[j];
+                            <text>
+                            {
+                              "@@type": "Question",
+                              "name": "@Html.Raw(faq.Question.Replace("\"", "\\\""))",
+                              "acceptedAnswer": { "@@type": "Answer", "text": "@Html.Raw(faq.Answer.Replace("\"", "\\\"").Replace("\r\n", " "))" }
+                            }
+                            </text>
+                            if (j < faqList.Count - 1) { <text>,</text> }
+                        }
+                      ]
+                    }
+                    </script>
+                }
+            </article>
+        </div>
+
+        <aside class="sidebar-col">
+            @if (ViewBag.RecentPosts != null)
+            {
+                var recentPosts = (IEnumerable<final_p_01.Domain.Entities.Post>)ViewBag.RecentPosts;
+                if (recentPosts.Any())
+                {
+                    <div class="sidebar-widget">
+                        <h4 class="widget-title">مطالب پیشنهادی</h4>
+                        <div class="recent-posts-list">
+                            @foreach (var post in recentPosts)
+                            {
+                                <a asp-controller="Home" asp-action="Post" asp-route-slug="@post.Slug" class="recent-post-item">
+                                    <img src="@(string.IsNullOrEmpty(post.CoverImagePath) ? Url.Content("~/H-IMG/133.webp") : post.CoverImagePath)" alt="@post.Title" class="recent-post-img" loading="lazy" />
+                                    <div class="recent-post-info">
+                                        <h5 class="recent-post-title">@post.Title</h5>
+                                        <span style="font-size: 0.8rem; color: #86868b; font-weight: 500;">@post.CreatedAt.ToString("yyyy/MM/dd")</span>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+
+            <div class="sidebar-widget">
+                <h4 class="widget-title">ارتباط با کارشناسان</h4>
+                <div class="social-media-grid">
+                    <a href="tel:09111515971" class="sm-btn call"><i class="bi bi-telephone-fill"></i> تماس</a>
+                    <a href="https://wa.me/989111515971" target="_blank" class="sm-btn wa" rel="nofollow"><i class="bi bi-whatsapp"></i> واتس‌اپ</a>
+                    <a href="https://t.me/DarabiHolding" target="_blank" class="sm-btn tg" rel="nofollow"><i class="bi bi-telegram"></i> تلگرام</a>
+                    <a href="https://instagram.com/darabicopadel" target="_blank" class="sm-btn ig" rel="nofollow"><i class="bi bi-instagram"></i> اینستاگرام</a>
+                </div>
+            </div>
+
+            <div class="sidebar-sticky-banner">
+                <div class="mag-banner">
+                    <i class="bi bi-apple mag-banner-icon"></i>
+                    <h3>طراحی فراتر از استاندارد</h3>
+                    <p>اجرای تخصصی زمین‌های پدل با شیشه‌های ۱۲ میل نشکن. تجربه‌ای امن و بی‌نظیر برای بازیکنان.</p>
+                    <a href="tel:09111515971" class="mag-banner-btn">دریافت مشاوره رایگان</a>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+</main>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll('oembed[url]').forEach(element => {
+                const url = element.getAttribute('url');
+                let iframeSrc = '';
+
+                // تولید لینک امبد آپارات
+                const aparatMatch = url.match(/(?:https?:\/\/)?(?:www\.)?aparat\.com\/v\/([\w-]+)/);
+                if (aparatMatch) {
+                    iframeSrc = 'https://www.aparat.com/video/video/embed/videohash/' + aparatMatch[1] + '/vt/frame';
+                }
+                
+                // تولید لینک امبد یوتیوب
+                const ytMatch = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                if (ytMatch) {
+                    iframeSrc = 'https://www.youtube.com/embed/' + ytMatch[1];
+                }
+
+                // جایگزینی تگ خام با پخش‌کننده زیبای اپلی
+                if (iframeSrc) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'video-wrapper-apple';
+                    wrapper.innerHTML = '<iframe src="' + iframeSrc + '" allowFullScreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>';
+                    element.parentNode.replaceChild(wrapper, element);
+                }
+            });
+        });
+
+        // نوار پیشرفت مطالعه
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById("progressBar").style.width = scrolled + "%";
+        }, { passive: true });
+    </script>
+}

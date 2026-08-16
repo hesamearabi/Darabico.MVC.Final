@@ -1,0 +1,244 @@
+﻿@model IEnumerable<final_p_01.Domain.Entities.Post>
+@using System.Linq
+
+@{
+    ViewData["Title"] = "مقالات آموزشی و راهنمای ساخت پدل - هلدینگ دارابی";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Hero {
+}
+
+@section Head {
+    <link rel="stylesheet" href="~/CSS-SOURCE/blog-style.css" asp-append-version="true" />
+    <meta name="description" content="مرجع تخصصی مقالات پدل: هزینه ساخت، ابعاد استاندارد، قوانین بازی، سقف و سوله پدل و اصول مدیریت باشگاه ورزشی از زبان متخصصین هلدینگ دارابی.">
+
+    <style>
+        /* استایل‌های شما دقیقاً حفظ شده است */
+        .blog-page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            padding-top: 140px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+            .breadcrumb a {
+                color: #333;
+                text-decoration: none;
+                transition: color 0.3s;
+            }
+
+                .breadcrumb a:hover {
+                    color: #d11e32;
+                }
+
+            .breadcrumb .separator {
+                color: #999;
+                font-size: 12px;
+            }
+
+            .breadcrumb .current {
+                color: #999;
+                font-weight: bold;
+            }
+
+        .blog-hero {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+            .blog-hero h1 {
+                font-size: 36px;
+                font-weight: 800;
+                color: #1a1a1a;
+                margin-bottom: 15px;
+            }
+
+            .blog-hero p {
+                font-size: 18px;
+                color: #666;
+                max-width: 700px;
+                margin: 0 auto;
+                line-height: 1.8;
+            }
+
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .article-card {
+            background: #fff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            text-decoration: none;
+            color: inherit;
+            border: 1px solid #f0f0f0;
+            position: relative;
+        }
+
+            .article-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            }
+
+        .article-thumb {
+            height: 220px;
+            overflow: hidden;
+            position: relative;
+        }
+
+            .article-thumb img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transition: transform 0.5s ease;
+            }
+
+        .article-card:hover .article-thumb img {
+            transform: scale(1.05);
+        }
+
+        .article-content {
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .article-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+            .article-meta .category {
+                color: #d11e32;
+                font-weight: bold;
+            }
+
+        .article-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #222;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .article-excerpt {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        a.read-more-link {
+            margin-top: auto;
+            color: #000;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+            a.read-more-link span {
+                transition: transform 0.3s;
+            }
+
+        .article-card:hover a.read-more-link span {
+            transform: translateX(-5px);
+        }
+
+        #main-header:not(.scrolled) .nav-link {
+            color: #121D35 !important;
+        }
+
+        #main-header:not(.scrolled) .logo-text {
+            color: #121D35 !important;
+        }
+
+        #main-header:not(.scrolled) .hamburger span {
+            background: #121D35 !important;
+        }
+    </style>
+}
+
+<div class="blog-page-container">
+
+    <nav class="breadcrumb" aria-label="Breadcrumb" dir="rtl">
+        <a asp-controller="Home" asp-action="Index">خانه</a>
+        <span class="separator">/</span>
+        <span class="current">وبلاگ و مقالات</span>
+    </nav>
+
+    <section class="blog-hero" dir="rtl">
+        <h1>دانشنامه تخصصی پدل و ساخت‌وساز</h1>
+        <p>از راهنمای جامع <strong>هزینه ساخت زمین پدل</strong> و نکات مهندسی شیشه، تا آموزش قوانین بازی. مرجع اطلاعاتی هلدینگ دارابی برای سرمایه‌گذاران و ورزشکاران.</p>
+    </section>
+
+    <div class="articles-grid" dir="rtl">
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var post in Model)
+            {
+                <div class="article-card">
+                    <div class="article-thumb">
+                        <img src="@(post.CoverImagePath ?? "/H-IMG/133.webp")" alt="@post.Title" loading="lazy">
+                    </div>
+                    <div class="article-content">
+                        <div class="article-meta">
+                            <span class="date">@post.CreatedAt.ToString("yyyy/MM/dd")</span>
+                            <span class="category">@post.Category?.Name</span>
+                        </div>
+                        <h2 class="article-title">@post.Title</h2>
+                        <p class="article-excerpt">
+                            @post.MetaDescription
+                        </p>
+                        <a asp-controller="Home" asp-action="Post" asp-route-slug="@post.Slug" class="read-more-link">مطالعه کامل <span>←</span></a>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div style="grid-column: 1 / -1; text-align: center; padding: 50px; color: #666;">
+                در حال حاضر مقاله‌ای منتشر نشده است. از پنل مدیریت اولین مقاله خود را بنویسید!
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.body.classList.add('internal-page');
+        });
+    </script>
+}

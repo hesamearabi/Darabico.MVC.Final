@@ -1,0 +1,838 @@
+﻿@model IEnumerable<final_p_01.Domain.Entities.Post>
+@using System.Linq
+
+@{
+    ViewData["Title"] = "صفحه اصلی";
+}
+
+@section Head {
+    <link rel="stylesheet" href="~/CSS-SOURCE/index.css" asp-append-version="true" />
+
+    <style>
+        :root {
+            --primary-blue: #0056b3;
+            --text-dark: #1a1a1a;
+            --text-gray: #555;
+            --bg-gray-light: #f4f6f8;
+            --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        section {
+            box-sizing: border-box;
+        }
+
+        /* ========================================= */
+        /* Hero Section Background Override          */
+        /* ========================================= */
+        .hero {
+            background-image: url('@Url.Content("~/H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp")');
+            background-size: cover;
+            background-position: center 35%;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+
+        .hero-overlay {
+            background: linear-gradient(to bottom, rgba(10, 25, 47, 0.7), rgba(10, 25, 47, 0.85)) !important;
+        }
+
+        /* ========================================= */
+        /* Services Section Styles                   */
+        /* ========================================= */
+        .services-section {
+            padding: 50px 0;
+            background-color: var(--bg-gray-light);
+        }
+
+        .services-container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 25px;
+        }
+
+        .services-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 30px;
+            border-right: 4px solid var(--primary-blue);
+            padding-right: 15px;
+        }
+
+            .services-header .title {
+                font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+                font-weight: 900;
+                color: var(--text-dark);
+                margin: 0;
+                line-height: 1.2;
+            }
+
+        .view-all {
+            text-decoration: none;
+            color: var(--primary-blue);
+            font-weight: 700;
+            font-size: 0.95rem;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+            .view-all:hover {
+                gap: 12px;
+            }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .service-card {
+            position: relative;
+            height: 360px;
+            border-radius: 16px;
+            overflow: hidden;
+            text-decoration: none;
+            display: block;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            background: #000;
+        }
+
+        .service-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+            opacity: 0.85;
+        }
+
+        .service-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.1) 60%, transparent 100%);
+            transition: var(--transition);
+        }
+
+        .service-info {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            left: 0;
+            padding: 25px;
+            color: white;
+            z-index: 2;
+            transition: var(--transition);
+        }
+
+            .service-info h3 {
+                font-size: 1.25rem;
+                font-weight: 800;
+                margin-bottom: 6px;
+                color: #fff;
+            }
+
+        .service-description {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #ddd;
+            height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: var(--transition);
+            text-align: justify;
+        }
+
+        .service-number {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 2rem;
+            font-weight: 900;
+            color: rgba(255,255,255,0.2);
+            z-index: 3;
+            font-family: sans-serif;
+        }
+
+        .service-card:hover .service-img {
+            transform: scale(1.1);
+            opacity: 0.6;
+        }
+
+        .service-card:hover .service-overlay {
+            background: linear-gradient(to top, var(--primary-blue) 0%, rgba(0,0,0,0.4) 100%);
+        }
+
+        .service-card:hover .service-description {
+            height: 65px;
+            opacity: 1;
+            margin-top: 8px;
+        }
+
+        .service-card:hover .service-info {
+            padding-bottom: 35px;
+        }
+
+        /* ========================================= */
+        /* Community Section Styles                 */
+        /* ========================================= */
+        .community-section-wrap {
+            padding: 50px 0;
+            background-color: #fff;
+            overflow: hidden;
+        }
+
+        .community-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .community-media {
+            position: relative;
+        }
+
+        .community-img-box {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.06);
+            aspect-ratio: 4/3;
+            z-index: 1;
+        }
+
+        .community-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .community-media:hover .community-img {
+            transform: scale(1.04);
+        }
+
+        .community-promo-card {
+            position: absolute;
+            bottom: 20px;
+            left: -20px;
+            background-color: var(--primary-blue);
+            color: #fff;
+            padding: 20px;
+            border-radius: 16px;
+            width: 220px;
+            box-shadow: 0 10px 25px rgba(0, 86, 179, 0.3);
+            z-index: 2;
+            text-align: right;
+            border: 3px solid #fff;
+        }
+
+            .community-promo-card h3 {
+                font-size: 1.05rem;
+                font-weight: 800;
+                margin-bottom: 10px;
+                line-height: 1.4;
+            }
+
+        .promo-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border-bottom: 1px solid rgba(255,255,255,0.4);
+            padding-bottom: 2px;
+            transition: all 0.3s;
+        }
+
+            .promo-link:hover {
+                border-bottom-color: #fff;
+                padding-right: 4px;
+            }
+
+        .community-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary-blue);
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+            .community-label .dot {
+                width: 6px;
+                height: 6px;
+                background-color: var(--primary-blue);
+                border-radius: 50%;
+            }
+
+        .community-title {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--text-dark);
+            margin-bottom: 25px;
+            line-height: 1.2;
+        }
+
+        .features-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .feature-item {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .feature-icon-box {
+            width: 50px;
+            height: 50px;
+            background-color: #eef5ff;
+            color: var(--primary-blue);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+
+        .feature-item:hover .feature-icon-box {
+            background-color: var(--primary-blue);
+            color: #fff;
+        }
+
+        .feature-content h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .feature-content p {
+            font-size: 0.85rem;
+            color: var(--text-gray);
+            line-height: 1.6;
+            margin: 0;
+            text-align: justify;
+        }
+
+        /* ========================================= */
+        /* Modern Gallery Projects Section           */
+        /* ========================================= */
+        .projects-gallery-section {
+            padding: 80px 0;
+            background-color: #fff;
+        }
+
+        .gallery-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+            .gallery-header h2 {
+                font-size: clamp(2rem, 4vw, 3rem);
+                font-weight: 900;
+                color: var(--text-dark);
+                position: relative;
+                display: inline-block;
+            }
+
+                .gallery-header h2::after {
+                    content: '';
+                    display: block;
+                    width: 50%;
+                    height: 5px;
+                    background: var(--primary-blue);
+                    margin: 15px auto 0;
+                    border-radius: 10px;
+                }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 300px);
+            gap: 20px;
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 25px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+            .gallery-item.large {
+                grid-column: span 2;
+                grid-row: span 2;
+            }
+
+            .gallery-item img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            }
+
+        .gallery-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 30px;
+        }
+
+        .gallery-content {
+            transform: translateY(20px);
+            transition: transform 0.4s ease;
+        }
+
+            .gallery-content h3 {
+                color: #fff;
+                font-size: 1.5rem;
+                font-weight: 800;
+                margin-bottom: 8px;
+            }
+
+            .gallery-content p {
+                color: rgba(255,255,255,0.9);
+                font-size: 0.95rem;
+                margin: 0;
+            }
+
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .gallery-item:hover .gallery-overlay {
+            opacity: 1;
+        }
+
+        .gallery-item:hover .gallery-content {
+            transform: translateY(0);
+        }
+
+        /* ========================================= */
+        /* Blog Cards Fix (SEO & UI Update)          */
+        /* ========================================= */
+        .blog-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .blog-card {
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            height: 100%;
+        }
+
+            .blog-card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            }
+
+        .blog-img {
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            overflow: hidden;
+            background: #f1f5f9;
+        }
+
+            .blog-img img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transition: transform 0.5s;
+            }
+
+        .blog-card:hover .blog-img img {
+            transform: scale(1.05);
+        }
+
+        .blog-info {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .blog-title {
+            color: #1a1a1a;
+            font-size: 1.1rem;
+            font-weight: 800;
+            line-height: 1.6;
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Mobile specific adjustments */
+        @@media (max-width: 992px) {
+            .services-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                margin-bottom: 25px;
+                border-right: none;
+                padding-right: 0;
+                border-left: 4px solid var(--primary-blue);
+                padding-left: 15px;
+            }
+
+            .services-section, .community-section-wrap {
+                padding: 40px 0;
+            }
+
+            .community-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .community-promo-card {
+                position: relative;
+                left: auto;
+                bottom: auto;
+                width: 100%;
+                margin-top: -20px;
+                margin-right: auto;
+                margin-left: auto;
+                border: none;
+                border-radius: 0 0 20px 20px;
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+                .community-promo-card h3 br {
+                    display: none;
+                }
+
+            .community-img-box {
+                border-radius: 20px 20px 0 0;
+            }
+
+            .community-title {
+                font-size: 1.6rem;
+            }
+            /* Gallery Mobile */
+            .gallery-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+                gap: 15px;
+            }
+
+            .gallery-item, .gallery-item.large {
+                grid-column: span 1;
+                grid-row: auto;
+                height: 250px;
+            }
+
+            .gallery-overlay {
+                opacity: 1;
+                background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            }
+
+            .gallery-content {
+                transform: translateY(0);
+            }
+
+                .gallery-content h3 {
+                    font-size: 1.2rem;
+                }
+        }
+
+        #projects-section {
+            scroll-margin-top: 90px;
+            padding-top: 30px;
+        }
+    </style>
+}
+
+@section Hero {
+    <div class="hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="d-block">طراحی و ساخت</span>
+                <span class="highlight">زمین پدل استاندارد</span>
+                <span class="d-block">در ایران</span>
+            </h1>
+            <p class="hero-subtitle">از تولید شیشه تا اجرای کامل با ضمانت کیفیت و استاندارد جهانی</p>
+            <div class="hero-actions">
+                <a asp-controller="home" asp-action="contact" class="hero-consult-btn">مشاوره رایگان ساخت</a>
+            </div>
+        </div>
+    </div>
+}
+
+<section class="about" id="about1">
+    <div class="about__container">
+        <div class="about__media">
+            <figure class="about__image-box">
+                <img src="@Url.Content("~/H-IMG/222.webp")" alt="بازیکن پدل" class="about__image" width="800" height="600" loading="lazy" />
+                <figcaption class="about__caption">
+                    <p class="about__caption-text">کیفیت و امنیت در زمین‌های پدل دارابی</p>
+                    <a asp-controller="Home" asp-action="About" class="about__caption-link">مشاهده داستان ما →</a>
+                </figcaption>
+            </figure>
+        </div>
+        <div class="about__content">
+            <div class="about__tag"><span class="about__tag-dot"></span> درباره ما</div>
+            <h2 class="about__title">گروه تولیدی هلدینگ دارابی؛<br>تلفیق ۵۰ سال تجربه شیشه با هیجان پدل</h2>
+
+            <p class="about__desc">
+                گروه تولیدی هلدینگ دارابی با پشتوانه نیم‌قرن تجربه در صنعت شیشه، اکنون به عنوان <strong>مجری تخصصی ساخت زمین پدل</strong> در سراسر ایران شناخته می‌شود. ما تنها مجموعه‌ای هستیم که <strong>شیشه زمین پدل</strong> را با ضخامت ۱۰ و ۱۲ میل سکوریت و مطابق با استانداردهای فدراسیون جهانی (FIP) در کارخانه اختصاصی خود تولید می‌کنیم.
+            </p>
+            <p class="about__desc">
+                تیم مهندسی ما با ارائه <strong>مشاوره رایگان ساخت زمین پدل</strong>، از مرحله برآورد هزینه‌ها و انتخاب زمین مناسب تا اجرای دقیق <strong>ابعاد استاندارد زمین پدل</strong>   همراه شماست. اگر قصد <strong>سرمایه‌گذاری در پدل</strong> را دارید، ما با حذف واسطه‌ها و تولید مستقیم سازه و شیشه، <strong>هزینه ساخت زمین پدل</strong> را برای شما بهینه کرده و پروژه‌ای با گارانتی معتبر و کیفیت صادراتی تحویل می‌دهیم.
+            </p>
+
+            <div class="about__stats">
+                <div class="about__stat"><h3 class="about__stat-number" data-value="1350">1340</h3><span class="about__stat-label">سال آغاز</span></div>
+                <div class="about__stat"><h3 class="about__stat-number" data-value="500" data-prefix="+">+500</h3><span class="about__stat-label">پروژه موفق</span></div>
+                <div class="about__stat"><h3 class="about__stat-number" data-value="5" data-prefix="+">+5</h3><span class="about__stat-label">در حال اجرا</span></div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <a asp-controller="Home" asp-action="About" class="btn-primary-glow" style="display:inline-block; padding: 12px 30px; background:var(--primary-blue); color:#fff; border-radius:50px; text-decoration:none; font-weight:bold; font-size:0.9rem;">
+                    بیشتر درباره هلدینگ بدانید
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="services-section" id="services-section">
+    <div class="services-container">
+        <div class="services-header">
+            <div class="header-left">
+                <h2 class="title">خدمات هلدینگ دارابی</h2>
+            </div>
+            <a asp-controller="home" asp-action="contact" class="view-all">مشاوره فنی <span>➜</span></a>
+        </div>
+        <div class="services-grid">
+
+            <a asp-controller="home" asp-action="blog" class="service-card">
+                <span class="service-number">01</span>
+                <img src="@Url.Content("~/H-IMG/02-compressed (2).webp")" alt="ساخت زمین پدل" class="service-img" />
+                <div class="service-overlay"></div>
+                <div class="service-info">
+                    <h3>ساخت و احداث زمین</h3>
+                    <div class="service-description">مشاوره، زیرسازی استاندارد و نصب تخصصی کورت‌های پدل با متریال درجه یک کارخانه.</div>
+                </div>
+            </a>
+
+            <a asp-controller="home" asp-action="blog" class="service-card">
+                <span class="service-number">02</span>
+                <img src="@Url.Content("~/H-IMG/05-compressed.webp")" alt="خدمات پس از فروش" class="service-img" />
+                <div class="service-overlay"></div>
+                <div class="service-info">
+                    <h3>نگهداری و آموزش</h3>
+                    <div class="service-description">تامین قطعات یدکی، ترمیم چمن و شیشه‌ها به همراه آموزش‌های تخصصی راه‌اندازی آکادمی.</div>
+                </div>
+            </a>
+
+            <a asp-controller="home" asp-action="blog" class="service-card">
+                <span class="service-number">03</span>
+                <img src="@Url.Content("~/H-IMG/003-compressed.webp")" alt="تجهیزات پدل" class="service-img" />
+                <div class="service-overlay"></div>
+                <div class="service-info">
+                    <h3>تجهیزات تخصصی کورت</h3>
+                    <div class="service-description">تولید انحصاری شیشه‌های ۱۰ و ۱۲ میل سکوریت و تامین سیستم‌های روشنایی استاندارد.</div>
+                </div>
+            </a>
+
+            <a asp-controller="home" asp-action="blog" class="service-card">
+                <span class="service-number">04</span>
+                <img src="@Url.Content("~/H-IMG/04-compressed.webp")" alt="رزرو و سرمایه گذاری" class="service-img" />
+                <div class="service-overlay"></div>
+                <div class="service-info">
+                    <h3>طرح‌های سرمایه‌گذاری</h3>
+                    <div class="service-description">ارائه بیزنس پلن دقیق جهت احداث مجموعه‌های ورزشی و برآورد هزینه ساخت زمین پدل.</div>
+                </div>
+            </a>
+
+        </div>
+    </div>
+</section>
+
+<section class="community-section-wrap">
+    <div class="community-grid">
+        <div class="community-media">
+            <div class="community-img-box"><img src="@Url.Content("~/H-IMG/11-compressed.webp")" alt="راکت پدل" class="community-img" /></div>
+            <div class="community-promo-card"><h3>سرمایه‌گذاری مطمئن<br>در صنعت ورزش پدل</h3><a asp-controller="home" asp-action="contact" class="promo-link">دریافت مشاوره تخصصی ➜</a></div>
+        </div>
+        <div class="community-content">
+            <div class="community-label"><span class="dot"></span> هلدینگ دارابی؛ فراتر از یک پیمانکار</div>
+            <h2 class="community-title">از خط تولید شیشه تا<br>هیجان بازی در زمین پدل</h2>
+            <div class="features-list">
+                <div class="feature-item"><div class="feature-icon-box">📱</div><div class="feature-content"><h4>شفافیت در اجرا</h4><p>مشاهده آنلاین فیلم‌های <strong>تست مقاومت شیشه‌ها</strong> و گزارش مراحل ساخت.</p></div></div>
+                <div class="feature-item"><div class="feature-icon-box">🤝</div><div class="feature-content"><h4>کیفیت بدون واسطه</h4><p>با خرید مستقیم از کارخانه، <strong>هزینه ساخت زمین پدل</strong> را بهینه کنید.</p></div></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="blog-tips-section" dir="rtl">
+    <div class="blog-header">
+        <div class="label">دانشنامه تخصصی پدل</div>
+        <h2>آخرین مقالات و راهنما</h2>
+        <a asp-controller="Home" asp-action="Blog" class="read-more-btn">مشاهده همه ➜</a>
+    </div>
+    <hr class="divider">
+
+    <div class="blog-cards">
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var post in Model)
+            {
+                <a asp-controller="Home" asp-action="Post" asp-route-slug="@post.Slug" class="blog-card">
+                    <div class="blog-img">
+                        @if (!string.IsNullOrEmpty(post.CoverImagePath))
+                        {
+                            <img src="@post.CoverImagePath" alt="@post.Title">
+                        }
+                        else
+                        {
+                            <img src="@Url.Content("~/H-IMG/133.webp")" alt="@post.Title">
+                        }
+                    </div>
+                    <div class="blog-info">
+                        <span style="color: var(--primary-blue); font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; display: block;">
+                            @post.Category?.Name
+                        </span>
+                        <h3 class="blog-title">@post.Title</h3>
+                    </div>
+                </a>
+            }
+        }
+        else
+        {
+            <div class="w-100 text-center" style="color: var(--text-gray); padding: 20px;">
+                در حال حاضر مقاله‌ای منتشر نشده است.
+            </div>
+        }
+    </div>
+</section>
+
+<section class="projects-gallery-section" id="projects-section">
+    <div class="gallery-header">
+        <h2>پروژه‌های اجرا شده ما</h2>
+    </div>
+
+    <div class="gallery-grid">
+        <div class="gallery-item large">
+            <img src="@Url.Content("~/H-IMG/166.webp")" alt="اجرای زمین پدل استاندارد" loading="lazy">
+            <div class="gallery-overlay">
+                <div class="gallery-content">
+                    <p>اجرای  کورت استاندارد با شیشه ۱۲ میل سکوریت</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="gallery-item">
+            <img src="@Url.Content("~/H-IMG/227.webp")" alt="نصب سازه پدل" loading="lazy">
+            <div class="gallery-overlay">
+                <div class="gallery-content">
+                    <p>نصب سازه فلزی و چمن موندو</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="gallery-item">
+            <img src="@Url.Content("~/H-IMG/225.webp")" alt="طراحی و اجرای زمین پدل با برند دارابیکو" loading="lazy">
+            <div class="gallery-overlay">
+                <div class="gallery-content">
+                    <p>طراحی و اجرای زمین پدل با برند دارابیکو</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="gallery-item">
+            <img src="@Url.Content("~/H-IMG/666.webp")" alt="تجهیز کامل زمین پدل" loading="lazy">
+            <div class="gallery-overlay">
+                <div class="gallery-content">
+                    <p>تجهیز کامل زمین پدل </p>
+                </div>
+            </div>
+        </div>
+        <div class="gallery-item">
+            <img src="@Url.Content("~/H-IMG/16.webp")" alt="نصب چمن کورت" loading="lazy">
+            <div class="gallery-overlay">
+                <div class="gallery-content">
+                    <p>نصب چمن کورت </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const counters = document.querySelectorAll(".about__stat-number");
+        if (counters.length && 'IntersectionObserver' in window) {
+            const counterObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const el = entry.target;
+                        if (el.dataset.animated) return;
+                        el.dataset.animated = "true";
+                        el.classList.add('animating');
+                        const target = parseInt(el.getAttribute('data-value'));
+                        const prefix = el.getAttribute('data-prefix') || '';
+                        let count = 0;
+                        const timer = setInterval(() => {
+                            count += Math.ceil(target / 50);
+                            if (count >= target) { el.textContent = prefix + target; clearInterval(timer); }
+                            else el.textContent = prefix + count;
+                        }, 30);
+                    }
+                });
+            }, { threshold: 0.5 });
+            counters.forEach(c => counterObserver.observe(c));
+        }
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    e.preventDefault();
+                    window.scrollTo({ top: target.offsetTop - 80, behavior: "smooth" });
+                }
+            });
+        });
+    });
+</script>

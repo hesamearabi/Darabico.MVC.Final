@@ -1,0 +1,65 @@
+﻿@{
+    ViewData["Title"] = "داشبورد مدیریت";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<div class="mb-4">
+    <h1 class="h3 fw-bold" style="color: #121D35;">👋 به پنل مدیریت دارابیکو خوش آمدید</h1>
+    <p class="text-muted">خلاصه وضعیت سیستم و محتوای سایت در یک نگاه</p>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px; transition: 0.3s;">
+            <div class="card-body p-4 d-flex align-items-center">
+                <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-4">
+                    <i class="bi bi-journal-text fs-1 text-primary"></i>
+                </div>
+                <div>
+                    <h5 class="text-muted mb-1 fs-6">کل مقالات</h5>
+                    <h2 class="fw-bold mb-0" style="color: #121D35;">@ViewBag.TotalPosts</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+            <div class="card-body p-4 d-flex align-items-center">
+                <div class="bg-success bg-opacity-10 p-3 rounded-circle me-4">
+                    <i class="bi bi-check-circle-fill fs-1 text-success"></i>
+                </div>
+                <div>
+                    <h5 class="text-muted mb-1 fs-6">مقالات منتشر شده</h5>
+                    <h2 class="fw-bold mb-0" style="color: #121D35;">@ViewBag.PublishedPosts</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+            <div class="card-body p-4 d-flex align-items-center">
+                <div class="bg-warning bg-opacity-10 p-3 rounded-circle me-4">
+                    <i class="bi bi-tags-fill fs-1 text-warning"></i>
+                </div>
+                <div>
+                    <h5 class="text-muted mb-1 fs-6">دسته‌بندی‌ها</h5>
+                    <h2 class="fw-bold mb-0" style="color: #121D35;">@ViewBag.TotalCategories</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm p-4" style="border-radius: 16px;">
+            <h5 class="fw-bold mb-3"><i class="bi bi-lightning-charge-fill text-warning me-2"></i> دسترسی سریع</h5>
+            <div class="d-flex gap-3">
+                <a href="/Admin/Posts/Create" class="btn btn-dark px-4 py-2" style="border-radius: 8px;">+ نوشتن مقاله جدید</a>
+                <a href="/Admin/Categories/Create" class="btn btn-outline-secondary px-4 py-2" style="border-radius: 8px;">+ ساخت دسته‌بندی</a>
+            </div>
+        </div>
+    </div>
+</div>

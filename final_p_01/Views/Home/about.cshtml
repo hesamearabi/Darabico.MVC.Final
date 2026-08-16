@@ -1,0 +1,837 @@
+﻿@{
+    Layout = "_Layout";
+    ViewData["Title"] = "درباره ما | ۵۰ سال افتخار";
+}
+
+@section Head {
+    <style>
+        :root {
+            --primary-blue: #0056b3;
+            --secondary-navy: #0a192f;
+            --text-dark: #1a1a1a;
+            --text-gray: #555;
+            --bg-light: #f8f9fa;
+            --bg-darker: #e9ecef;
+        }
+
+        /* ========================================= */
+        /* Hero Section (Professional & UX Optimized)*/
+        /* ========================================= */
+        .about-hero {
+            position: relative;
+            height: 65vh; /* ارتفاع مناسب برای نمایش عکس */
+            min-height: 500px;
+            background-color: var(--secondary-navy);
+            /* تصویر پس‌زمینه با افکت پارالاکس */
+            background-image: url('/H-IMG/15-3.webp');
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed; /* افکت پارالاکس */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #fff;
+            overflow: hidden;
+        }
+
+            /* لایه تاریک هوشمند برای خوانایی متن */
+            .about-hero::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                /* گرادینت: بالا تیره‌تر برای متن، پایین روشن‌تر برای دیدن عکس */
+                background: linear-gradient(to bottom, rgba(10, 25, 47, 0.8) 0%, rgba(10, 25, 47, 0.6) 60%, rgba(10, 25, 47, 0.8) 100%);
+                z-index: 1;
+            }
+
+        .about-hero-content {
+            position: relative;
+            z-index: 2;
+            padding: 0 20px;
+            max-width: 850px;
+            animation: fadeInUp 1s ease-out; /* انیمیشن ورود نرم */
+        }
+
+        .about-hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 900;
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+        .about-hero p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+            line-height: 1.8;
+            max-width: 700px;
+            margin: 0 auto;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+        }
+
+        /* نشانگر اسکرول (UX Feature) */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            opacity: 0.8;
+            animation: bounce 2s infinite;
+        }
+
+        .mouse {
+            width: 26px;
+            height: 40px;
+            border: 2px solid #fff;
+            border-radius: 20px;
+            position: relative;
+        }
+
+        .wheel {
+            width: 4px;
+            height: 8px;
+            background: #fff;
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+            animation: scroll 1.5s infinite;
+        }
+
+        /* انیمیشن‌ها */
+        @@keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @@keyframes scroll {
+            0% {
+                top: 6px;
+                opacity: 1;
+            }
+
+            100% {
+                top: 20px;
+                opacity: 0;
+            }
+        }
+
+        @@keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translate(-50%, 0);
+            }
+
+            40% {
+                transform: translate(-50%, -10px);
+            }
+
+            60% {
+                transform: translate(-50%, -5px);
+            }
+        }
+
+        /* ========================================= */
+        /* Story Section                             */
+        /* ========================================= */
+        .story-section {
+            padding: 90px 0;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .container-custom {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 25px;
+        }
+
+        .story-content-centered {
+            max-width: 950px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .story-text h2 {
+            font-size: 2.2rem;
+            color: var(--primary-blue);
+            margin-bottom: 30px;
+            font-weight: 900;
+            position: relative;
+            display: inline-block;
+        }
+
+            .story-text h2::after {
+                content: '';
+                display: block;
+                width: 60px;
+                height: 4px;
+                background: var(--primary-blue);
+                margin: 15px auto 0;
+                border-radius: 2px;
+            }
+
+        .story-text p {
+            font-size: 1.05rem;
+            line-height: 2.2;
+            color: var(--text-gray);
+            margin-bottom: 25px;
+            text-align: justify;
+            text-align-last: center;
+        }
+
+        /* شبکه شرکت‌ها */
+        .subsidiaries-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 40px;
+        }
+
+        .subsidiary-card {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--secondary-navy);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .subsidiary-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 15px rgba(0,0,0,0.08);
+                border-color: var(--primary-blue);
+            }
+
+            /* کارت لینک‌دار */
+            .subsidiary-card.has-link {
+                background: #f0f7ff;
+                color: var(--primary-blue);
+                border-color: #cce5ff;
+            }
+
+                .subsidiary-card.has-link:hover {
+                    background: var(--primary-blue);
+                    color: #fff;
+                }
+
+        .link-icon {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        /* ========================================= */
+        /* Timeline Section                          */
+        /* ========================================= */
+        .timeline-section {
+            padding: 100px 0;
+            background-color: var(--bg-darker);
+            direction: ltr;
+        }
+
+        .section-header {
+            direction: rtl;
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 70px;
+        }
+
+            .section-header h2 {
+                font-size: 2.2rem;
+                color: var(--text-dark);
+                margin-bottom: 10px;
+                font-weight: 900;
+            }
+
+        .timeline-container {
+            position: relative;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+
+            .timeline-container::after {
+                content: '';
+                position: absolute;
+                width: 4px;
+                background-color: #cbd5e0;
+                top: 0;
+                bottom: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                border-radius: 2px;
+            }
+
+        .timeline-item {
+            padding: 15px 45px;
+            position: relative;
+            width: 50%;
+            box-sizing: border-box;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+            .timeline-item::after {
+                content: '';
+                position: absolute;
+                width: 22px;
+                height: 22px;
+                background-color: #fff;
+                border: 5px solid var(--primary-blue);
+                top: 32px;
+                border-radius: 50%;
+                z-index: 3;
+                transition: all 0.3s;
+            }
+
+            .timeline-item:hover::after {
+                background-color: var(--primary-blue);
+                transform: scale(1.2);
+            }
+
+        .item-left {
+            left: 0;
+        }
+
+            .item-left::after {
+                right: -13px;
+            }
+
+        .item-right {
+            left: 50%;
+        }
+
+            .item-right::after {
+                left: -13px;
+            }
+
+        .timeline-content {
+            padding: 35px;
+            background-color: #fff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            transition: all 0.4s ease;
+            position: relative;
+            direction: rtl;
+            text-align: right;
+            border-right: 5px solid transparent;
+        }
+
+            .timeline-content:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            }
+
+            .timeline-content.active {
+                border-right-color: var(--primary-blue);
+            }
+
+        .toggle-btn {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            width: 32px;
+            height: 32px;
+            background: #f0f4f8;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-blue);
+            font-weight: bold;
+            font-size: 1.4rem;
+            transition: 0.3s;
+        }
+
+        .timeline-content.active .toggle-btn {
+            transform: rotate(45deg);
+            background: var(--primary-blue);
+            color: #fff;
+        }
+
+        .hidden-details {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .timeline-content.active .hidden-details {
+            max-height: 1000px;
+            opacity: 1;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .year-tag {
+            display: inline-block;
+            background: #eef5ff;
+            color: var(--primary-blue);
+            padding: 6px 18px;
+            border-radius: 50px;
+            font-weight: 800;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+        }
+
+        .timeline-content h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+
+        .timeline-content p {
+            font-size: 0.95rem;
+            color: var(--text-gray);
+            margin: 0;
+            line-height: 1.8;
+            text-align: justify;
+        }
+
+        /* دکمه لینک داخل تایم‌لاین */
+        .timeline-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+            background-color: #f0f7ff;
+            color: var(--primary-blue);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: all 0.3s;
+            border: 1px solid #cce5ff;
+        }
+
+            .timeline-link-btn:hover {
+                background-color: var(--primary-blue);
+                color: #fff;
+                border-color: var(--primary-blue);
+            }
+
+        /* ========================================= */
+        /* Values Section                           */
+        /* ========================================= */
+        .values-section {
+            padding: 100px 0;
+            background: var(--secondary-navy);
+            color: #fff;
+        }
+
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .value-card {
+            background: rgba(255,255,255,0.05);
+            padding: 40px;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: 0.3s;
+            text-align: center;
+        }
+
+            .value-card:hover {
+                background: rgba(255,255,255,0.1);
+                transform: translateY(-10px);
+                border-color: rgba(255,255,255,0.3);
+            }
+
+        .value-icon {
+            font-size: 3.5rem;
+            margin-bottom: 25px;
+            display: block;
+            color: #4da6ff;
+        }
+
+        /* ========================================= */
+        /* CTA Section (Professional)               */
+        /* ========================================= */
+        .cta-section {
+            position: relative;
+            padding: 80px 0;
+            background: linear-gradient(135deg, var(--secondary-navy) 0%, #162a47 100%);
+            color: #fff;
+            overflow: hidden;
+        }
+
+            .cta-section::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.05) 0%, transparent 25%), radial-gradient(circle at 80% 80%, rgba(0, 86, 179, 0.1) 0%, transparent 30%);
+                z-index: 1;
+            }
+
+        .cta-container {
+            position: relative;
+            z-index: 2;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .cta-title {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            font-weight: 900;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .cta-desc {
+            font-size: 1.1rem;
+            color: #ccd6f6;
+            max-width: 700px;
+            margin-bottom: 40px;
+            line-height: 1.8;
+        }
+
+        .cta-benefits {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.05);
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.9rem;
+        }
+
+        .benefit-icon {
+            color: #64ffda;
+            font-weight: bold;
+        }
+
+        .cta-actions {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn-primary-glow {
+            background: var(--primary-blue);
+            color: #fff;
+            padding: 16px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 1.1rem;
+            box-shadow: 0 0 20px rgba(0, 86, 179, 0.4);
+            transition: all 0.3s ease;
+            border: 2px solid var(--primary-blue);
+        }
+
+            .btn-primary-glow:hover {
+                background: transparent;
+                box-shadow: 0 0 30px rgba(0, 86, 179, 0.6);
+                transform: translateY(-3px);
+            }
+
+        .btn-secondary-outline {
+            background: transparent;
+            color: #fff;
+            padding: 16px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border: 2px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .btn-secondary-outline:hover {
+                background: #fff;
+                color: var(--secondary-navy);
+                border-color: #fff;
+            }
+
+        /* ========================================= */
+        /* Responsive                               */
+        /* ========================================= */
+        @@media (max-width: 992px) {
+            .about-hero {
+                background-attachment: scroll;
+            }
+            /* غیرفعال کردن پارالاکس در موبایل */
+            .timeline-section {
+                direction: rtl;
+            }
+
+            .timeline-container::after {
+                left: auto;
+                right: 30px;
+                transform: none;
+            }
+
+            .timeline-item {
+                width: 100%;
+                padding-left: 0;
+                padding-right: 70px;
+                left: 0 !important;
+                margin-bottom: 20px;
+            }
+
+            .item-left::after, .item-right::after {
+                left: auto;
+                right: 21px;
+            }
+
+            .toggle-btn {
+                left: 20px;
+            }
+
+            .story-text p {
+                text-align: justify;
+                text-align-last: right;
+            }
+
+            .subsidiaries-grid {
+                justify-content: center;
+            }
+
+            .cta-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .btn-primary-glow, .btn-secondary-outline {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+}
+
+@section Hero { }
+
+<div class="about-hero">
+    <div class="about-hero-content">
+        <h1>ریشه در خاک، سر در ابرها</h1>
+        <p>از سال ۱۳۴۰ تا امروز؛ مسیری که از کوره‌های شیشه‌گری آغاز شد و به تکنولوژی ساخت مدرن‌ترین زمین‌های ورزشی رسید.</p>
+    </div>
+
+    <div class="scroll-indicator">
+        <div class="mouse">
+            <div class="wheel"></div>
+        </div>
+    </div>
+</div>
+
+<section class="story-section">
+    <div class="container-custom">
+        <div class="story-content-centered">
+            <div class="story-text">
+                <h2>هلدینگ توسعه سرمایه‌گذاری دارابی</h2>
+                <p>
+                    گروه دارابی از سال ۱۳۵۳ تحت عنوان صنایع شیشه دارابی با هدف توسعه صنعت ساختمان و با تمرکز بر به‌کارگیری اصولی سرمایه در یک حوزه حیاتی و مهم، فعالیت خود را در زمینه ساخت و پخش و نصب شیشه‌های ساختمانی، سکوریت و تزئینی آغاز نمود. این مجموعه از سال ۱۳۸۵ به منظور گسترش و نوسازی صنایع و اشتغال‌زایی در استان مازندران، فعالیت خود را با راه‌اندازی خط تولید درب و پنجره‌ی UPVC و شیشه‌های دوجداره وسعت بخشید.
+                </p>
+                <p>
+                    هم‌اکنون هلدینگ توسعه سرمایه‌گذاری دارابی، با تکیه بر نیم قرن تجربه، متشکل از شرکت‌های تخصصی زیر است که زنجیره‌ای کامل از خدمات مهندسی، تولیدی و اجرایی را ارائه می‌دهند:
+                </p>
+
+                <div class="subsidiaries-grid">
+                    <div class="subsidiary-card">ساری پن</div>
+
+                    <a href="https://karen-machine.com/" target="_blank" class="subsidiary-card has-link" title="بازدید از وب‌سایت کارن ماشین">
+                        ماشین‌سازی کارن
+                        <span class="link-icon">↗</span>
+                    </a>
+
+                    <div class="subsidiary-card">کاسپین توری‌ساز</div>
+                    <div class="subsidiary-card">توسعه پردیس</div>
+                    <div class="subsidiary-card">ساختمان پزشکان سینوهه</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="timeline-section">
+    <div class="container-custom">
+        <div class="section-header">
+            <h2>مسیر رشد ما</h2>
+            <p style="color:var(--text-gray)">نقاط عطفی که ما را به جایگاه امروز رساندند (برای جزئیات کلیک کنید)</p>
+        </div>
+
+        <div class="timeline-container">
+
+            <div class="timeline-item item-left" onclick="toggleTimeline(this)">
+                <div class="timeline-content">
+                    <span class="toggle-btn">+</span>
+                    <span class="year-tag">۱۳۵۰</span>
+                    <h3>تاسیس صنایع شیشه دارابی</h3>
+                    <p>آغاز فعالیت در صنعت شیشه با تمرکز بر شیشه‌های ساختمانی، سکوریت و تزئینی.</p>
+                    <div class="hidden-details">
+                        <p>گروه دارابی تحت عنوان صنایع شیشه دارابی با هدف توسعه صنعت ساختمان و با تمرکز بر به‌کارگیری اصولی سرمایه در یک حوزه حیاتی، فعالیت خود را در زمینه ساخت، پخش و نصب شیشه‌های ساختمانی، سکوریت و تزئینی آغاز نمود.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item item-right" onclick="toggleTimeline(this)">
+                <div class="timeline-content">
+                    <span class="toggle-btn">+</span>
+                    <span class="year-tag">۱۳۸۲</span>
+                    <h3>راه‌اندازی ساری پن</h3>
+                    <p>گسترش فعالیت با خط تولید درب و پنجره UPVC و شیشه‌های دوجداره.</p>
+                    <div class="hidden-details">
+                        <p>این مجموعه به منظور گسترش و نوسازی صنایع و اشتغال‌زایی در استان مازندران، فعالیت خود را با راه‌اندازی خط تولید پیشرفته درب و پنجره‌ی UPVC و شیشه‌های دوجداره تحت عنوان برند «ساری پن» وسعت بخشید.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item item-left" onclick="toggleTimeline(this)">
+                <div class="timeline-content">
+                    <span class="toggle-btn">+</span>
+                    <span class="year-tag">۱۳۹۲</span>
+                    <h3>تاسیس ماشین‌سازی کارن</h3>
+                    <p>تولید و واردات انواع ماشین‌آلات شیشه دوجداره و درب و پنجره.</p>
+                    <div class="hidden-details">
+                        <p>مهندسان و متخصصان مجرب کارن ماشین با هدف تولید و عرضه مطلوب در جهت ارتقاء کیفیت صنعت ساختمان و با عنایت به اصل ۱۹ مقررات ملی ساختمان (کاهش اتلاف انرژی)، آمادگی خود را جهت همکاری در زمینه تولید و نصب جدیدترین ماشین‌آلات شیشه‌های دوجداره و چند جداره اعلام می‌دارند.</p>
+
+                        <a href="https://karen-machine.com/" target="_blank" class="timeline-link-btn" onclick="event.stopPropagation()">
+                            بازدید از وب‌سایت کارن ماشین ↗
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item item-right" onclick="toggleTimeline(this)">
+                <div class="timeline-content">
+                    <span class="toggle-btn">+</span>
+                    <span class="year-tag">۱۴۰۳</span>
+                    <h3>دپارتمان پدل دارابی</h3>
+                    <p>تخصصی‌ترین مرجع ساخت زمین پدل با شیشه‌های استاندارد.</p>
+                    <div class="hidden-details">
+                        <p>با تکیه بر نیم قرن تجربه در تولید شیشه و سازه، دپارتمان تخصصی پدل دارابی در سال ۱۴۰۳ تاسیس شد. ما به عنوان تنها مجموعه‌ای که تولیدکننده اصلی‌ترین متریال زمین پدل (شیشه و سازه) است، خدمات صفر تا صد ساخت، نصب و گارانتی زمین‌های پدل را با بالاترین کیفیت به سرمایه‌گذاران ورزشی ارائه می‌دهیم.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<section class="values-section">
+    <div class="container-custom">
+        <div class="section-header">
+            <h2 style="color:#fff">چرا هلدینگ دارابی؟</h2>
+            <p style="color:#aaa">تفاوت ما در زنجیره کامل تولید و اجراست</p>
+        </div>
+        <div class="values-grid">
+            <div class="value-card">
+                <div class="value-icon">🏭</div>
+                <h3>تولیدکننده واقعی</h3>
+                <p style="color:#ccc; line-height:1.7">ما واسطه نیستیم؛ از ماشین‌آلات تا شیشه و سازه، در کارخانجات هلدینگ تولید می‌شود.</p>
+            </div>
+            <div class="value-card">
+                <div class="value-icon">📐</div>
+                <h3>تکنولوژی روز</h3>
+                <p style="color:#ccc; line-height:1.7">بهره‌گیری از ماشین‌آلات پیشرفته کارن ماشین برای تضمین دقت و کیفیت محصولات.</p>
+            </div>
+            <div class="value-card">
+                <div class="value-icon">🛡️</div>
+                <h3>تنوع خدمات</h3>
+                <p style="color:#ccc; line-height:1.7">از شیشه ساختمانی تا زمین ورزشی و صنعت گردشگری؛ ما در تمام مراحل کنار شما هستیم.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta-section">
+    <div class="cta-container">
+        <h2 class="cta-title">مسیر موفقیت پروژه شما از اینجا آغاز می‌شود</h2>
+        <p class="cta-desc">
+            ما در هلدینگ دارابی، فقط پیمانکار شما نیستیم؛ شریک تجاری شما هستیم. با تکیه بر ۵۰ سال تجربه تولید و اجرا، ریسک سرمایه‌گذاری شما را به صفر می‌رسانیم.
+        </p>
+
+        <div class="cta-benefits">
+            <div class="benefit-item"><span class="benefit-icon">✓</span> مشاوره رایگان تخصصی</div>
+            <div class="benefit-item"><span class="benefit-icon">✓</span> بازدید حضوری از محل</div>
+            <div class="benefit-item"><span class="benefit-icon">✓</span> گارانتی ۱۰ ساله کتبی</div>
+        </div>
+
+        <div class="cta-actions">
+            <a asp-controller="home" asp-action="contact" class="btn-primary-glow">
+                دریافت مشاوره و استعلام قیمت
+            </a>
+            <a asp-controller="home" asp-action="contact" class="btn-secondary-outline">
+                <span>📞</span> تماس مستقیم با مهندسین
+            </a>
+        </div>
+    </div>
+</section>
+
+<script>
+    function toggleTimeline(element) {
+        const content = element.querySelector('.timeline-content');
+        const isActive = content.classList.contains('active');
+
+        document.querySelectorAll('.timeline-content').forEach(c => c.classList.remove('active'));
+        if (!isActive) content.classList.add('active');
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const items = document.querySelectorAll('.timeline-content');
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = 1;
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            items.forEach(item => {
+                item.style.opacity = 0;
+                item.style.transform = 'translateY(20px)';
+                item.style.transition = 'all 0.6s ease-out';
+                observer.observe(item);
+            });
+        }
+    });
+</script>

@@ -1,0 +1,188 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - اتاق فرمان دارابیکو</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" />
+
+    <style>
+        :root {
+            --brand-navy: #121D35;
+            --brand-red: #d11e32;
+            --bg-light: #F4F6F8;
+            --text-dark: #1E293B;
+            --sidebar-width: 260px;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* سایدبار (منوی سمت راست) */
+        .admin-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: var(--sidebar-width);
+            background: var(--brand-navy);
+            color: #fff;
+            z-index: 1000;
+            box-shadow: -4px 0 15px rgba(0,0,0,0.05);
+            transition: 0.3s;
+        }
+
+        .sidebar-brand {
+            padding: 25px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 20px;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--brand-red);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .sidebar-menu {
+            padding: 0 15px;
+            list-style: none;
+            margin: 0;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+            .sidebar-link:hover, .sidebar-link.active {
+                background: rgba(255,255,255,0.1);
+                color: #fff;
+            }
+
+            .sidebar-link.active {
+                border-right: 4px solid var(--brand-red);
+            }
+
+        /* محتوای اصلی و هدر بالا */
+        .admin-main {
+            margin-right: var(--sidebar-width);
+            transition: 0.3s;
+        }
+
+        .admin-topbar {
+            height: 70px;
+            background: #fff;
+            padding: 0 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            color: var(--brand-navy);
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            background: var(--bg-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .admin-content {
+            padding: 30px;
+        }
+
+        @@media (max-width: 992px) {
+            .admin-sidebar {
+                transform: translateX(100%);
+            }
+
+            .admin-main {
+                margin-right: 0;
+            }
+        }
+    </style>
+    @RenderSection("Head", required: false)
+</head>
+<body>
+
+    <aside class="admin-sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon"><i class="bi bi-buildings"></i></div>
+            <div>
+                <h5 class="m-0 fw-bold">هلدینگ دارابیکو</h5>
+                <small style="color: rgba(255,255,255,0.5); font-size: 0.75rem;">مدیریت سیستم</small>
+            </div>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="/Admin/Home" class="sidebar-link"><i class="bi bi-grid-1x2-fill"></i> داشبورد</a></li>
+            <li><a href="/Admin/Categories" class="sidebar-link"><i class="bi bi-tags-fill"></i> دسته‌بندی‌ها</a></li>
+
+            <li><a href="/Admin/Posts" class="sidebar-link"><i class="bi bi-journal-richtext"></i> مقالات وبلاگ</a></li>
+
+            <li><a href="/Admin/Settings" class="sidebar-link text-warning"><i class="bi bi-gear-fill"></i> تنظیمات امنیتی</a></li>
+
+            <li style="margin-top: 30px;">
+                <a href="/" class="sidebar-link text-info" target="_blank"><i class="bi bi-globe"></i> مشاهده سایت</a>
+            </li>
+
+            <li>
+                <a href="/Admin/Auth/Logout" class="sidebar-link text-danger"><i class="bi bi-box-arrow-right"></i> خروج</a>
+            </li>
+        </ul>
+    </aside>
+
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <div>
+                <button class="btn btn-light d-lg-none"><i class="bi bi-list"></i></button>
+            </div>
+            <div class="user-profile">
+                <span>مدیر سایت</span>
+                <div class="user-avatar"><i class="bi bi-person"></i></div>
+            </div>
+        </header>
+
+        <div class="admin-content">
+            @RenderBody()
+        </div>
+    </main>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

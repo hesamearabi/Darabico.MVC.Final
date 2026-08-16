@@ -1,0 +1,215 @@
+﻿@model final_p_01.Domain.Entities.Post
+
+@{
+    ViewData["Title"] = "ویرایش مقاله";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .darabico-form-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        border: 1px solid #eee;
+    }
+
+    .form-label {
+        font-weight: 700;
+        color: #121D35;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #CBD5E1;
+        padding: 12px 15px;
+        font-size: 0.95rem;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #d11e32;
+            box-shadow: 0 0 0 4px rgba(209, 30, 50, 0.1);
+        }
+
+    .btn-submit-darabico {
+        background: #121D35;
+        color: #fff;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: bold;
+        border: none;
+        transition: 0.3s;
+    }
+
+        .btn-submit-darabico:hover {
+            background: #d11e32;
+            color: #fff;
+        }
+
+    .ck-editor__editable_inline {
+        min-height: 400px;
+        font-size: 1.1rem;
+        line-height: 1.8;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h4 fw-bold" style="color: #121D35;">ویرایش: @Model.Title</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">بازگشت به لیست</a>
+</div>
+
+<div class="darabico-form-card">
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+    <form asp-action="Edit" enctype="multipart/form-data" method="post" id="editForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="CreatedAt" />
+        <input type="hidden" asp-for="CoverImagePath" />
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="mb-4">
+                    <label asp-for="Title" class="form-label">عنوان مقاله</label>
+                    <input asp-for="Title" class="form-control" required />
+                </div>
+                <div class="mb-4">
+                    <label asp-for="Slug" class="form-label">اسلاگ (URL)</label>
+                    <input asp-for="Slug" class="form-control" style="direction: ltr;" required />
+                </div>
+                <div class="mb-4">
+                    <label asp-for="Content" class="form-label">متن مقاله</label>
+                    <textarea asp-for="Content" id="Content" class="form-control" rows="12" required></textarea>
+                </div>
+
+                <div class="card card-outline card-dark mt-5 mb-4" style="border: 1px solid #dee2e6; border-radius: 8px;">
+                    <div class="card-header d-flex justify-content-between align-items-center p-3" style="background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+                        <h5 class="mb-0 fw-bold" style="color: #121D35; font-size: 1rem;"><i class="bi bi-patch-question text-danger me-1"></i> ویرایش سوالات متداول (FAQ)</h5>
+                        <button type="button" id="btn-add-faq" class="btn btn-sm btn-outline-success fw-bold"><i class="bi bi-plus-lg"></i> افزودن پرسش جدید</button>
+                    </div>
+                    <div class="card-body p-3" id="faq-wrapper" style="background: #fdfdfd;">
+                        @if (Model.Faqs != null && Model.Faqs.Any())
+                        {
+                            int index = 0;
+                            foreach (var faq in Model.Faqs)
+                            {
+                                <div class="faq-item-row p-3 mb-3 position-relative" id="faq-row-@index" style="background: #fff; border: 1px solid #dee2e6; border-radius: 8px;">
+                                    <button type="button" class="btn btn-sm btn-outline-danger position-absolute" style="top: 10px; left: 10px; z-index: 10;" onclick="removeFaqRow(@index)"><i class="bi bi-trash3"></i> حذف</button>
+                                    <div class="mb-3 pr-4">
+                                        <label class="form-label small text-muted">پرسش متداول:</label>
+                                        <input type="text" class="form-control faq-question" value="@faq.Question" required />
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label small text-muted">پاسخ کوتاه و کامل:</label>
+                                        <textarea class="form-control faq-answer" rows="2" required>@faq.Answer</textarea>
+                                    </div>
+                                </div>
+                                index++;
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="mb-4">
+                    <label asp-for="CategoryId" class="form-label">دسته‌بندی</label>
+                    <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.CategoryId" required></select>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">تغییر عکس کاور (اختیاری)</label>
+                    <input type="file" name="coverImage" class="form-control" accept="image/*" />
+                    @if (!string.IsNullOrEmpty(Model.CoverImagePath))
+                    {
+                        <div class="mt-3 p-2 bg-light border rounded text-center">
+                            <img src="@Model.CoverImagePath" alt="Cover" class="img-fluid rounded shadow-sm" style="max-height: 120px;" />
+                        </div>
+                    }
+                </div>
+                <div class="mb-4 form-check form-switch fs-5">
+                    <input class="form-check-input" type="checkbox" asp-for="IsPublished" role="switch" id="publishSwitch">
+                    <label class="form-check-label fs-6 mt-1 ms-2" for="publishSwitch">وضعیت انتشار</label>
+                </div>
+                <button type="submit" class="btn-submit-darabico w-100 shadow-sm mt-3"><i class="bi bi-save me-2"></i> ذخیره تغییرات</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/translations/fa.js"></script>
+
+    <script>
+        ClassicEditor
+            .create(document.querySelector('#Content'), {
+                language: 'fa',
+                toolbar: [
+                    'heading', '|',
+                    'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', '|',
+                    'imageUpload', 'mediaEmbed', 'insertTable', '|',
+                    'undo', 'redo'
+                ],
+                ckfinder: {
+                    uploadUrl: '/Admin/Posts/UploadArticleImage'
+                },
+                mediaEmbed: {
+                    previewsInData: false, // 🚀 این بخش حیاتی به false تغییر کرد تا ویدیوها امن ذخیره شوند
+                    providers: [
+                        {
+                            name: 'aparat',
+                            url: [ /^aparat\.com\/v\/([\w-]+)/, /^www\.aparat\.com\/v\/([\w-]+)/ ],
+                            html: match => {
+                                const id = match[1];
+                                return (
+                                    '<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 18px; margin: 30px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">' +
+                                    `<iframe src="https://www.aparat.com/video/video/embed/videohash/${id}/vt/frame" ` +
+                                    'style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" ' +
+                                    'allowFullScreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>' +
+                                    '</div>'
+                                );
+                            }
+                        }
+                    ]
+                }
+            })
+            .then(editor => {
+                editor.model.document.on('change:data', () => { document.querySelector('#Content').value = editor.getData(); });
+            })
+            .catch(error => { console.error(error); });
+
+        let faqCounter = document.querySelectorAll('.faq-item-row').length;
+        document.getElementById('btn-add-faq').addEventListener('click', function () {
+            const wrapper = document.getElementById('faq-wrapper');
+            const faqTemplate = `
+                <div class="faq-item-row p-3 mb-3 position-relative" id="faq-row-${faqCounter}" style="background: #fff; border: 1px dashed #28a745; border-radius: 8px;">
+                    <button type="button" class="btn btn-sm btn-outline-danger position-absolute" style="top: 10px; left: 10px; z-index: 10;" onclick="removeFaqRow(${faqCounter})"><i class="bi bi-trash3"></i> حذف</button>
+                    <div class="mb-3 pr-4">
+                        <label class="form-label small text-muted">پرسش متداول جدید:</label>
+                        <input type="text" class="form-control faq-question border-success" required />
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label small text-muted">پاسخ کوتاه و کامل:</label>
+                        <textarea class="form-control faq-answer border-success" rows="2" required></textarea>
+                    </div>
+                </div>`;
+            wrapper.insertAdjacentHTML('beforeend', faqTemplate);
+            faqCounter++;
+        });
+
+        function removeFaqRow(id) {
+            const row = document.getElementById(`faq-row-${id}`);
+            if (row) row.remove();
+        }
+
+        document.getElementById('editForm').addEventListener('submit', function (e) {
+            const rows = document.querySelectorAll('.faq-item-row');
+            rows.forEach((row, index) => {
+                row.querySelector('.faq-question').setAttribute('name', `Faqs[${index}].Question`);
+                row.querySelector('.faq-answer').setAttribute('name', `Faqs[${index}].Answer`);
+            });
+        });
+    </script>
+}

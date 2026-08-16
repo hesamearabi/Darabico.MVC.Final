@@ -1,0 +1,164 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Vazirmatn', sans-serif;
+  background: #fff;
+  color: #333;
+  line-height: 1.6;
+  direction: rtl;
+}
+
+/* هدر بنر */
+.hero {
+  position: relative;
+  height: 100vh;
+  background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)),
+    url(./H-IMG/rockets-BG.png) center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
+}
+
+.hero-content {
+  max-width: 90%;
+  z-index: 2;
+}
+
+.hero h1 {
+  font-size: 4.5rem;
+  font-weight: 900;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  margin-bottom: 1rem;
+}
+
+.cta-button {
+  display: inline-block;
+  background: #00ff88;
+  color: #000;
+  padding: 0.8rem 2rem;
+  border-radius: 50px;
+  font-weight: bold;
+  text-decoration: none;
+  margin-top: 1.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.4);
+}
+
+.cta-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 255, 136, 0.6);
+}
+
+/* بخش‌ها */
+.section {
+  padding: 4rem 5%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3rem;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.section.left {
+  flex-direction: row-reverse;
+}
+
+.section-content, .section-list {
+  flex: 1;
+  min-width: 300px;
+}
+
+.section-title {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: #000;
+  margin-bottom: 1rem;
+}
+
+.section-subtitle {
+  color: #666;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.section-list {
+  background: white;
+  padding: 2rem;
+  border-left: 6px solid #00ff88;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+
+.section-list h3 {
+  color: #00ff88;
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+}
+
+.section-list ul {
+  list-style: none;
+}
+
+.section-list li {
+  margin-bottom: 1rem;
+  padding-right: 1.5rem;
+  position: relative;
+  font-size: 1.1rem;
+}
+
+.section-list li::before {
+  content: '•';
+  color: #00ff88;
+  font-weight: bold;
+  position: absolute;
+  right: 0;
+}
+
+/* ایونت */
+.events {
+  background: #f8f8f8;
+  text-align: center;
+}
+
+.events-title {
+  font-size: 2.5rem;
+  color: #000;
+  margin-bottom: 2rem;
+  font-weight: 900;
+}
+
+.events-img {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+/* ریسپانسیو */
+@media (max-width: 992px) {
+  .hero h1 { font-size: 3.5rem; }
+  .section { padding: 3rem 5%; gap: 2rem; }
+  .section-title { font-size: 2.3rem; }
+}
+
+@media (max-width: 768px) {
+  .hero h1 { font-size: 2.8rem; }
+  .hero { height: 80vh; }
+  .section, .section.left { flex-direction: column; text-align: center; }
+  .section-list { border-left: none; border-top: 6px solid #00ff88; }
+  .events-title { font-size: 2rem; }
+}
+
+@media (max-width: 480px) {
+  .hero h1 { font-size: 2.2rem; }
+  .cta-button { padding: 0.7rem 1.5rem; font-size: 0.9rem; }
+  .section-title { font-size: 1.9rem; }
+}

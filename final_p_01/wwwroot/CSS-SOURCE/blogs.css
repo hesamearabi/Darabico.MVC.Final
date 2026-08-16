@@ -1,0 +1,148 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: sans-serif;
+    /* direction: ltr; */
+}
+
+
+body {
+    background: #ffffff;
+    /* padding: 20px; */
+    /* margin-top: 150px; */
+}
+
+.blog-container {
+    display: flex;
+    gap: 30px;
+    max-width: 1200px;
+    margin: auto;
+    margin-top: 70PX;
+    margin-bottom: 70px;
+}
+
+/* ستون چپ */
+.main-post {
+    width: 70%;
+    background: #e2e2e2;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.main-post-img img {
+    width: 100%;
+    display: block;
+}
+
+.main-post-content {
+    padding: 25px 30px;
+}
+
+.meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #555;
+    font-size: 14px;
+}
+
+.dot {
+    width: 5px;
+    height: 5px;
+    background: #777;
+    border-radius: 50%;
+}
+
+.post-title {
+    font-size: 26px;
+    margin: 12px 0 15px 0;
+    color: #1a1a1a;
+    font-weight: 700;
+}
+
+.post-text {
+    line-height: 1.9;
+    color: #555;
+    font-size: 15px;
+}
+
+/* ستون راست */
+.sidebar {
+    width: 30%;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.sidebar-box {
+    background: #0a0a0a;
+    color: white;
+    padding: 25px;
+    border-radius: 15px;
+}
+
+.sidebar-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #222;
+    padding-bottom: 10px;
+}
+
+.category-list li {
+    padding: 12px 0;
+    border-bottom: 1px solid #222;
+    color: #ccc;
+    font-size: 15px;
+}
+.category-list li:last-child {
+    border-bottom: none;
+}
+
+/* Recent posts */
+.recent-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+.recent-item div a{
+    text-decoration: none;
+}
+
+.recent-item img {
+    width: 55px;
+    height: 55px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.recent-date {
+    color: #b6ff3b;
+    font-size: 13px;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.recent-title {
+    color: white;
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+/* ریسپانسیو موبایل */
+@media (max-width: 900px) {
+    .blog-container {
+        flex-direction: column;
+    }
+
+    .main-post, .sidebar {
+        width: 100%;
+        /* direction: ; */
+    }
+    .sidebar{
+        width: 95%;
+        margin: auto;
+    }
+}
