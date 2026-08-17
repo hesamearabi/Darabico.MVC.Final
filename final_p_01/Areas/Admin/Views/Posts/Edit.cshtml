@@ -73,10 +73,9 @@
                     <label asp-for="Slug" class="form-label">اسلاگ (URL)</label>
                     <input asp-for="Slug" class="form-control" style="direction: ltr;" required />
                 </div>
-
                 <div class="mb-4">
                     <label asp-for="Content" class="form-label">متن مقاله</label>
-                    <textarea asp-for="Content" id="Content" class="form-control" rows="12"></textarea>
+                    <textarea asp-for="Content" id="Content" class="form-control" rows="12" required></textarea>
                 </div>
 
                 <div class="card card-outline card-dark mt-5 mb-4" style="border: 1px solid #dee2e6; border-radius: 8px;">
@@ -123,19 +122,10 @@
                         </div>
                     }
                 </div>
-
-                <div class="card mb-4 border-0 shadow-sm" style="background-color: #f8f9fa;">
-                    <div class="card-body">
-                        <label class="form-label mb-3">تنظیمات انتشار</label>
-                        <div class="form-check form-switch fs-5 mb-0">
-                            <input class="form-check-input" type="checkbox" asp-for="IsPublished" role="switch" id="publishSwitch" style="cursor: pointer;">
-                            <label class="form-check-label fs-6 mt-1 ms-2" for="publishSwitch" style="cursor: pointer;">
-                                آیا این مقاله در سایت منتشر شود؟
-                            </label>
-                        </div>
-                    </div>
+                <div class="mb-4 form-check form-switch fs-5">
+                    <input class="form-check-input" type="checkbox" asp-for="IsPublished" role="switch" id="publishSwitch">
+                    <label class="form-check-label fs-6 mt-1 ms-2" for="publishSwitch">وضعیت انتشار</label>
                 </div>
-
                 <button type="submit" class="btn-submit-darabico w-100 shadow-sm mt-3"><i class="bi bi-save me-2"></i> ذخیره تغییرات</button>
             </div>
         </div>
@@ -146,17 +136,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
 
     <script>
-        // 💡 1. تابع استخراج آپارات (اصلاح شده برای جابجایی راحت با موس)
         function getAparatEmbedHtml(input) {
             if (!input) return '';
             input = input.trim();
-
-            if (input.includes('<iframe') || input.includes('<div')) {
-                // 🚀 اضافه شدن contenteditable="false" و mceNonEditable
-                return '<div contenteditable="false" class="aparat-video-container mceNonEditable" style="position: relative; display: block; width: 100%; padding-top: 56.25%; margin: 25px 0; border-radius: 12px; overflow: hidden; background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.15); cursor: move;">' +
-                       input +
-                       '</div><p><br></p>';
-            }
 
             var hash = '';
             if (input.indexOf('aparat.com/v/') !== -1) {
@@ -167,14 +149,12 @@
                 hash = input.replace(/[^a-zA-Z0-9]/g, '');
             }
 
-            if (!hash) return '';
+            if (!hash) {
+                if (input.includes('<iframe')) return input;
+                return '';
+            }
 
-            // 🚀 جادوی contenteditable="false" : با این کار ویدیو تبدیل به یک بلوک قابل درگ (Drag) می‌شود
-            return '<div contenteditable="false" class="aparat-video-container mceNonEditable" style="position: relative; display: block; width: 100%; padding-top: 56.25%; margin: 25px 0; border-radius: 12px; overflow: hidden; background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.15); cursor: move;">' +
-                   '<iframe src="https://www.aparat.com/video/video/embed/videohash/' + hash + '/vt/frame" ' +
-                   'style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; pointer-events: auto;" ' +
-                   'allowFullScreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>' +
-                   '</div><p><br></p>';
+            return '<p><iframe class="aparat-video" src="https://www.aparat.com/video/video/embed/videohash/' + hash + '/vt/frame" style="width: 100%; aspect-ratio: 16/9; border: 0; border-radius: 12px; margin: 25px 0; box-shadow: 0 8px 20px rgba(0,0,0,0.15);" allowFullScreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe></p>';
         }
 
         tinymce.init({
@@ -185,20 +165,14 @@
             toolbar: 'undo redo | aparat | bold italic underline strikethrough | fontfamily fontsize blocks | alignleft aligncenter alignright alignjustify | outdent indent | numlist bullist | forecolor backcolor removeformat | pagebreak | charmap emoticons | fullscreen preview save print | insertfile image media template link anchor | ltr rtl | code',
             toolbar_mode: 'sliding',
             image_title: true,
-            automatic_uploads: true,
-            images_upload_url: '/Admin/Posts/UploadArticleImage',
-            file_picker_types: 'image media',
 
-            // 🚀 2. این گزینه حتماً باید true باشد تا ویدیوها داخل ادیتور قابلیت پخش شدن داشته باشند
-            media_live_embeds: true,
+            // 🚀 قابلیت Drag & Drop عالی
+            media_live_embeds: false,
 
             extended_valid_elements: 'iframe[*],video[*],source[*],div[*],p[*]',
-
-            // 🚀 3. استایل‌دهی به بلوک‌های غیرقابل ویرایش تا وقتی موس روی ویدیو می‌رود، خط‌چین قرمز شود و بفهمید قابل جابجایی است
-            content_style: 'body { font-family: Tahoma, Arial, sans-serif; font-size: 16px; line-height: 1.8; } .mceNonEditable { outline: 2px solid transparent; transition: outline 0.3s; cursor: move; } .mceNonEditable:hover { outline: 2px dashed #d11e32; } .aparat-video-container { position: relative; display: block; width: 100%; padding-top: 56.25%; margin: 20px 0; border-radius: 12px; overflow: hidden; background: #000; } .aparat-video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; pointer-events: auto; }',
+            content_style: 'body { font-family: Tahoma, Arial, sans-serif; font-size: 16px; line-height: 1.8; }',
 
             setup: function (editor) {
-                // دکمه اختصاصی آپارات
                 editor.ui.registry.addButton('aparat', {
                     icon: 'embed',
                     tooltip: 'افزودن ویدیوی آپارات',
@@ -232,7 +206,42 @@
                 });
             },
 
-            // سیستم آپلود فایل مستقیم ویدیو (MP4)
+            images_upload_handler: function (blobInfo, progress) {
+                return new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/Admin/Posts/UploadArticleImage');
+
+                    const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+                    if (tokenElement) {
+                        xhr.setRequestHeader('RequestVerificationToken', tokenElement.value);
+                    }
+
+                    xhr.upload.onprogress = (e) => {
+                        progress(e.loaded / e.total * 100);
+                    };
+
+                    xhr.onload = () => {
+                        if (xhr.status === 400 || xhr.status === 403 || xhr.status === 500) {
+                            reject({ message: xhr.responseText || 'خطا در آپلود تصویر.', remove: true });
+                            return;
+                        }
+                        if (xhr.status < 200 || xhr.status >= 300) {
+                            reject('HTTP Error: ' + xhr.status); return;
+                        }
+                        const json = JSON.parse(xhr.responseText);
+                        if (!json || typeof json.location != 'string') {
+                            reject('Invalid JSON: ' + xhr.responseText); return;
+                        }
+                        resolve(json.location);
+                    };
+                    xhr.onerror = () => { reject('Image upload failed due to a XHR Transport error.'); };
+
+                    const formData = new FormData();
+                    formData.append('upload', blobInfo.blob(), blobInfo.filename());
+                    xhr.send(formData);
+                });
+            },
+
             file_picker_callback: function (cb, value, meta) {
                 if (meta.filetype === 'media') {
                     var input = document.createElement('input');
@@ -246,8 +255,13 @@
 
                         cb('در حال آپلود...', { title: 'لطفاً صبر کنید' });
 
+                        const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+
                         fetch('/Admin/Posts/UploadArticleVideo', {
                             method: 'POST',
+                            headers: {
+                                'RequestVerificationToken': tokenElement ? tokenElement.value : ''
+                            },
                             body: formData
                         })
                         .then(response => {
@@ -255,12 +269,9 @@
                             return response.json();
                         })
                         .then(result => {
-                            // 🚀 جادوی contenteditable="false" برای ویدیوهای آپلود شده مستقیم
-                            var videoHtml = '<div contenteditable="false" class="mceNonEditable" style="text-align: center; margin: 20px 0; cursor: move;">' +
-                                            '<video controls="controls" style="width: 100%; max-width: 800px; height: auto; border-radius: 12px; display: block; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); background:#000;">' +
+                            var videoHtml = '<p><video controls="controls" style="width: 100%; aspect-ratio: 16/9; max-width: 800px; border-radius: 12px; display: block; margin: 20px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); background:#000;">' +
                                             '<source src="' + result.location + '" type="video/mp4" />' +
-                                            '</video>' +
-                                            '</div><p><br></p>';
+                                            '</video></p>';
                             editor.insertContent(videoHtml);
                         })
                         .catch(error => {
@@ -272,9 +283,7 @@
             }
         });
 
-        // ===================================================
-        // 🚀 4. رفع باگ ذخیره نشدن سوالات متداول (FAQ) در دیتابیس
-        // ===================================================
+        // FAQ Management
         let faqCounter = document.querySelectorAll('.faq-item-row').length || 0;
         document.getElementById('btn-add-faq')?.addEventListener('click', function () {
             const wrapper = document.getElementById('faq-wrapper');
@@ -299,10 +308,9 @@
             if (row) row.remove();
         }
 
-        document.querySelector('form')?.addEventListener('submit', function (e) {
+        document.getElementById('editForm')?.addEventListener('submit', function (e) {
             const rows = document.querySelectorAll('.faq-item-row');
             rows.forEach((row, index) => {
-                // تزریق داینامیک فیلد Index برای جلوگیری از شکستن Model Binding هنگام حذف یک ردیف
                 let indexInput = row.querySelector('.faq-index-hidden');
                 if (!indexInput) {
                     indexInput = document.createElement('input');
