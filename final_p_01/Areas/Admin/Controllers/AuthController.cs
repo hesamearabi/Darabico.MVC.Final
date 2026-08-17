@@ -1,5 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity; // برای PasswordHasher
+using Microsoft.EntityFrameworkCore; // برای دستورات Async دیتابیس
 using final_p_01.Areas.Admin.Models;
 using final_p_01.Domain.Entities;
 using final_p_01.Infrastructure.Data;
@@ -11,10 +13,13 @@ namespace final_p_01.Areas.Admin.Controllers
     public class AuthController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly PasswordHasher<AdminUser> _passwordHasher;
 
         public AuthController(ApplicationDbContext context)
         {
             _context = context;
+            // نمونه‌سازی ابزار هش کردن پسورد
+            _passwordHasher = new PasswordHasher<AdminUser>();
         }
 
         [HttpGet]
@@ -33,28 +38,54 @@ namespace final_p_01.Areas.Admin.Controllers
         {
             if (ModelState.IsValid)
             {
-                if (!_context.AdminUsers.Any())
+                // 1. بررسی و Seed کردن ادمین اولیه به صورت کاملاً امن
+                if (!await _context.AdminUsers.AnyAsync())
                 {
-                    _context.AdminUsers.Add(new AdminUser { Email = "admin@darabico.com", Password = "123" });
-                    _context.SaveChanges();
+                    var newAdmin = new AdminUser
+                    {
+                        Email = "admin@darabico.com"
+                    };
+
+                    // رمز عبور هش شده و امن ذخیره می‌شود (رمز پیش‌فرض: Admin@123!)
+                    newAdmin.Password = _passwordHasher.HashPassword(newAdmin, "Admin@123!");
+
+                    _context.AdminUsers.Add(newAdmin);
+                    await _context.SaveChangesAsync();
                 }
 
-                var user = _context.AdminUsers.FirstOrDefault(u => u.Email == model.Email && u.Password == model.Password);
+                // 2. پیدا کردن کاربر فقط بر اساس ایمیل
+                var user = await _context.AdminUsers.FirstOrDefaultAsync(u => u.Email == model.Email);
 
                 if (user != null)
                 {
-                    var claims = new List<Claim>
+                    // 3. مقایسه امن رمز عبور هش شده با رمز وارد شده
+                    var passwordVerification = _passwordHasher.VerifyHashedPassword(user, user.Password, model.Password);
+
+                    if (passwordVerification == PasswordVerificationResult.Success || passwordVerification == PasswordVerificationResult.SuccessRehashNeeded)
                     {
-                        new Claim(ClaimTypes.Name, user.Email)
-                    };
-                    var identity = new ClaimsIdentity(claims, "DarabicoAuth");
-                    var principal = new ClaimsPrincipal(identity);
+                        // 4. تولید Claim ها و لاگین در صورت صحت اطلاعات
+                        var claims = new List<Claim>
+                        {
+                            new Claim(ClaimTypes.Name, user.Email),
+                            new Claim(ClaimTypes.Role, "Administrator") // افزوده شدن نقش
+                        };
+                        var identity = new ClaimsIdentity(claims, "DarabicoAuth");
+                        var principal = new ClaimsPrincipal(identity);
 
-                    await HttpContext.SignInAsync("DarabicoAuth", principal);
+                        // 5. تنظیمات امنیتی کوکی
+                        var authProperties = new AuthenticationProperties
+                        {
+                            IsPersistent = true, // حفظ لاگین بعد از بستن مرورگر
+                            ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                        };
 
-                    return RedirectToAction("Index", "Posts", new { area = "Admin" });
+                        await HttpContext.SignInAsync("DarabicoAuth", principal, authProperties);
+
+                        return RedirectToAction("Index", "Posts", new { area = "Admin" });
+                    }
                 }
 
+                // پیام خطای یکسان برای جلوگیری از لو رفتن وجود یا عدم وجود ایمیل در دیتابیس
                 ModelState.AddModelError(string.Empty, "ایمیل یا رمز عبور اشتباه است.");
             }
             return View(model);

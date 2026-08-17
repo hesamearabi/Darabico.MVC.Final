@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using final_p_01.Domain.Entities;
 using final_p_01.Infrastructure.Data;
 using Microsoft.AspNetCore.Http;
@@ -23,14 +24,51 @@ namespace final_p_01.Areas.Admin.Controllers
             _context = context;
         }
 
-        [HttpGet]
-        public IActionResult Index()
+        // 🚀 متد کمکی برای آپلود ایمن تصاویر (ممانعت قطعی از RCE و آپلود فایل‌های مخرب)
+        private async Task<string> ProcessAndSaveImageAsync(IFormFile file, string subFolder)
         {
-            var posts = _context.Posts
+            if (file == null || file.Length == 0) return null;
+
+            // 1. بررسی سایز (حداکثر 3 مگابایت)
+            const long maxFileSize = 3 * 1024 * 1024;
+            if (file.Length > maxFileSize)
+                throw new InvalidOperationException("حجم عکس نباید بیشتر از 3 مگابایت باشد.");
+
+            // 2. بررسی پسوند مجاز
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+                throw new InvalidOperationException("فرمت فایل غیرمجاز است. فقط (jpg, png, webp, gif) پذیرفته می‌شود.");
+
+            // 3. بررسی اولیه نوع فایل (MIME)
+            if (!file.ContentType.StartsWith("image/"))
+                throw new InvalidOperationException("فایل آپلودی نامعتبر است.");
+
+            // 4. تغییر نام قطعی برای جلوگیری از Path Traversal
+            string uniqueFileName = $"{Guid.NewGuid()}{extension}";
+            string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", subFolder);
+
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            // 5. آپلود به صورت Async
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(fileStream);
+            }
+
+            return $"/uploads/{subFolder}/{uniqueFileName}";
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            var posts = await _context.Posts
                 .AsNoTracking()
                 .Include(p => p.Category)
                 .OrderByDescending(p => p.CreatedAt)
-                .ToList();
+                .ToListAsync();
 
             return View(posts);
         }
@@ -44,7 +82,7 @@ namespace final_p_01.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Post post, IFormFile? coverImage)
+        public async Task<IActionResult> Create(Post post, IFormFile? coverImage)
         {
             ModelState.Remove("Category");
             ModelState.Remove("CoverImagePath");
@@ -52,32 +90,33 @@ namespace final_p_01.Areas.Admin.Controllers
 
             if (ModelState.IsValid)
             {
-                bool isSlugExist = _context.Posts.Any(p => p.Slug == post.Slug);
+                bool isSlugExist = await _context.Posts.AnyAsync(p => p.Slug == post.Slug);
                 if (isSlugExist)
                 {
-                    ModelState.AddModelError("Slug", "این آدرس (URL) قبلاً برای مقاله دیگری ثبت شده است. لطفاً کلمه دیگری اضافه کنید.");
+                    ModelState.AddModelError("Slug", "این آدرس (URL) قبلاً ثبت شده است. لطفاً کلمه دیگری اضافه کنید.");
                     ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
                     return View(post);
                 }
 
-                if (coverImage != null && coverImage.Length > 0)
+                try
                 {
-                    string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "posts");
-                    if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
-                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + coverImage.FileName;
-                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    // آپلود ایمن
+                    if (coverImage != null && coverImage.Length > 0)
                     {
-                        coverImage.CopyTo(fileStream);
+                        post.CoverImagePath = await ProcessAndSaveImageAsync(coverImage, "posts");
                     }
-                    post.CoverImagePath = "/uploads/posts/" + uniqueFileName;
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("CoverImagePath", ex.Message);
+                    ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
+                    return View(post);
                 }
 
-                post.CreatedAt = DateTime.Now;
+                post.CreatedAt = DateTime.UtcNow; // استفاده از UTC برای استانداردسازی زمان
                 _context.Posts.Add(post);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
+
                 return RedirectToAction("Index");
             }
 
@@ -86,11 +125,11 @@ namespace final_p_01.Areas.Admin.Controllers
         }
 
         [HttpGet]
-        public IActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int id)
         {
-            var post = _context.Posts
+            var post = await _context.Posts
                 .Include(p => p.Faqs)
-                .FirstOrDefault(p => p.Id == id);
+                .FirstOrDefaultAsync(p => p.Id == id);
 
             if (post == null) return NotFound();
 
@@ -100,7 +139,7 @@ namespace final_p_01.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, Post post, IFormFile? coverImage)
+        public async Task<IActionResult> Edit(int id, Post post, IFormFile? coverImage)
         {
             if (id != post.Id) return NotFound();
 
@@ -110,15 +149,15 @@ namespace final_p_01.Areas.Admin.Controllers
 
             if (ModelState.IsValid)
             {
-                bool isSlugExist = _context.Posts.Any(p => p.Slug == post.Slug && p.Id != post.Id);
+                bool isSlugExist = await _context.Posts.AnyAsync(p => p.Slug == post.Slug && p.Id != post.Id);
                 if (isSlugExist)
                 {
-                    ModelState.AddModelError("Slug", "این آدرس (URL) قبلاً برای مقاله دیگری ثبت شده است. لطفاً آن را تغییر دهید.");
+                    ModelState.AddModelError("Slug", "این آدرس (URL) قبلاً ثبت شده است. لطفاً آن را تغییر دهید.");
                     ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
                     return View(post);
                 }
 
-                var existingPost = _context.Posts.Include(p => p.Faqs).FirstOrDefault(p => p.Id == id);
+                var existingPost = await _context.Posts.Include(p => p.Faqs).FirstOrDefaultAsync(p => p.Id == id);
                 if (existingPost == null) return NotFound();
 
                 existingPost.Title = post.Title;
@@ -128,19 +167,26 @@ namespace final_p_01.Areas.Admin.Controllers
                 existingPost.MetaDescription = post.MetaDescription;
                 existingPost.IsPublished = post.IsPublished;
 
-                if (coverImage != null && coverImage.Length > 0)
+                try
                 {
-                    string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "posts");
-                    if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
-                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + coverImage.FileName;
-                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    if (coverImage != null && coverImage.Length > 0)
                     {
-                        coverImage.CopyTo(fileStream);
+                        // 🚀 حذف عکس قدیمی برای جلوگیری از اشغال فضای هارد
+                        if (!string.IsNullOrEmpty(existingPost.CoverImagePath))
+                        {
+                            string oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", existingPost.CoverImagePath.TrimStart('/'));
+                            if (System.IO.File.Exists(oldImagePath)) System.IO.File.Delete(oldImagePath);
+                        }
+
+                        // آپلود عکس جدید
+                        existingPost.CoverImagePath = await ProcessAndSaveImageAsync(coverImage, "posts");
                     }
-                    existingPost.CoverImagePath = "/uploads/posts/" + uniqueFileName;
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("CoverImagePath", ex.Message);
+                    ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
+                    return View(post);
                 }
 
                 _context.Faqs.RemoveRange(existingPost.Faqs);
@@ -155,7 +201,7 @@ namespace final_p_01.Areas.Admin.Controllers
                     }
                 }
 
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 return RedirectToAction("Index");
             }
 
@@ -165,51 +211,48 @@ namespace final_p_01.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var post = _context.Posts.Find(id);
+            var post = await _context.Posts.FindAsync(id);
             if (post != null)
             {
                 if (!string.IsNullOrEmpty(post.CoverImagePath))
                 {
                     string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", post.CoverImagePath.TrimStart('/'));
-                    if (System.IO.File.Exists(imagePath))
+
+                    // بررسی امنیتی برای جلوگیری از حذف فایل‌های خارج از پوشه آپلود
+                    if (System.IO.File.Exists(imagePath) && imagePath.Contains("uploads"))
                     {
                         System.IO.File.Delete(imagePath);
                     }
                 }
 
                 _context.Posts.Remove(post);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
             }
             return RedirectToAction("Index");
         }
 
-        // 🚀 متد اصلاح شده: هماهنگ با استانداردهای آپلود TinyMCE
+        // 🚀 متد اصلاح و ایمن شده برای آپلود داخل ادیتور متنی
         [HttpPost]
-        public IActionResult UploadArticleImage(IFormFile file) // 💡 پارامتر باید file باشد
+        public async Task<IActionResult> UploadArticleImage(IFormFile upload)
         {
-            if (file != null && file.Length > 0)
+            try
             {
-                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "article-images");
-                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
-                string uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
-                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                if (upload != null && upload.Length > 0)
                 {
-                    file.CopyTo(fileStream);
+                    string url = await ProcessAndSaveImageAsync(upload, "article-images");
+
+                    // فرمت استاندارد CKEditor
+                    return Json(new { uploaded = 1, fileName = Path.GetFileName(url), url = url });
                 }
-
-                string url = "/uploads/article-images/" + uniqueFileName;
-
-                // 💡 فرمت JSON استاندارد برای ادیتور TinyMCE
-                return Json(new { location = url });
+                return Json(new { uploaded = 0, error = new { message = "فایلی ارسال نشده است." } });
             }
-
-            // 💡 برگشت خطای استاندارد در صورت عدم ارسال فایل
-            return BadRequest(new { error = "خطا در آپلود عکس." });
+            catch (Exception ex)
+            {
+                // مدیریت خطای حجم یا پسوند در ادیتور
+                return Json(new { uploaded = 0, error = new { message = ex.Message } });
+            }
         }
     }
 }
