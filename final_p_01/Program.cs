@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using final_p_01.Infrastructure.Data;
+using final_p_01.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +18,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// 🚀 پرفورمنس: فعال‌سازی فشرده‌سازی برای لود سریع‌تر صفحات سایت (سئو فنی عالی)
+// 🚀 پرفورمنس: فعال‌سازی فشرده‌سازی
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true;
@@ -36,7 +38,7 @@ builder.Services.AddRouting(options =>
 
 builder.Services.AddControllersWithViews();
 
-// 🚀 پرفورمنس: فعال‌سازی سرویس کش خروجی برای کنترلرها (ارتباط با HomeController)
+// 🚀 پرفورمنس: فعال‌سازی سرویس کش خروجی
 builder.Services.AddOutputCache();
 
 // تنظیمات دیتابیس
@@ -50,55 +52,78 @@ builder.Services.AddAuthentication("DarabicoAuth")
         options.LoginPath = "/Admin/Auth/Login";
         options.LogoutPath = "/Admin/Auth/Logout";
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
-
-        // جلوگیری از دسترسی کدهای جاوااسکریپت مخرب به کوکی (XSS)
         options.Cookie.HttpOnly = true;
-
-        // کوکی فقط روی پروتکل امن HTTPS ارسال می‌شود
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-
-        // جلوگیری از ارسال فرم از دامنه‌های دیگر (CSRF)
         options.Cookie.SameSite = SameSiteMode.Strict;
     });
 
 var app = builder.Build();
 
+// =======================================================
+// 🚀 رفع باگ معماری (Admin Seed): اجرای Seeder در Startup
+// =======================================================
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        var configuration = services.GetRequiredService<IConfiguration>();
+
+        // اجرای Seed فقط در صورتی که ادمین وجود نداشته باشد
+        if (!context.AdminUsers.Any())
+        {
+            var adminEmail = configuration["AdminSettings:DefaultEmail"] ?? "admin@darabico.com";
+            var adminPassword = configuration["AdminSettings:DefaultPassword"] ?? "Fallback@123!";
+
+            var passwordHasher = new PasswordHasher<AdminUser>();
+            var defaultAdmin = new AdminUser
+            {
+                Email = adminEmail
+            };
+
+            defaultAdmin.Password = passwordHasher.HashPassword(defaultAdmin, adminPassword);
+
+            context.AdminUsers.Add(defaultAdmin);
+            context.SaveChanges();
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database.");
+    }
+}
+// =======================================================
+
 app.UseForwardedHeaders();
 
-// 🚀 امنیت (رفع باگ بحرانی Information Disclosure)
+// 🚀 امنیت (رفع باگ Information Disclosure)
 if (app.Environment.IsDevelopment())
 {
-    // این صفحه فقط در سیستم برنامه‌نویس باز می‌شود!
     app.UseDeveloperExceptionPage();
 }
 else
 {
-    // کاربران و هکرها فقط صفحه خطای معمولی را می‌بینند
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-
-// 🚀 پرفورمنس: استفاده از فشرده‌سازی در خروجی‌ها
 app.UseResponseCompression();
 
-// 🚀 پرفورمنس: کش کردن فایل‌های استاتیک در مرورگر کاربر (افزایش شدید امتیاز Google PageSpeed)
+// 🚀 پرفورمنس: کش فایل‌های استاتیک
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
     {
-        // نگهداری عکس‌ها و استایل‌ها در مرورگر کاربر برای 30 روز
         ctx.Context.Response.Headers["Cache-Control"] = "public,max-age=2592000";
     }
 });
 
 app.UseRouting();
-
-// 🚀 پرفورمنس: فعال‌سازی میدل‌ور کش برای صفحات استاتیک
 app.UseOutputCache();
 
-// فعال‌سازی نگهبان‌ها (ترتیب دقیقاً باید همین باشد)
 app.UseAuthentication();
 app.UseAuthorization();
 

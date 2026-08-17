@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using final_p_01.Domain.Entities;
 using final_p_01.Infrastructure.Data;
 using Microsoft.AspNetCore.Http;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging;
 
 namespace final_p_01.Areas.Admin.Controllers
 {
@@ -18,13 +20,37 @@ namespace final_p_01.Areas.Admin.Controllers
     public class PostsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<PostsController> _logger;
 
-        public PostsController(ApplicationDbContext context)
+        // 🚀 BUG 3: تعریف Magic Bytes برای بررسی واقعی محتوای فایل‌ها
+        private static readonly Dictionary<string, byte[][]> _imageSignatures = new(StringComparer.OrdinalIgnoreCase)
+        {
+            { ".jpeg", new[] { new byte[] { 0xFF, 0xD8, 0xFF } } },
+            { ".jpg",  new[] { new byte[] { 0xFF, 0xD8, 0xFF } } },
+            { ".png",  new[] { new byte[] { 0x89, 0x50, 0x4E, 0x47 } } },
+            { ".gif",  new[] { new byte[] { 0x47, 0x49, 0x46, 0x38 } } },
+            { ".webp", new[] { new byte[] { 0x52, 0x49, 0x46, 0x46 } } } // RIFF header for WebP
+        };
+
+        public PostsController(ApplicationDbContext context, ILogger<PostsController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
-        // 🚀 متد کمکی برای آپلود ایمن تصاویر (ممانعت قطعی از RCE و آپلود فایل‌های مخرب)
+        // بررسی واقعی تصویر بودن فایل از طریق خواندن بایت‌های اولیه
+        private bool IsValidImageSignature(IFormFile file, string extension)
+        {
+            if (!_imageSignatures.TryGetValue(extension, out byte[][]? signatures)) return false;
+
+            using var reader = new BinaryReader(file.OpenReadStream());
+            var headerBytes = reader.ReadBytes(signatures.Max(m => m.Length));
+
+            return signatures.Any(signature =>
+                headerBytes.Take(signature.Length).SequenceEqual(signature));
+        }
+
+        // 🚀 متد اصلی آپلود (ایمن در برابر RCE، Path Traversal و Spoofing)
         private async Task<string> ProcessAndSaveImageAsync(IFormFile file, string subFolder)
         {
             if (file == null || file.Length == 0) return null;
@@ -32,33 +58,63 @@ namespace final_p_01.Areas.Admin.Controllers
             // 1. بررسی سایز (حداکثر 3 مگابایت)
             const long maxFileSize = 3 * 1024 * 1024;
             if (file.Length > maxFileSize)
-                throw new InvalidOperationException("حجم عکس نباید بیشتر از 3 مگابایت باشد.");
+                throw new InvalidOperationException("حجم تصویر بیش از حد مجاز است.");
 
-            // 2. بررسی پسوند مجاز
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+            // 2. بررسی پسوند
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
-                throw new InvalidOperationException("فرمت فایل غیرمجاز است. فقط (jpg, png, webp, gif) پذیرفته می‌شود.");
+            if (string.IsNullOrEmpty(extension) || !_imageSignatures.ContainsKey(extension))
+                throw new InvalidOperationException("فرمت فایل معتبر نیست.");
 
-            // 3. بررسی اولیه نوع فایل (MIME)
+            // 3. بررسی اولیه MIME Type
             if (!file.ContentType.StartsWith("image/"))
-                throw new InvalidOperationException("فایل آپلودی نامعتبر است.");
+                throw new InvalidOperationException("فرمت فایل معتبر نیست.");
 
-            // 4. تغییر نام قطعی برای جلوگیری از Path Traversal
+            // 4. بررسی واقعی محتوای فایل (Magic Bytes)
+            if (!IsValidImageSignature(file, extension))
+                throw new InvalidOperationException("محتوای فایل دستکاری شده و نامعتبر است.");
+
+            // 5. ایجاد مسیر امن با نام تصادفی
             string uniqueFileName = $"{Guid.NewGuid()}{extension}";
-            string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", subFolder);
+            string webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            string uploadsFolder = Path.Combine(webRootPath, "uploads", subFolder);
 
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
             string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-            // 5. آپلود به صورت Async
+            // 6. ذخیره فایل
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(fileStream);
             }
 
             return $"/uploads/{subFolder}/{uniqueFileName}";
+        }
+
+        // 🚀 BUG 6: متد کمکی برای حذف کاملاً امن فایل‌ها با Canonicalization
+        private void DeleteSecurely(string relativePath)
+        {
+            if (string.IsNullOrEmpty(relativePath)) return;
+
+            try
+            {
+                string webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                string allowedDirectory = Path.GetFullPath(Path.Combine(webRootPath, "uploads"));
+
+                // پاک‌سازی مسیر ورودی از اسلش‌های اضافی
+                string cleanedPath = relativePath.TrimStart('/', '\\');
+                string targetPath = Path.GetFullPath(Path.Combine(webRootPath, cleanedPath));
+
+                // فقط در صورتی حذف کن که مسیر نهایی درون پوشه uploads باشد (جلوگیری از ../)
+                if (targetPath.StartsWith(allowedDirectory, StringComparison.OrdinalIgnoreCase) && System.IO.File.Exists(targetPath))
+                {
+                    System.IO.File.Delete(targetPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to securely delete old image at path: {Path}", relativePath);
+            }
         }
 
         [HttpGet]
@@ -100,7 +156,6 @@ namespace final_p_01.Areas.Admin.Controllers
 
                 try
                 {
-                    // آپلود ایمن
                     if (coverImage != null && coverImage.Length > 0)
                     {
                         post.CoverImagePath = await ProcessAndSaveImageAsync(coverImage, "posts");
@@ -108,12 +163,14 @@ namespace final_p_01.Areas.Admin.Controllers
                 }
                 catch (Exception ex)
                 {
-                    ModelState.AddModelError("CoverImagePath", ex.Message);
+                    // 🚀 BUG 4: لاگ کردن استثنا در سرور و نمایش پیام عمومی به کاربر
+                    _logger.LogError(ex, "Error uploading cover image during Post Create.");
+                    ModelState.AddModelError("CoverImagePath", "خطایی در آپلود تصویر رخ داد. لطفاً تصویر معتبری انتخاب کنید.");
                     ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
                     return View(post);
                 }
 
-                post.CreatedAt = DateTime.UtcNow; // استفاده از UTC برای استانداردسازی زمان
+                post.CreatedAt = DateTime.UtcNow;
                 _context.Posts.Add(post);
                 await _context.SaveChangesAsync();
 
@@ -167,24 +224,21 @@ namespace final_p_01.Areas.Admin.Controllers
                 existingPost.MetaDescription = post.MetaDescription;
                 existingPost.IsPublished = post.IsPublished;
 
+                string? oldImagePathToDelete = null;
+
                 try
                 {
                     if (coverImage != null && coverImage.Length > 0)
                     {
-                        // 🚀 حذف عکس قدیمی برای جلوگیری از اشغال فضای هارد
-                        if (!string.IsNullOrEmpty(existingPost.CoverImagePath))
-                        {
-                            string oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", existingPost.CoverImagePath.TrimStart('/'));
-                            if (System.IO.File.Exists(oldImagePath)) System.IO.File.Delete(oldImagePath);
-                        }
-
-                        // آپلود عکس جدید
+                        // 🚀 BUG 5: آماده‌سازی برای حذف، اما فقط بعد از ذخیره موفق دیتابیس
+                        oldImagePathToDelete = existingPost.CoverImagePath;
                         existingPost.CoverImagePath = await ProcessAndSaveImageAsync(coverImage, "posts");
                     }
                 }
                 catch (Exception ex)
                 {
-                    ModelState.AddModelError("CoverImagePath", ex.Message);
+                    _logger.LogError(ex, "Error uploading cover image during Post Edit. Post ID: {PostId}", existingPost.Id);
+                    ModelState.AddModelError("CoverImagePath", "خطایی در آپلود تصویر جدید رخ داد. فایل معتبر نیست.");
                     ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
                     return View(post);
                 }
@@ -201,7 +255,15 @@ namespace final_p_01.Areas.Admin.Controllers
                     }
                 }
 
+                // ابتدا در دیتابیس ذخیره می‌کنیم
                 await _context.SaveChangesAsync();
+
+                // اگر دیتابیس با موفقیت ثبت شد، حالا با خیال راحت فایل قدیمی را حذف می‌کنیم
+                if (!string.IsNullOrEmpty(oldImagePathToDelete))
+                {
+                    DeleteSecurely(oldImagePathToDelete);
+                }
+
                 return RedirectToAction("Index");
             }
 
@@ -216,24 +278,18 @@ namespace final_p_01.Areas.Admin.Controllers
             var post = await _context.Posts.FindAsync(id);
             if (post != null)
             {
-                if (!string.IsNullOrEmpty(post.CoverImagePath))
-                {
-                    string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", post.CoverImagePath.TrimStart('/'));
-
-                    // بررسی امنیتی برای جلوگیری از حذف فایل‌های خارج از پوشه آپلود
-                    if (System.IO.File.Exists(imagePath) && imagePath.Contains("uploads"))
-                    {
-                        System.IO.File.Delete(imagePath);
-                    }
-                }
+                string? imagePathToDelete = post.CoverImagePath;
 
                 _context.Posts.Remove(post);
                 await _context.SaveChangesAsync();
+
+                // حذف امنِ عکسِ مقاله پس از موفقیت دیتابیس
+                DeleteSecurely(imagePathToDelete);
             }
             return RedirectToAction("Index");
         }
 
-        // 🚀 متد اصلاح و ایمن شده برای آپلود داخل ادیتور متنی
+        // 🚀 BUG 7: بازگرداندن فرمت کاملاً سازگار با TinyMCE
         [HttpPost]
         public async Task<IActionResult> UploadArticleImage(IFormFile upload)
         {
@@ -243,15 +299,17 @@ namespace final_p_01.Areas.Admin.Controllers
                 {
                     string url = await ProcessAndSaveImageAsync(upload, "article-images");
 
-                    // فرمت استاندارد CKEditor
-                    return Json(new { uploaded = 1, fileName = Path.GetFileName(url), url = url });
+                    // فرمت دقیق استاندارد TinyMCE 
+                    return Json(new { location = url });
                 }
-                return Json(new { uploaded = 0, error = new { message = "فایلی ارسال نشده است." } });
+
+                return BadRequest("فایلی ارسال نشده است.");
             }
             catch (Exception ex)
             {
-                // مدیریت خطای حجم یا پسوند در ادیتور
-                return Json(new { uploaded = 0, error = new { message = ex.Message } });
+                _logger.LogWarning(ex, "Failed to upload image from TinyMCE editor.");
+                // ارورهای TinyMCE بهتر است با Status Code 400 بازگردانده شوند
+                return BadRequest("خطا در آپلود تصویر. لطفاً تصویر معتبری انتخاب کنید.");
             }
         }
     }

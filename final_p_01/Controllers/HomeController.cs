@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics;
-using System.Text; // 🚀 اضافه شده برای بهینه‌سازی حافظه
+using System.Text;
 using final_p_01.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
@@ -23,7 +23,7 @@ namespace final_p_01.Controllers
         public async Task<IActionResult> Index()
         {
             var latestPosts = await _context.Posts
-                .AsNoTracking() // 🚀 پرفورمنس: عدم ردگیری تغییرات در دیتابیس
+                .AsNoTracking() // 🚀 پرفورمنس
                 .Include(p => p.Category)
                 .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide")
                 .OrderByDescending(p => p.CreatedAt)
@@ -36,19 +36,20 @@ namespace final_p_01.Controllers
         // --- 2. صفحه ادامه مطلب مقاله ---
         public async Task<IActionResult> Post(string slug)
         {
-            if (string.IsNullOrEmpty(slug)) return NotFound();
+            // استفاده از متد پایه‌ی NotFound توکار فریم‌ورک
+            if (string.IsNullOrEmpty(slug)) return base.NotFound();
 
             var post = await _context.Posts
-                .AsNoTracking() // 🚀 پرفورمنس
+                .AsNoTracking()
                 .Include(p => p.Category)
                 .Include(p => p.Faqs)
-                // 🚀 امنیت (رفع IDOR): حتماً بررسی می‌کنیم که مقاله منتشر شده باشد
+                // ایمنی: Draftها به هیچ وجه بارگذاری نمی‌شوند
                 .FirstOrDefaultAsync(p => p.Slug == slug && p.IsPublished);
 
-            if (post == null) return NotFound();
+            if (post == null) return base.NotFound();
 
             ViewBag.RecentPosts = await _context.Posts
-                .AsNoTracking() // 🚀 پرفورمنس
+                .AsNoTracking()
                 .Where(p => p.IsPublished && p.Id != post.Id && p.Slug != "padel-court-construction-guide")
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(4)
@@ -61,7 +62,7 @@ namespace final_p_01.Controllers
         public async Task<IActionResult> Blog()
         {
             var posts = await _context.Posts
-                .AsNoTracking() // 🚀 پرفورمنس
+                .AsNoTracking()
                 .Include(p => p.Category)
                 .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide")
                 .OrderByDescending(p => p.CreatedAt)
@@ -77,13 +78,13 @@ namespace final_p_01.Controllers
         public async Task<IActionResult> PadelGuide()
         {
             var guidePost = await _context.Posts
-                .AsNoTracking() // 🚀 پرفورمنس
+                .AsNoTracking()
                 .Include(p => p.Faqs)
                 .FirstOrDefaultAsync(p => p.Slug == "padel-court-construction-guide" && p.IsPublished);
 
             if (guidePost == null)
             {
-                return NotFound();
+                return base.NotFound();
             }
 
             return View(guidePost);
@@ -116,7 +117,6 @@ namespace final_p_01.Controllers
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
-            // 🚀 پرفورمنس: استفاده از StringBuilder برای جلوگیری از نشت حافظه (Memory Leak)
             var xml = new StringBuilder();
             xml.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
             xml.AppendLine("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">");
@@ -127,10 +127,9 @@ namespace final_p_01.Controllers
                 ("https://darabico.com/Home/About", "monthly", "0.8"),
                 ("https://darabico.com/Home/Contact", "monthly", "0.8"),
                 ("https://darabico.com/Home/Blog", "daily", "0.9"),
-                ("https://darabico.com/padel-court-construction-guide", "weekly", "0.9") // 🚀 اضافه شدن لینک راهنما به نقشه سایت
+                ("https://darabico.com/padel-court-construction-guide", "weekly", "0.9")
             };
 
-            // اضافه کردن صفحات ثابت
             foreach (var page in staticPages)
             {
                 xml.AppendLine("  <url>");
@@ -140,7 +139,6 @@ namespace final_p_01.Controllers
                 xml.AppendLine("  </url>");
             }
 
-            // اضافه کردن مقالات پویا
             foreach (var post in posts)
             {
                 xml.AppendLine("  <url>");
@@ -157,8 +155,11 @@ namespace final_p_01.Controllers
         }
 
         // --- 5. مدیریت خطاها ---
+
+        // تغییر نام از NotFound به PageNotFound برای جلوگیری از تداخل (Shadowing) با متد پایه‌ی Controller.NotFound()
+        [Route("Home/PageNotFound")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult NotFound(int statusCode)
+        public IActionResult PageNotFound(int statusCode)
         {
             ViewBag.StatusCode = statusCode;
             return View("NotFound");

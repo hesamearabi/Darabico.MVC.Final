@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Identity; // برای PasswordHasher
-using Microsoft.EntityFrameworkCore; // برای دستورات Async دیتابیس
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using final_p_01.Areas.Admin.Models;
 using final_p_01.Domain.Entities;
 using final_p_01.Infrastructure.Data;
@@ -18,7 +18,6 @@ namespace final_p_01.Areas.Admin.Controllers
         public AuthController(ApplicationDbContext context)
         {
             _context = context;
-            // نمونه‌سازی ابزار هش کردن پسورد
             _passwordHasher = new PasswordHasher<AdminUser>();
         }
 
@@ -38,44 +37,29 @@ namespace final_p_01.Areas.Admin.Controllers
         {
             if (ModelState.IsValid)
             {
-                // 1. بررسی و Seed کردن ادمین اولیه به صورت کاملاً امن
-                if (!await _context.AdminUsers.AnyAsync())
-                {
-                    var newAdmin = new AdminUser
-                    {
-                        Email = "admin@darabico.com"
-                    };
-
-                    // رمز عبور هش شده و امن ذخیره می‌شود (رمز پیش‌فرض: Admin@123!)
-                    newAdmin.Password = _passwordHasher.HashPassword(newAdmin, "Admin@123!");
-
-                    _context.AdminUsers.Add(newAdmin);
-                    await _context.SaveChangesAsync();
-                }
-
-                // 2. پیدا کردن کاربر فقط بر اساس ایمیل
+                // 1. پیدا کردن کاربر فقط بر اساس ایمیل
                 var user = await _context.AdminUsers.FirstOrDefaultAsync(u => u.Email == model.Email);
 
                 if (user != null)
                 {
-                    // 3. مقایسه امن رمز عبور هش شده با رمز وارد شده
+                    // 2. مقایسه امن رمز عبور هش شده با رمز وارد شده
                     var passwordVerification = _passwordHasher.VerifyHashedPassword(user, user.Password, model.Password);
 
                     if (passwordVerification == PasswordVerificationResult.Success || passwordVerification == PasswordVerificationResult.SuccessRehashNeeded)
                     {
-                        // 4. تولید Claim ها و لاگین در صورت صحت اطلاعات
+                        // 3. تولید Claim ها و لاگین
                         var claims = new List<Claim>
                         {
                             new Claim(ClaimTypes.Name, user.Email),
-                            new Claim(ClaimTypes.Role, "Administrator") // افزوده شدن نقش
+                            new Claim(ClaimTypes.Role, "Administrator")
                         };
                         var identity = new ClaimsIdentity(claims, "DarabicoAuth");
                         var principal = new ClaimsPrincipal(identity);
 
-                        // 5. تنظیمات امنیتی کوکی
+                        // 4. تنظیمات امنیتی کوکی
                         var authProperties = new AuthenticationProperties
                         {
-                            IsPersistent = true, // حفظ لاگین بعد از بستن مرورگر
+                            IsPersistent = true,
                             ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
                         };
 
@@ -85,7 +69,7 @@ namespace final_p_01.Areas.Admin.Controllers
                     }
                 }
 
-                // پیام خطای یکسان برای جلوگیری از لو رفتن وجود یا عدم وجود ایمیل در دیتابیس
+                // پیام خطای یکسان (جلوگیری از User Enumeration)
                 ModelState.AddModelError(string.Empty, "ایمیل یا رمز عبور اشتباه است.");
             }
             return View(model);
