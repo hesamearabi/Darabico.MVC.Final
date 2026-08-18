@@ -1,7 +1,7 @@
 ﻿@model final_p_01.Domain.Entities.Post
 @inject final_p_01.Infrastructure.Data.ApplicationDbContext _context
 @using System.Linq
-@using System.Text.RegularExpressions
+@using Ganss.Xss
 
 @{
     ViewData["Title"] = Model?.Title;
@@ -16,28 +16,24 @@
 
     string coverImage = !string.IsNullOrWhiteSpace(Model?.CoverImagePath) ? Model.CoverImagePath : "/H-IMG/133.webp";
 
-    // 💡 موتور هوشمند بک‌اند: تبدیل خودکار لینک‌های ساده آپارات به پلیر استاندارد
-    string FixAparatVideos(string htmlContent)
-    {
-        if (string.IsNullOrWhiteSpace(htmlContent)) return "";
+    // 🚀 پیکربندی پاک‌سازی امن HTML (Sanitization) به جای Regex آسیب‌پذیر
+    var sanitizer = new HtmlSanitizer();
+    // افزودن تگ‌ها و صفات مورد نیاز ادیتور که به صورت پیش‌فرض ممکن است فیلتر شوند
+    sanitizer.AllowedTags.Add("iframe");
+    sanitizer.AllowedTags.Add("video");
+    sanitizer.AllowedTags.Add("source");
+    sanitizer.AllowedTags.Add("div");
+    sanitizer.AllowedAttributes.Add("allowfullscreen");
+    sanitizer.AllowedAttributes.Add("webkitallowfullscreen");
+    sanitizer.AllowedAttributes.Add("mozallowfullscreen");
+    sanitizer.AllowedAttributes.Add("frameborder");
+    sanitizer.AllowedAttributes.Add("controls");
+    sanitizer.AllowedAttributes.Add("style");
+    sanitizer.AllowedAttributes.Add("class");
+    sanitizer.AllowedAttributes.Add("id");
 
-        // الگوی شناسایی لینک‌های آپارات (حتی اگر کاربر لینک را عادی پیست کرده باشد)
-        string pattern = @"(?:https?:\/\/)?(?:www\.)?aparat\.com\/v\/([a-zA-Z0-9]+)";
-
-        return Regex.Replace(htmlContent, pattern, match =>
-        {
-            string hash = match.Groups[1].Value;
-            return $@"<div class=""aparat-embed-wrapper"">
-                        <iframe src=""https://www.aparat.com/video/video/embed/videohash/{hash}/vt/frame""
-                                allowFullScreen=""true""
-                                webkitallowfullscreen=""true""
-                                mozallowfullscreen=""true""></iframe>
-                    </div>";
-        });
-    }
-
-    // پردازش متن مقاله قبل از رندر شدن در سایت
-    string processedContent = FixAparatVideos(Model?.Content ?? "");
+    // پردازش کاملاً امن متن مقاله قبل از رندر شدن
+    string processedContent = sanitizer.Sanitize(Model?.Content ?? "");
 }
 
 @section Hero {
@@ -48,8 +44,8 @@
 
     <style>
         /* ========================================================
-                                           🎨 PREMIUM PRODUCT DESIGN - PURE CSS
-                                           ======================================================== */
+                                                   🎨 PREMIUM PRODUCT DESIGN - PURE CSS
+                                                   ======================================================== */
         :root {
             --pd-bg: #f8fafc;
             --pd-card: #ffffff;
@@ -600,7 +596,8 @@
                     <details class="pd-details">
                         <summary class="pd-summary">@faq.Question</summary>
                         <div class="pd-answer">
-                            @Html.Raw((faq.Answer ?? "").Replace("\n", "<br/>"))
+                            <!-- 🚀 اعمال Sanitization برای خروجی FAQ -->
+                            @Html.Raw(sanitizer.Sanitize((faq.Answer ?? "").Replace("\n", "<br/>")))
                         </div>
                     </details>
                 }

@@ -1,4 +1,10 @@
-﻿<!DOCTYPE html>
+﻿@{
+    // 🚀 افزودن هدرهای امنیتی در سطح Layout برای محافظت از بازدیدکنندگان
+    Context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    Context.Response.Headers.Append("X-Frame-Options", "SAMEORIGIN");
+    Context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+}
+<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -265,7 +271,6 @@
 
                 <div class="hero-actions">
                     <a asp-controller="Home" asp-action="Contact" class="hero-consult-btn">دریافت مشاوره و قیمت</a>
-                    <!-- لینک زیر اصلاح شد تا به درستی به صفحه مقاله هدایت شود -->
                     <a asp-controller="Home" asp-action="Post" asp-route-slug="padel-court-construction-guide" class="hero-guide-btn" title="راهنمای جامع صفر تا صد ساخت زمین پدل">
                         راهنمای ۰ تا ۱۰۰ ساخت پدل
                     </a>
@@ -308,7 +313,6 @@
                         <li><a asp-controller="Home" asp-action="Blog">مجله آموزشی پدل</a></li>
                         <li><a asp-controller="Home" asp-action="About">درباره ما</a></li>
                         <li><a asp-controller="Home" asp-action="Contact">ارتباط با ما</a></li>
-                        <!-- لینک زیر اصلاح شد تا به درستی به صفحه مقاله هدایت شود -->
                         <li><a asp-controller="Home" asp-action="Post" asp-route-slug="padel-court-construction-guide">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
                     </ul>
                 </div>
