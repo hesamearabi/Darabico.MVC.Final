@@ -1,245 +1,210 @@
-﻿@model IEnumerable<final_p_01.Domain.Entities.Post>
-@using System.Linq
+﻿@model final_p_01.Models.BlogListViewModel
 
 @{
-    // 🚀 اصلاح سئو: کلمه "دارابی کو |" حذف شد چون لی‌اوت به صورت اتوماتیک آن را اضافه می‌کند
-    ViewData["Title"] = "مقالات و راهنمای تخصصی ساخت و تجهیز زمین پدل";
+    ViewData["Title"] = "مجله آموزشی پدل";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-@section Hero {
-}
-
 @section Head {
-    <link rel="stylesheet" href="~/CSS-SOURCE/blog-style.css" asp-append-version="true" />
-    <meta name="description" content="مرجع تخصصی مقالات پدل: هزینه ساخت، ابعاد استاندارد، قوانین بازی، سقف و سوله پدل و اصول مدیریت باشگاه ورزشی از زبان متخصصین هلدینگ دارابی.">
-
+    <link rel="stylesheet" href="~/CSS-SOURCE/index.css" asp-append-version="true" />
     <style>
-        /* استایل‌های شما دقیقاً حفظ شده است */
-        .blog-page-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
+        .blog-page-wrapper {
             padding-top: 140px;
+            padding-bottom: 80px;
+            max-width: 1300px;
+            margin: 0 auto;
+            padding-left: 25px;
+            padding-right: 25px;
         }
 
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-        }
-
-            .breadcrumb a {
-                color: #333;
-                text-decoration: none;
-                transition: color 0.3s;
-            }
-
-                .breadcrumb a:hover {
-                    color: #d11e32;
-                }
-
-            .breadcrumb .separator {
-                color: #999;
-                font-size: 12px;
-            }
-
-            .breadcrumb .current {
-                color: #999;
-                font-weight: bold;
-            }
-
-        .blog-hero {
+        .blog-header {
             text-align: center;
             margin-bottom: 50px;
         }
 
-            .blog-hero h1 {
-                font-size: 36px;
-                font-weight: 800;
-                color: #1a1a1a;
+            .blog-header h1 {
+                font-size: clamp(2rem, 3vw, 2.5rem);
+                font-weight: 900;
+                color: var(--text-dark, #1a1a1a);
                 margin-bottom: 15px;
             }
 
-            .blog-hero p {
-                font-size: 18px;
-                color: #666;
-                max-width: 700px;
-                margin: 0 auto;
-                line-height: 1.8;
+            .blog-header p {
+                color: var(--text-gray, #555);
+                font-size: 1.1rem;
             }
 
-        .articles-grid {
+        .blog-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 30px;
         }
 
-        .article-card {
+        .blog-card {
             background: #fff;
-            border-radius: 15px;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-decoration: none;
             display: flex;
             flex-direction: column;
-            text-decoration: none;
-            color: inherit;
             border: 1px solid #f0f0f0;
-            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            transition: transform 0.3s, box-shadow 0.3s;
         }
 
-            .article-card:hover {
+            .blog-card:hover {
                 transform: translateY(-5px);
                 box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             }
 
-        .article-thumb {
+        .blog-img {
             height: 220px;
             overflow: hidden;
-            position: relative;
         }
 
-            .article-thumb img {
+            .blog-img img {
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
                 transition: transform 0.5s ease;
             }
 
-        .article-card:hover .article-thumb img {
+        .blog-card:hover .blog-img img {
             transform: scale(1.05);
         }
 
-        .article-content {
+        .blog-info {
             padding: 25px;
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
         }
 
-        .article-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: #888;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-            .article-meta .category {
-                color: #d11e32;
-                font-weight: bold;
-            }
-
-        .article-title {
-            font-size: 18px;
+        .blog-title {
+            font-size: 1.2rem;
             font-weight: bold;
             color: #222;
-            margin-bottom: 15px;
             line-height: 1.5;
-        }
-
-        .article-excerpt {
-            font-size: 14px;
-            color: #666;
-            line-height: 1.8;
-            margin-bottom: 20px;
+            margin: 0;
             display: -webkit-box;
-            -webkit-line-clamp: 3;
+            -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
 
-        a.read-more-link {
-            margin-top: auto;
-            color: #000;
-            font-weight: bold;
-            font-size: 14px;
+        /* 🚀 استایل صفحه‌بندی (Pagination) */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 60px;
+            gap: 10px;
+        }
+
+        .page-item {
             display: flex;
             align-items: center;
-            gap: 5px;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            background: #fff;
+            border: 1px solid #ddd;
+            color: #333;
             text-decoration: none;
-            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            font-size: 1.1rem;
         }
 
-            a.read-more-link span {
-                transition: transform 0.3s;
+            .page-item:hover, .page-item.active {
+                background: var(--primary-blue, #0056b3);
+                color: #fff;
+                border-color: var(--primary-blue, #0056b3);
             }
 
-        .article-card:hover a.read-more-link span {
-            transform: translateX(-5px);
-        }
-
-        #main-header:not(.scrolled) .nav-link {
-            color: #121D35 !important;
-        }
-
-        #main-header:not(.scrolled) .logo-text {
-            color: #121D35 !important;
-        }
-
-        #main-header:not(.scrolled) .hamburger span {
-            background: #121D35 !important;
-        }
+            .page-item.disabled {
+                opacity: 0.5;
+                pointer-events: none;
+                background: #f8f9fa;
+            }
     </style>
 }
 
-<div class="blog-page-container">
+<div class="blog-page-wrapper">
+    <div class="blog-header" dir="rtl">
+        <h1>دانشنامه و مجله پدل</h1>
+        <p>مرجع تخصصی مقالات، آموزش‌ها و راهنمای ساخت زمین پدل</p>
+    </div>
 
-    <nav class="breadcrumb" aria-label="Breadcrumb" dir="rtl">
-        <a asp-controller="Home" asp-action="Index">خانه</a>
-        <span class="separator">/</span>
-        <span class="current">وبلاگ و مقالات</span>
-    </nav>
-
-    <section class="blog-hero" dir="rtl">
-        <h1>دانشنامه تخصصی پدل و ساخت‌وساز</h1>
-        <p>از راهنمای جامع <strong>هزینه ساخت زمین پدل</strong> و نکات مهندسی شیشه، تا آموزش قوانین بازی. مرجع اطلاعاتی هلدینگ دارابی برای سرمایه‌گذاران و ورزشکاران.</p>
-    </section>
-
-    <div class="articles-grid" dir="rtl">
-        @if (Model != null && Model.Any())
+    <div class="blog-cards" dir="rtl">
+        @if (Model.Posts != null && Model.Posts.Any())
         {
-            @foreach (var post in Model)
+            @foreach (var post in Model.Posts)
             {
-                <div class="article-card">
-                    <div class="article-thumb">
-                        <img src="@(!string.IsNullOrWhiteSpace(post.CoverImagePath) ? post.CoverImagePath : "/H-IMG/133.webp")" alt="@post.Title" loading="lazy">
+                <a asp-controller="Home" asp-action="Post" asp-route-slug="@post.Slug" class="blog-card">
+                    <div class="blog-img">
+                        @if (!string.IsNullOrEmpty(post.CoverImagePath))
+                        {
+                            <img src="@post.CoverImagePath" alt="@post.Title" loading="lazy">
+                        }
+                        else
+                        {
+                            <img src="@Url.Content("~/H-IMG/133.webp")" alt="@post.Title" loading="lazy">
+                        }
                     </div>
-                    <div class="article-content">
-                        <div class="article-meta">
-                            <span class="date">@post.CreatedAt.ToString("yyyy/MM/dd")</span>
-                            <span class="category">@(post.Category?.Name ?? "بدون دسته‌بندی")</span>
-                        </div>
-                        <h2 class="article-title">@post.Title</h2>
-                        <p class="article-excerpt">
-                            @post.MetaDescription
-                        </p>
-                        <a asp-controller="Home" asp-action="Post" asp-route-slug="@post.Slug" class="read-more-link">مطالعه کامل <span>←</span></a>
+                    <div class="blog-info">
+                        <span style="color: var(--primary-blue, #0056b3); font-size: 0.85rem; font-weight: bold; margin-bottom: 8px; display: block;">
+                            @(post.Category?.Name ?? "بدون دسته‌بندی")
+                        </span>
+                        <h3 class="blog-title">@post.Title</h3>
                     </div>
-                </div>
+                </a>
             }
         }
         else
         {
-            <div style="grid-column: 1 / -1; text-align: center; padding: 50px; color: #666;">
-                در حال حاضر مقاله‌ای منتشر نشده است. از پنل مدیریت اولین مقاله خود را بنویسید!
+            <div class="w-100 text-center" style="color: #666; padding: 40px; grid-column: 1 / -1; font-size: 1.1rem;">
+                در حال حاضر مقاله‌ای منتشر نشده است.
             </div>
         }
     </div>
+
+    <!-- 🚀 سیستم صفحه‌بندی یکپارچه با سئو -->
+    @if (Model.TotalPages > 1)
+    {
+        <div class="pagination-container" dir="ltr">
+            @if (Model.CurrentPage > 1)
+            {
+                <a asp-action="Blog" asp-route-page="@(Model.CurrentPage - 1)" class="page-item" title="صفحه قبلی">&laquo;</a>
+            }
+            else
+            {
+                <span class="page-item disabled">&laquo;</span>
+            }
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <a asp-action="Blog" asp-route-page="@i" class="page-item @(i == Model.CurrentPage ? "active" : "")">@i</a>
+            }
+
+            @if (Model.CurrentPage < Model.TotalPages)
+            {
+                <a asp-action="Blog" asp-route-page="@(Model.CurrentPage + 1)" class="page-item" title="صفحه بعدی">&raquo;</a>
+            }
+            else
+            {
+                <span class="page-item disabled">&raquo;</span>
+            }
+        </div>
+    }
 </div>
 
 @section Scripts {
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            document.body.classList.add('internal-page');
+            // در صفحات داخلی هدر باید توپر باشد تا روی پس‌زمینه سفید دیده شود
+            const header = document.getElementById("main-header");
+            if (header) {
+                header.style.background = "rgba(10, 12, 18, 0.95)";
+                header.classList.add("scrolled");
+            }
         });
     </script>
 }

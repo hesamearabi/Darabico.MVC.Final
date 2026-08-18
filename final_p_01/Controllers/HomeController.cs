@@ -23,7 +23,7 @@ namespace final_p_01.Controllers
         public async Task<IActionResult> Index()
         {
             var latestPosts = await _context.Posts
-                .AsNoTracking() // 🚀 پرفورمنس
+                .AsNoTracking()
                 .Include(p => p.Category)
                 .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide")
                 .OrderByDescending(p => p.CreatedAt)
@@ -34,41 +34,81 @@ namespace final_p_01.Controllers
         }
 
         // --- 2. صفحه ادامه مطلب مقاله ---
-        public async Task<IActionResult> Post(string slug)
+        [Route("blog/{slug}")]
+        [Route("Home/Post")]
+        public async Task<IActionResult> Post([FromRoute] string? slug, [FromQuery(Name = "slug")] string? querySlug)
         {
-            // استفاده از متد پایه‌ی NotFound توکار فریم‌ورک
-            if (string.IsNullOrEmpty(slug)) return base.NotFound();
+            var actualSlug = slug ?? querySlug;
+            if (string.IsNullOrEmpty(actualSlug)) return base.NotFound();
+
+            // 🚀 BUG FIX: استفاده از مسیر متنی صریح برای جلوگیری از لوپ (Infinite Redirect Loop)
+            if (string.IsNullOrEmpty(slug) && !string.IsNullOrEmpty(querySlug))
+            {
+                return RedirectPermanent($"/blog/{actualSlug}");
+            }
 
             var post = await _context.Posts
                 .AsNoTracking()
                 .Include(p => p.Category)
                 .Include(p => p.Faqs)
-                // ایمنی: Draftها به هیچ وجه بارگذاری نمی‌شوند
-                .FirstOrDefaultAsync(p => p.Slug == slug && p.IsPublished);
+                .FirstOrDefaultAsync(p => p.Slug == actualSlug && p.IsPublished);
 
             if (post == null) return base.NotFound();
 
-            ViewBag.RecentPosts = await _context.Posts
+            var relatedPosts = await _context.Posts
                 .AsNoTracking()
                 .Where(p => p.IsPublished && p.Id != post.Id && p.Slug != "padel-court-construction-guide")
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(4)
                 .ToListAsync();
 
-            return View(post);
+            var viewModel = new PostDetailsViewModel
+            {
+                Post = post,
+                RelatedPosts = relatedPosts
+            };
+
+            return View(viewModel);
         }
 
-        // --- 3. صفحه لیست کل بلاگ‌ها ---
-        public async Task<IActionResult> Blog()
+        // --- 3. صفحه لیست کل بلاگ‌ها همراه با Pagination ---
+        [Route("blog")]
+        [Route("Home/Blog")]
+        public async Task<IActionResult> Blog([FromQuery] int page = 1)
         {
-            var posts = await _context.Posts
+            // 🚀 BUG FIX: استفاده از مسیر متنی صریح برای جلوگیری از لوپ
+            if (Request.Path.Value != null && Request.Path.Value.Contains("Home/Blog", StringComparison.OrdinalIgnoreCase))
+            {
+                string targetUrl = page > 1 ? $"/blog?page={page}" : "/blog";
+                return RedirectPermanent(targetUrl);
+            }
+
+            int pageSize = 9; // تعداد مقاله در هر صفحه
+            var query = _context.Posts
                 .AsNoTracking()
+                .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide");
+
+            int totalPosts = await query.CountAsync();
+            int totalPages = (int)Math.Ceiling(totalPosts / (double)pageSize);
+
+            if (page < 1) page = 1;
+            if (page > totalPages && totalPages > 0) page = totalPages;
+
+            var posts = await query
                 .Include(p => p.Category)
-                .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide")
                 .OrderByDescending(p => p.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            return View(posts);
+            var viewModel = new BlogListViewModel
+            {
+                Posts = posts,
+                CurrentPage = page,
+                TotalPages = totalPages
+            };
+
+            return View(viewModel);
         }
 
         // =========================================================
@@ -90,9 +130,29 @@ namespace final_p_01.Controllers
             return View(guidePost);
         }
 
-        // --- صفحات استاتیک قبلی شما ---
-        public IActionResult Contact() { return View(); }
-        public IActionResult about() { return View(); }
+        // --- صفحات استاتیک ---
+        [Route("contact-us")]
+        [Route("Home/Contact")]
+        public IActionResult Contact()
+        {
+            // 🚀 BUG FIX: جلوگیری از لوپ ریدایرکت
+            if (Request.Path.Value != null && Request.Path.Value.Contains("Home/Contact", StringComparison.OrdinalIgnoreCase))
+                return RedirectPermanent("/contact-us");
+
+            return View();
+        }
+
+        [Route("about-us")]
+        [Route("Home/about")]
+        public IActionResult about()
+        {
+            // 🚀 BUG FIX: جلوگیری از لوپ ریدایرکت
+            if (Request.Path.Value != null && Request.Path.Value.Contains("Home/about", StringComparison.OrdinalIgnoreCase))
+                return RedirectPermanent("/about-us");
+
+            return View();
+        }
+
         public IActionResult padelgrass() { return View(); }
         public IActionResult structure() { return View(); }
         public IActionResult Resume() { return View(); }
@@ -121,32 +181,47 @@ namespace final_p_01.Controllers
             xml.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
             xml.AppendLine("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">");
 
-            var staticPages = new List<(string Url, string ChangeFreq, string Priority)>
+            var staticPages = new List<(string? Url, string ChangeFreq, string Priority)>
             {
-                ("https://darabico.com/", "daily", "1.0"),
-                ("https://darabico.com/Home/About", "monthly", "0.8"),
-                ("https://darabico.com/Home/Contact", "monthly", "0.8"),
-                ("https://darabico.com/Home/Blog", "daily", "0.9"),
-                ("https://darabico.com/padel-court-construction-guide", "weekly", "0.9")
+                (Url.Action("Index", "Home", null, Request.Scheme), "daily", "1.0"),
+                (Url.Action("about", "Home", null, Request.Scheme), "monthly", "0.8"),
+                (Url.Action("Contact", "Home", null, Request.Scheme), "monthly", "0.8"),
+                (Url.Action("Blog", "Home", null, Request.Scheme), "daily", "0.9"),
+                (Url.Action("PadelGuide", "Home", null, Request.Scheme), "weekly", "0.9")
             };
 
             foreach (var page in staticPages)
             {
-                xml.AppendLine("  <url>");
-                xml.AppendLine($"    <loc>{page.Url}</loc>");
-                xml.AppendLine($"    <changefreq>{page.ChangeFreq}</changefreq>");
-                xml.AppendLine($"    <priority>{page.Priority}</priority>");
-                xml.AppendLine("  </url>");
+                if (!string.IsNullOrEmpty(page.Url))
+                {
+                    // 🚀 هماهنگ‌سازی آدرس‌های تولید شده در نقشه سایت با روت‌های تمیز جدید
+                    string cleanUrl = page.Url
+                        .Replace("/Home/Contact", "/contact-us", StringComparison.OrdinalIgnoreCase)
+                        .Replace("/Home/about", "/about-us", StringComparison.OrdinalIgnoreCase)
+                        .Replace("/Home/Blog", "/blog", StringComparison.OrdinalIgnoreCase);
+
+                    xml.AppendLine("  <url>");
+                    xml.AppendLine($"    <loc>{cleanUrl}</loc>");
+                    xml.AppendLine($"    <changefreq>{page.ChangeFreq}</changefreq>");
+                    xml.AppendLine($"    <priority>{page.Priority}</priority>");
+                    xml.AppendLine("  </url>");
+                }
             }
 
             foreach (var post in posts)
             {
-                xml.AppendLine("  <url>");
-                xml.AppendLine($"    <loc>https://darabico.com/Home/Post?slug={post.Slug}</loc>");
-                xml.AppendLine($"    <lastmod>{post.CreatedAt:yyyy-MM-dd}</lastmod>");
-                xml.AppendLine("    <changefreq>weekly</changefreq>");
-                xml.AppendLine("    <priority>0.7</priority>");
-                xml.AppendLine("  </url>");
+                // تولید آدرس کاملاً منطبق با روت جدید
+                var postUrl = $"{Request.Scheme}://{Request.Host}/blog/{post.Slug}";
+
+                if (!string.IsNullOrEmpty(postUrl))
+                {
+                    xml.AppendLine("  <url>");
+                    xml.AppendLine($"    <loc>{postUrl}</loc>");
+                    xml.AppendLine($"    <lastmod>{post.CreatedAt:yyyy-MM-dd}</lastmod>");
+                    xml.AppendLine("    <changefreq>weekly</changefreq>");
+                    xml.AppendLine("    <priority>0.7</priority>");
+                    xml.AppendLine("  </url>");
+                }
             }
 
             xml.AppendLine("</urlset>");
@@ -155,8 +230,6 @@ namespace final_p_01.Controllers
         }
 
         // --- 5. مدیریت خطاها ---
-
-        // تغییر نام از NotFound به PageNotFound برای جلوگیری از تداخل (Shadowing) با متد پایه‌ی Controller.NotFound()
         [Route("Home/PageNotFound")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult PageNotFound(int statusCode)

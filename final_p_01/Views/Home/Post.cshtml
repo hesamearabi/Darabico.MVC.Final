@@ -1,24 +1,15 @@
-﻿@model final_p_01.Domain.Entities.Post
-@inject final_p_01.Infrastructure.Data.ApplicationDbContext _context
+﻿@model final_p_01.Models.PostDetailsViewModel
 @using System.Linq
 @using Ganss.Xss
 
 @{
-    ViewData["Title"] = Model?.Title;
+    ViewData["Title"] = Model.Post.Title;
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-    // واکشی هوشمند ۳ مقاله پیشنهادی (مرتبط)
-    var relatedPosts = _context.Posts
-        .Where(p => p.IsPublished && p.Id != Model.Id)
-        .OrderByDescending(p => p.CreatedAt)
-        .Take(3)
-        .ToList();
+    string coverImage = !string.IsNullOrWhiteSpace(Model.Post.CoverImagePath) ? Model.Post.CoverImagePath : "/H-IMG/133.webp";
 
-    string coverImage = !string.IsNullOrWhiteSpace(Model?.CoverImagePath) ? Model.CoverImagePath : "/H-IMG/133.webp";
-
-    // 🚀 پیکربندی پاک‌سازی امن HTML (Sanitization) به جای Regex آسیب‌پذیر
+    // 🚀 Sanitization
     var sanitizer = new HtmlSanitizer();
-    // افزودن تگ‌ها و صفات مورد نیاز ادیتور که به صورت پیش‌فرض ممکن است فیلتر شوند
     sanitizer.AllowedTags.Add("iframe");
     sanitizer.AllowedTags.Add("video");
     sanitizer.AllowedTags.Add("source");
@@ -32,640 +23,620 @@
     sanitizer.AllowedAttributes.Add("class");
     sanitizer.AllowedAttributes.Add("id");
 
-    // پردازش کاملاً امن متن مقاله قبل از رندر شدن
-    string processedContent = sanitizer.Sanitize(Model?.Content ?? "");
+    string processedContent = sanitizer.Sanitize(Model.Post.Content ?? "");
 }
 
-@section Hero {
-}
+@section Hero { }
 
-@section Head {
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
-    <style>
-        /* ========================================================
-                                                   🎨 PREMIUM PRODUCT DESIGN - PURE CSS
-                                                   ======================================================== */
-        :root {
-            --pd-bg: #f8fafc;
-            --pd-card: #ffffff;
-            --pd-text-main: #0f172a;
-            --pd-text-muted: #64748b;
-            --pd-primary: #0056b3;
-            --pd-accent: #d11e32;
-            --pd-navy: #0a0c12;
-            --pd-radius-xl: 24px;
-            --pd-radius-lg: 16px;
-            --pd-radius-md: 12px;
-            --pd-shadow: 0 10px 40px rgba(0,0,0,0.04);
-            --pd-shadow-hover: 0 20px 40px rgba(0,0,0,0.08);
-            --pd-transition: all 0.3s ease;
-        }
-
-        body {
-            background-color: var(--pd-bg) !important;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        /* --- 1. HERO HEADER --- */
-        .pd-hero {
-            position: relative;
-            width: 100%;
-            height: 60vh;
-            min-height: 450px;
-            background-image: url('@coverImage');
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: 0;
-            padding-top: 80px;
-        }
-
-            .pd-hero::before {
-                content: '';
-                position: absolute;
-                inset: 0;
-                background: linear-gradient(to top, rgba(10, 12, 18, 0.95) 0%, rgba(10, 12, 18, 0.5) 50%, rgba(10, 12, 18, 0.2) 100%);
+    @section Head {
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+        <style>
+            /* CSS قبلی بدون تغییر (همان استایل‌های .pd-hero, .pd-container و ...) */
+            :root {
+                --pd-bg: #f8fafc;
+                --pd-card: #ffffff;
+                --pd-text-main: #0f172a;
+                --pd-text-muted: #64748b;
+                --pd-primary: #0056b3;
+                --pd-accent: #d11e32;
+                --pd-navy: #0a0c12;
+                --pd-radius-xl: 24px;
+                --pd-radius-lg: 16px;
+                --pd-radius-md: 12px;
+                --pd-shadow: 0 10px 40px rgba(0,0,0,0.04);
+                --pd-shadow-hover: 0 20px 40px rgba(0,0,0,0.08);
+                --pd-transition: all 0.3s ease;
             }
 
-        .pd-hero-content {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            color: #fff;
-            max-width: 900px;
-            padding: 0 20px;
-        }
-
-        .pd-breadcrumb {
-            display: inline-flex;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 8px 24px;
-            border-radius: 50px;
-            border: 1px solid rgba(255,255,255,0.1);
-            margin-bottom: 25px;
-            font-size: 0.85rem;
-            color: #cbd5e1;
-        }
-
-            .pd-breadcrumb a {
-                color: #fff;
-                text-decoration: none;
-                transition: var(--pd-transition);
+            body {
+                background-color: var(--pd-bg) !important;
             }
 
-                .pd-breadcrumb a:hover {
-                    color: var(--pd-accent);
-                }
-
-            .pd-breadcrumb .sep {
-                margin: 0 10px;
-                opacity: 0.5;
+            * {
+                box-sizing: border-box;
             }
 
-        .pd-title {
-            font-size: clamp(2rem, 4vw, 3.5rem);
-            font-weight: 900;
-            line-height: 1.3;
-            margin-bottom: 25px;
-            margin-top: 0;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.4);
-        }
-
-        .pd-meta {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 25px;
-            font-size: 0.95rem;
-            color: #e2e8f0;
-            flex-wrap: wrap;
-        }
-
-            .pd-meta span {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-
-            .pd-meta i {
-                color: var(--pd-accent);
-            }
-
-        /* --- 2. ARTICLE CONTENT --- */
-        .pd-container {
-            max-width: 850px;
-            margin: -60px auto 80px;
-            background: var(--pd-card);
-            border-radius: var(--pd-radius-xl);
-            padding: 60px 70px;
-            box-shadow: var(--pd-shadow);
-            position: relative;
-            z-index: 10;
-        }
-
-        .pd-body {
-            font-size: 1.15rem;
-            line-height: 2.2;
-            color: var(--pd-text-muted);
-            text-align: justify;
-        }
-
-            .pd-body h2, .pd-body h3 {
-                color: var(--pd-text-main);
-                font-weight: 800;
-                margin-top: 2.5rem;
-                margin-bottom: 1.2rem;
-                line-height: 1.4;
-            }
-
-            /* --- 🚀 استایل‌های قطعی ویدیوهای آپارات (ریسپانسیو ۱۶:۹) --- */
-            .pd-body .aparat-embed-wrapper,
-            .pd-body .aparat-video-container {
-                position: relative !important;
-                width: 100% !important;
-                padding-bottom: 56.25% !important; /* نسبت تصویر استاندارد ویدیو */
-                height: 0 !important;
-                margin: 2.5rem 0 !important;
-                border-radius: 16px !important;
-                overflow: hidden !important;
-                background-color: #000 !important;
-                box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15) !important;
-            }
-
-                .pd-body .aparat-embed-wrapper iframe,
-                .pd-body .aparat-video-container iframe {
-                    position: absolute !important;
-                    top: 0 !important;
-                    left: 0 !important;
-                    width: 100% !important;
-                    height: 100% !important;
-                    border: none !important;
-                }
-
-            .pd-body img {
-                max-width: 100% !important;
-                height: auto !important;
-                border-radius: var(--pd-radius-md);
-                margin: 2rem 0;
-                box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-            }
-
-        /* --- 3. FAQ --- */
-        .pd-faq-wrapper {
-            margin-top: 4rem;
-            padding-top: 3rem;
-            border-top: 2px dashed #f1f5f9;
-        }
-
-        .pd-faq-title {
-            font-size: 1.8rem;
-            font-weight: 900;
-            color: var(--pd-text-main);
-            margin-bottom: 2rem;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-            .pd-faq-title i {
-                color: var(--pd-primary);
-            }
-
-        .pd-details {
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: var(--pd-radius-md);
-            margin-bottom: 1rem;
-            overflow: hidden;
-            transition: var(--pd-transition);
-        }
-
-            .pd-details:hover {
-                border-color: #cbd5e1;
-            }
-
-        .pd-summary {
-            padding: 1.25rem 1.5rem;
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: var(--pd-text-main);
-            cursor: pointer;
-            list-style: none;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #fff;
-        }
-
-            .pd-summary::-webkit-details-marker {
-                display: none;
-            }
-
-            .pd-summary::after {
-                content: '\F282';
-                font-family: "bootstrap-icons";
-                font-size: 1.2rem;
-                color: var(--pd-primary);
-                transition: transform 0.3s ease;
-            }
-
-        .pd-details[open] .pd-summary {
-            color: var(--pd-primary);
-            background: #f8fafc;
-        }
-
-            .pd-details[open] .pd-summary::after {
-                transform: rotate(180deg);
-            }
-
-        .pd-answer {
-            padding: 0 1.5rem 1.5rem;
-            color: var(--pd-text-secondary);
-            line-height: 1.9;
-            background: #f8fafc;
-            border-top: 1px solid transparent;
-        }
-
-        /* --- 4. CTA BOX --- */
-        .pd-cta {
-            background: linear-gradient(135deg, var(--pd-navy) 0%, #1e293b 100%);
-            border-radius: var(--pd-radius-lg);
-            padding: 3rem;
-            margin-top: 4rem;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-            gap: 30px;
-            box-shadow: 0 20px 40px rgba(10, 12, 18, 0.2);
-            position: relative;
-            overflow: hidden;
-            flex-wrap: wrap;
-        }
-
-            .pd-cta::after {
-                content: '';
-                position: absolute;
-                top: -50%;
-                left: -20%;
-                width: 300px;
-                height: 300px;
-                background: radial-gradient(circle, rgba(209, 30, 50, 0.3) 0%, transparent 70%);
-                pointer-events: none;
-            }
-
-        .pd-cta-text {
-            position: relative;
-            z-index: 2;
-            flex: 1 1 50%;
-            min-width: 300px;
-        }
-
-            .pd-cta-text h4 {
-                color: #fff;
-                font-size: 1.8rem;
-                font-weight: 900;
-                margin-bottom: 0.8rem;
-                margin-top: 0;
-            }
-
-            .pd-cta-text p {
-                color: #cbd5e1;
-                font-size: 1.05rem;
-                margin: 0;
-                line-height: 1.8;
-                max-width: 100%;
-            }
-
-        .pd-cta-actions {
-            position: relative;
-            z-index: 2;
-            flex: 0 0 auto;
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .pd-btn-social {
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
-            width: 50px;
-            height: 50px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            font-size: 1.3rem;
-            text-decoration: none;
-            transition: var(--pd-transition);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
-            padding: 0;
-            margin: 0;
-        }
-
-            .pd-btn-social i {
+            .pd-hero {
+                position: relative;
+                width: 100%;
+                height: 60vh;
+                min-height: 450px;
+                background-image: url('@coverImage');
+                background-size: cover;
+                background-position: center;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                line-height: 1;
+                margin-top: 0;
+                padding-top: 80px;
             }
 
-            .pd-btn-social:hover {
-                background: var(--pd-primary);
+                .pd-hero::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(to top, rgba(10, 12, 18, 0.95) 0%, rgba(10, 12, 18, 0.5) 50%, rgba(10, 12, 18, 0.2) 100%);
+                }
+
+            .pd-hero-content {
+                position: relative;
+                z-index: 2;
+                text-align: center;
                 color: #fff;
-                transform: translateY(-3px);
-                border-color: var(--pd-primary);
-                box-shadow: 0 10px 20px rgba(0, 86, 179, 0.3);
+                max-width: 900px;
+                padding: 0 20px;
             }
 
-        .pd-btn {
-            background: var(--pd-primary);
-            color: #fff;
-            padding: 14px 28px;
-            border-radius: 50px;
-            font-weight: 700;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: var(--pd-transition);
-            box-shadow: 0 10px 20px rgba(0, 86, 179, 0.3);
-            border: none;
-            cursor: pointer;
-            margin: 0;
-            height: 50px;
-        }
-
-            .pd-btn:hover {
-                background: #004494;
-                transform: translateY(-3px);
-                box-shadow: 0 15px 25px rgba(0, 86, 179, 0.4);
-                color: #fff;
+            .pd-breadcrumb {
+                display: inline-flex;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+                padding: 8px 24px;
+                border-radius: 50px;
+                border: 1px solid rgba(255,255,255,0.1);
+                margin-bottom: 25px;
+                font-size: 0.85rem;
+                color: #cbd5e1;
             }
 
-        /* --- 5. RELATED POSTS --- */
-        .pd-related-section {
-            max-width: 1200px;
-            margin: 0 auto 80px;
-            padding: 0 20px;
-        }
+                .pd-breadcrumb a {
+                    color: #fff;
+                    text-decoration: none;
+                    transition: var(--pd-transition);
+                }
 
-        .pd-related-title {
-            text-align: center;
-            font-size: 2.2rem;
-            font-weight: 900;
-            color: var(--pd-text-main);
-            margin-bottom: 2.5rem;
-        }
+                    .pd-breadcrumb a:hover {
+                        color: var(--pd-accent);
+                    }
 
-        .pd-related-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 30px;
-        }
-
-        .pd-card {
-            background: var(--pd-card);
-            border-radius: var(--pd-radius-lg);
-            overflow: hidden;
-            box-shadow: var(--pd-shadow);
-            transition: var(--pd-transition);
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid #f1f5f9;
-        }
-
-            .pd-card:hover {
-                transform: translateY(-10px);
-                box-shadow: var(--pd-shadow-hover);
-                border-color: var(--pd-primary);
-            }
-
-        .pd-card-img {
-            width: 100%;
-            height: 220px;
-            object-fit: cover;
-            transition: 0.5s;
-        }
-
-        .pd-card:hover .pd-card-img {
-            transform: scale(1.05);
-        }
-
-        .pd-card-body {
-            padding: 25px;
-            background: #fff;
-            z-index: 2;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-        }
-
-        .pd-card-meta {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-size: 0.85rem;
-            color: var(--pd-text-muted);
-            margin-bottom: 12px;
-            font-weight: 600;
-        }
-
-            .pd-card-meta i {
-                color: var(--pd-primary);
-            }
-
-        .pd-card-title {
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: var(--pd-text-main);
-            line-height: 1.6;
-            margin: 0;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        /* --- RESPONSIVE MOBILE --- */
-        @@media (max-width: 768px) {
-            .pd-hero {
-                height: auto;
-                padding-top: 100px;
-                padding-bottom: 60px;
-            }
+                .pd-breadcrumb .sep {
+                    margin: 0 10px;
+                    opacity: 0.5;
+                }
 
             .pd-title {
-                font-size: 2rem;
+                font-size: clamp(2rem, 4vw, 3.5rem);
+                font-weight: 900;
+                line-height: 1.3;
+                margin-bottom: 25px;
+                margin-top: 0;
+                text-shadow: 0 4px 20px rgba(0,0,0,0.4);
             }
 
-            .pd-container {
-                margin: -40px 15px 50px;
-                padding: 30px 20px;
-                border-radius: var(--pd-radius-lg);
-            }
-
-            .pd-cta {
-                flex-direction: column;
-                text-align: center;
-                gap: 25px;
-                padding: 30px 20px;
-            }
-
-            .pd-cta-text {
-                min-width: 100%;
-            }
-
-            .pd-cta-actions {
-                width: 100%;
+            .pd-meta {
+                display: flex;
+                align-items: center;
                 justify-content: center;
+                gap: 25px;
+                font-size: 0.95rem;
+                color: #e2e8f0;
                 flex-wrap: wrap;
             }
 
-            .pd-body {
-                font-size: 1.05rem;
+                .pd-meta span {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .pd-meta i {
+                    color: var(--pd-accent);
+                }
+
+            .pd-container {
+                max-width: 850px;
+                margin: -60px auto 80px;
+                background: var(--pd-card);
+                border-radius: var(--pd-radius-xl);
+                padding: 60px 70px;
+                box-shadow: var(--pd-shadow);
+                position: relative;
+                z-index: 10;
             }
+
+            .pd-body {
+                font-size: 1.15rem;
+                line-height: 2.2;
+                color: var(--pd-text-muted);
+                text-align: justify;
+            }
+
+                .pd-body h2, .pd-body h3 {
+                    color: var(--pd-text-main);
+                    font-weight: 800;
+                    margin-top: 2.5rem;
+                    margin-bottom: 1.2rem;
+                    line-height: 1.4;
+                }
+
+                .pd-body .aparat-embed-wrapper, .pd-body .aparat-video-container {
+                    position: relative !important;
+                    width: 100% !important;
+                    padding-bottom: 56.25% !important;
+                    height: 0 !important;
+                    margin: 2.5rem 0 !important;
+                    border-radius: 16px !important;
+                    overflow: hidden !important;
+                    background-color: #000 !important;
+                    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15) !important;
+                }
+
+                    .pd-body .aparat-embed-wrapper iframe, .pd-body .aparat-video-container iframe {
+                        position: absolute !important;
+                        top: 0 !important;
+                        left: 0 !important;
+                        width: 100% !important;
+                        height: 100% !important;
+                        border: none !important;
+                    }
+
+                .pd-body img {
+                    max-width: 100% !important;
+                    height: auto !important;
+                    border-radius: var(--pd-radius-md);
+                    margin: 2rem 0;
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+                }
+
+            .pd-faq-wrapper {
+                margin-top: 4rem;
+                padding-top: 3rem;
+                border-top: 2px dashed #f1f5f9;
+            }
+
+            .pd-faq-title {
+                font-size: 1.8rem;
+                font-weight: 900;
+                color: var(--pd-text-main);
+                margin-bottom: 2rem;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+                .pd-faq-title i {
+                    color: var(--pd-primary);
+                }
+
+            .pd-details {
+                background: #fff;
+                border: 1px solid #e2e8f0;
+                border-radius: var(--pd-radius-md);
+                margin-bottom: 1rem;
+                overflow: hidden;
+                transition: var(--pd-transition);
+            }
+
+                .pd-details:hover {
+                    border-color: #cbd5e1;
+                }
 
             .pd-summary {
-                font-size: 1rem;
-                padding: 1rem;
+                padding: 1.25rem 1.5rem;
+                font-weight: 700;
+                font-size: 1.1rem;
+                color: var(--pd-text-main);
+                cursor: pointer;
+                list-style: none;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: #fff;
             }
+
+                .pd-summary::-webkit-details-marker {
+                    display: none;
+                }
+
+                .pd-summary::after {
+                    content: '\F282';
+                    font-family: "bootstrap-icons";
+                    font-size: 1.2rem;
+                    color: var(--pd-primary);
+                    transition: transform 0.3s ease;
+                }
+
+            .pd-details[open] .pd-summary {
+                color: var(--pd-primary);
+                background: #f8fafc;
+            }
+
+                .pd-details[open] .pd-summary::after {
+                    transform: rotate(180deg);
+                }
 
             .pd-answer {
-                padding: 0 1rem 1rem;
+                padding: 0 1.5rem 1.5rem;
+                color: var(--pd-text-secondary);
+                line-height: 1.9;
+                background: #f8fafc;
+                border-top: 1px solid transparent;
             }
-        }
-    </style>
-}
 
-<div class="pd-hero">
-    <div class="pd-hero-content">
-        <div class="pd-breadcrumb">
-            <a href="/">خانه</a>
-            <span class="sep">/</span>
-            <a asp-controller="Home" asp-action="Blog">مجله پدل</a>
-            <span class="sep">/</span>
-            <span style="color: #fff;">@Model.Title</span>
-        </div>
-
-        <h1 class="pd-title">@Model.Title</h1>
-
-        <div class="pd-meta">
-            <span><i class="bi bi-person-circle"></i> تحریریه دارابی کو</span>
-            <span><i class="bi bi-calendar3"></i> @Model.CreatedAt.ToString("yyyy/MM/dd")</span>
-            @if (Model.Category != null)
-            {
-                <span><i class="bi bi-folder2-open"></i> @Model.Category.Name</span>
+            .pd-cta {
+                background: linear-gradient(135deg, var(--pd-navy) 0%, #1e293b 100%);
+                border-radius: var(--pd-radius-lg);
+                padding: 3rem;
+                margin-top: 4rem;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                gap: 30px;
+                box-shadow: 0 20px 40px rgba(10, 12, 18, 0.2);
+                position: relative;
+                overflow: hidden;
+                flex-wrap: wrap;
             }
-        </div>
-    </div>
-</div>
 
-<main class="pd-container">
+                .pd-cta::after {
+                    content: '';
+                    position: absolute;
+                    top: -50%;
+                    left: -20%;
+                    width: 300px;
+                    height: 300px;
+                    background: radial-gradient(circle, rgba(209, 30, 50, 0.3) 0%, transparent 70%);
+                    pointer-events: none;
+                }
 
-    <div class="pd-body">
-        @Html.Raw(processedContent)
-    </div>
+            .pd-cta-text {
+                position: relative;
+                z-index: 2;
+                flex: 1 1 50%;
+                min-width: 300px;
+            }
 
-    @if (Model.Faqs != null && Model.Faqs.Any())
-    {
-        <div class="pd-faq-wrapper">
-            <h3 class="pd-faq-title">
-                <i class="bi bi-patch-question-fill"></i>
-                سوالات متداول
-            </h3>
+                .pd-cta-text h4 {
+                    color: #fff;
+                    font-size: 1.8rem;
+                    font-weight: 900;
+                    margin-bottom: 0.8rem;
+                    margin-top: 0;
+                }
 
-            <div class="pd-faq-list">
-                @foreach (var faq in Model.Faqs)
+                .pd-cta-text p {
+                    color: #cbd5e1;
+                    font-size: 1.05rem;
+                    margin: 0;
+                    line-height: 1.8;
+                    max-width: 100%;
+                }
+
+            .pd-cta-actions {
+                position: relative;
+                z-index: 2;
+                flex: 0 0 auto;
+                display: flex;
+                gap: 12px;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+
+            .pd-btn-social {
+                background: rgba(255, 255, 255, 0.05);
+                color: #fff;
+                width: 50px;
+                height: 50px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                font-size: 1.3rem;
+                text-decoration: none;
+                transition: var(--pd-transition);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(5px);
+                padding: 0;
+                margin: 0;
+            }
+
+                .pd-btn-social i {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    line-height: 1;
+                }
+
+                .pd-btn-social:hover {
+                    background: var(--pd-primary);
+                    color: #fff;
+                    transform: translateY(-3px);
+                    border-color: var(--pd-primary);
+                    box-shadow: 0 10px 20px rgba(0, 86, 179, 0.3);
+                }
+
+            .pd-btn {
+                background: var(--pd-primary);
+                color: #fff;
+                padding: 14px 28px;
+                border-radius: 50px;
+                font-weight: 700;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                transition: var(--pd-transition);
+                box-shadow: 0 10px 20px rgba(0, 86, 179, 0.3);
+                border: none;
+                cursor: pointer;
+                margin: 0;
+                height: 50px;
+            }
+
+                .pd-btn:hover {
+                    background: #004494;
+                    transform: translateY(-3px);
+                    box-shadow: 0 15px 25px rgba(0, 86, 179, 0.4);
+                    color: #fff;
+                }
+
+            .pd-related-section {
+                max-width: 1200px;
+                margin: 0 auto 80px;
+                padding: 0 20px;
+            }
+
+            .pd-related-title {
+                text-align: center;
+                font-size: 2.2rem;
+                font-weight: 900;
+                color: var(--pd-text-main);
+                margin-bottom: 2.5rem;
+            }
+
+            .pd-related-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                gap: 30px;
+            }
+
+            .pd-card {
+                background: var(--pd-card);
+                border-radius: var(--pd-radius-lg);
+                overflow: hidden;
+                box-shadow: var(--pd-shadow);
+                transition: var(--pd-transition);
+                text-decoration: none;
+                color: inherit;
+                display: flex;
+                flex-direction: column;
+                border: 1px solid #f1f5f9;
+            }
+
+                .pd-card:hover {
+                    transform: translateY(-10px);
+                    box-shadow: var(--pd-shadow-hover);
+                    border-color: var(--pd-primary);
+                }
+
+            .pd-card-img {
+                width: 100%;
+                height: 220px;
+                object-fit: cover;
+                transition: 0.5s;
+            }
+
+            .pd-card:hover .pd-card-img {
+                transform: scale(1.05);
+            }
+
+            .pd-card-body {
+                padding: 25px;
+                background: #fff;
+                z-index: 2;
+                flex-grow: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+            }
+
+            .pd-card-meta {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                font-size: 0.85rem;
+                color: var(--pd-text-muted);
+                margin-bottom: 12px;
+                font-weight: 600;
+            }
+
+                .pd-card-meta i {
+                    color: var(--pd-primary);
+                }
+
+            .pd-card-title {
+                font-size: 1.2rem;
+                font-weight: 800;
+                color: var(--pd-text-main);
+                line-height: 1.6;
+                margin: 0;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+
+            @@media (max-width: 768px) {
+                .pd-hero {
+                    height: auto;
+                    padding-top: 100px;
+                    padding-bottom: 60px;
+                }
+
+                .pd-title {
+                    font-size: 2rem;
+                }
+
+                .pd-container {
+                    margin: -40px 15px 50px;
+                    padding: 30px 20px;
+                    border-radius: var(--pd-radius-lg);
+                }
+
+                .pd-cta {
+                    flex-direction: column;
+                    text-align: center;
+                    gap: 25px;
+                    padding: 30px 20px;
+                }
+
+                .pd-cta-text {
+                    min-width: 100%;
+                }
+
+                .pd-cta-actions {
+                    width: 100%;
+                    justify-content: center;
+                    flex-wrap: wrap;
+                }
+
+                .pd-body {
+                    font-size: 1.05rem;
+                }
+
+                .pd-summary {
+                    font-size: 1rem;
+                    padding: 1rem;
+                }
+
+                .pd-answer {
+                    padding: 0 1rem 1rem;
+                }
+            }
+        </style>
+    }
+
+    <div class="pd-hero">
+        <div class="pd-hero-content">
+            <div class="pd-breadcrumb">
+                <a href="/">خانه</a>
+                <span class="sep">/</span>
+                <a asp-controller="Home" asp-action="Blog">مجله پدل</a>
+                <span class="sep">/</span>
+                <span style="color: #fff;">@Model.Post.Title</span>
+            </div>
+
+            <h1 class="pd-title">@Model.Post.Title</h1>
+
+            <div class="pd-meta">
+                <span><i class="bi bi-person-circle"></i> تحریریه دارابی کو</span>
+                <span><i class="bi bi-calendar3"></i> @Model.Post.CreatedAt.ToString("yyyy/MM/dd")</span>
+                @if (Model.Post.Category != null)
                 {
-                    <details class="pd-details">
-                        <summary class="pd-summary">@faq.Question</summary>
-                        <div class="pd-answer">
-                            <!-- 🚀 اعمال Sanitization برای خروجی FAQ -->
-                            @Html.Raw(sanitizer.Sanitize((faq.Answer ?? "").Replace("\n", "<br/>")))
-                        </div>
-                    </details>
+                    <span><i class="bi bi-folder2-open"></i> @Model.Post.Category.Name</span>
                 }
             </div>
         </div>
-    }
-
-    <div class="pd-cta">
-        <div class="pd-cta-text">
-            <h4>آماده ساخت کورت پدل هستید؟</h4>
-            <p>طراحی فراتر از استاندارد. اجرای تخصصی زمین‌های پدل با شیشه‌های ۱۲ میل نشکن. تجربه‌ای امن و بی‌نظیر برای بازیکنان.</p>
-        </div>
-        <div class="pd-cta-actions">
-            <a href="https://wa.me/989111515971" target="_blank" class="pd-btn-social" title="واتس‌اپ">
-                <i class="bi bi-whatsapp"></i>
-            </a>
-            <a href="https://t.me/DarabiHolding" target="_blank" class="pd-btn-social" title="تلگرام">
-                <i class="bi bi-telegram"></i>
-            </a>
-            <a href="https://instagram.com/darabicopadel" target="_blank" class="pd-btn-social" title="اینستاگرام">
-                <i class="bi bi-instagram"></i>
-            </a>
-            <a asp-controller="Home" asp-action="Contact" class="pd-btn">
-                <i class="bi bi-telephone-fill"></i> دریافت مشاوره رایگان
-            </a>
-        </div>
     </div>
 
-</main>
+    <main class="pd-container">
 
-@if (relatedPosts != null && relatedPosts.Any())
-{
-    <section class="pd-related-section">
-        <h3 class="pd-related-title">مطالب پیشنهادی</h3>
-        <div class="pd-related-grid">
-            @foreach (var rpost in relatedPosts)
-            {
-                <a asp-controller="Home" asp-action="Post" asp-route-slug="@rpost.Slug" class="pd-card">
-                    <div style="overflow: hidden;">
-                        <img src="@(!string.IsNullOrWhiteSpace(rpost.CoverImagePath) ? rpost.CoverImagePath : "/H-IMG/133.webp")" alt="@rpost.Title" class="pd-card-img" loading="lazy" />
-                    </div>
-                    <div class="pd-card-body">
-                        <div class="pd-card-meta">
-                            <span><i class="bi bi-clock"></i> @rpost.CreatedAt.ToString("yyyy/MM/dd")</span>
-                            @if (rpost.Category != null)
-                            {
-                                <span><i class="bi bi-tag"></i> @rpost.Category.Name</span>
-                            }
-                        </div>
-                        <h5 class="pd-card-title">@rpost.Title</h5>
-                    </div>
-                </a>
-            }
+        <div class="pd-body">
+            @Html.Raw(processedContent)
         </div>
-    </section>
-}
 
-@section Scripts {
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // حل مشکلات هدر و لودر
-            document.body.classList.remove('loading-state');
-            const header = document.getElementById("main-header");
-            if (header && !header.classList.contains("scrolled")) {
-                header.style.background = "rgba(10, 12, 18, 0.95)";
-                header.style.backdropFilter = "blur(10px)";
-                header.classList.add("scrolled");
-            }
-        });
-    </script>
-}
+        @if (Model.Post.Faqs != null && Model.Post.Faqs.Any())
+        {
+            <div class="pd-faq-wrapper">
+                <h3 class="pd-faq-title">
+                    <i class="bi bi-patch-question-fill"></i>
+                    سوالات متداول
+                </h3>
+
+                <div class="pd-faq-list">
+                    @foreach (var faq in Model.Post.Faqs)
+                    {
+                        <details class="pd-details">
+                            <summary class="pd-summary">@faq.Question</summary>
+                            <div class="pd-answer">
+                                @Html.Raw(sanitizer.Sanitize((faq.Answer ?? "").Replace("\n", "<br/>")))
+                            </div>
+                        </details>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="pd-cta">
+            <div class="pd-cta-text">
+                <h4>آماده ساخت کورت پدل هستید؟</h4>
+                <p>طراحی فراتر از استاندارد. اجرای تخصصی زمین‌های پدل با شیشه‌های ۱۲ میل نشکن. تجربه‌ای امن و بی‌نظیر برای بازیکنان.</p>
+            </div>
+            <div class="pd-cta-actions">
+                <a href="https://wa.me/989111515971" target="_blank" class="pd-btn-social" title="واتس‌اپ">
+                    <i class="bi bi-whatsapp"></i>
+                </a>
+                <a href="https://t.me/DarabiHolding" target="_blank" class="pd-btn-social" title="تلگرام">
+                    <i class="bi bi-telegram"></i>
+                </a>
+                <a href="https://instagram.com/darabicopadel" target="_blank" class="pd-btn-social" title="اینستاگرام">
+                    <i class="bi bi-instagram"></i>
+                </a>
+                <a asp-controller="Home" asp-action="Contact" class="pd-btn">
+                    <i class="bi bi-telephone-fill"></i> دریافت مشاوره رایگان
+                </a>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- مقالات مرتبط (خوانده شده از طریق ViewModel) -->
+    @if (Model.RelatedPosts != null && Model.RelatedPosts.Any())
+    {
+        <section class="pd-related-section">
+            <h3 class="pd-related-title">مطالب پیشنهادی</h3>
+            <div class="pd-related-grid">
+                @foreach (var rpost in Model.RelatedPosts)
+                {
+                    <a asp-controller="Home" asp-action="Post" asp-route-slug="@rpost.Slug" class="pd-card">
+                        <div style="overflow: hidden;">
+                            <img src="@(!string.IsNullOrWhiteSpace(rpost.CoverImagePath) ? rpost.CoverImagePath : "/H-IMG/133.webp")" alt="@rpost.Title" class="pd-card-img" loading="lazy" />
+                        </div>
+                        <div class="pd-card-body">
+                            <div class="pd-card-meta">
+                                <span><i class="bi bi-clock"></i> @rpost.CreatedAt.ToString("yyyy/MM/dd")</span>
+                            </div>
+                            <h5 class="pd-card-title">@rpost.Title</h5>
+                        </div>
+                    </a>
+                }
+            </div>
+        </section>
+    }
+
+    @section Scripts {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                document.body.classList.remove('loading-state');
+                const header = document.getElementById("main-header");
+                if (header && !header.classList.contains("scrolled")) {
+                    header.style.background = "rgba(10, 12, 18, 0.95)";
+                    header.style.backdropFilter = "blur(10px)";
+                    header.classList.add("scrolled");
+                }
+            });
+        </script>
+    }
