@@ -1,16 +1,6 @@
-﻿# ==========================================
-# Robots.txt for Darabico Holding
-# ==========================================
-
-User-agent: *
-# اجازه دسترسی به همه صفحات عمومی داده شده است
-Allow: /
-
-# مسدود کردن ربات‌ها از ورود به صفحات امنیتی و مدیریت
+﻿User-agent: *
 Disallow: /Admin/
-Disallow: /admin/
-Disallow: /login/
-Disallow: /Error/
+Disallow: /Home/PageNotFound
+Disallow: /Home/Error
 
-# معرفی نقشه سایت به ربات‌های گوگل
 Sitemap: https://darabico.com/sitemap.xml

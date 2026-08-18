@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// تنظیمات هاستینگ
+// تنظیمات هاستینگ و پروکسی‌ها (برای اجرا پشت IIS یا Nginx)
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -18,32 +18,40 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// 🚀 پرفورمنس: فعال‌سازی فشرده‌سازی
+// 🚀 پرفورمنس: فعال‌سازی فشرده‌سازی برای لود سریع‌تر صفحات
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true;
     options.Providers.Add<GzipCompressionProvider>();
+    options.Providers.Add<BrotliCompressionProvider>(); // بروتلی برای مرورگرهای مدرن
 });
-builder.Services.Configure<GzipCompressionProviderOptions>(options =>
-{
-    options.Level = CompressionLevel.Fastest;
-});
+builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
+builder.Services.Configure<BrotliCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
 
-// تنظیمات سئو برای URLها
+// 🚀 SEO: تنظیمات روتینگ با حروف کوچک و حذف اسلش اضافه
 builder.Services.AddRouting(options =>
 {
     options.LowercaseUrls = true;
     options.AppendTrailingSlash = false;
 });
 
-builder.Services.AddControllersWithViews();
+// 🚀 امنیت (HSTS): تنظیم Strict-Transport-Security برای Production
+builder.Services.AddHsts(options =>
+{
+    options.Preload = true;
+    options.IncludeSubDomains = true;
+    options.MaxAge = TimeSpan.FromDays(365);
+});
 
-// 🚀 پرفورمنس: فعال‌سازی سرویس کش خروجی
+builder.Services.AddControllersWithViews();
 builder.Services.AddOutputCache();
 
-// تنظیمات دیتابیس
+// 🚀 معماری و دیتابیس: رفع باگ Assembly Mismatch برای Entity Framework
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        b => b.MigrationsAssembly("final_p_01.Infrastructure") // معرفی صریح لایه زیرساخت
+    ));
 
 // 🚀 امنیت: پیکربندی پیشرفته و ضد-هک برای کوکی احراز هویت
 builder.Services.AddAuthentication("DarabicoAuth")
@@ -52,15 +60,16 @@ builder.Services.AddAuthentication("DarabicoAuth")
         options.LoginPath = "/Admin/Auth/Login";
         options.LogoutPath = "/Admin/Auth/Logout";
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
-        options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.Cookie.SameSite = SameSiteMode.Strict;
+
+        options.Cookie.HttpOnly = true; // جلوگیری از XSS
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // فقط روی HTTPS
+        options.Cookie.SameSite = SameSiteMode.Strict; // جلوگیری از CSRF
     });
 
 var app = builder.Build();
 
 // =======================================================
-// 🚀 رفع باگ معماری (Admin Seed): اجرای Seeder در Startup
+// 🚀 معماری (Admin Seed) با رویکرد Fail-Fast
 // =======================================================
 using (var scope = app.Services.CreateScope())
 {
@@ -70,11 +79,17 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<ApplicationDbContext>();
         var configuration = services.GetRequiredService<IConfiguration>();
 
-        // اجرای Seed فقط در صورتی که ادمین وجود نداشته باشد
+        // اجرای Seed فقط در صورتی که هیچ ادمینی وجود نداشته باشد
         if (!context.AdminUsers.Any())
         {
-            var adminEmail = configuration["AdminSettings:DefaultEmail"] ?? "admin@darabico.com";
-            var adminPassword = configuration["AdminSettings:DefaultPassword"] ?? "Fallback@123!";
+            var adminEmail = configuration["AdminSettings:DefaultEmail"];
+            var adminPassword = configuration["AdminSettings:DefaultPassword"];
+
+            // 🚀 Fail-Fast: برنامه بدون پیکربندی امنیتی نباید بالا بیاید!
+            if (string.IsNullOrEmpty(adminEmail) || string.IsNullOrEmpty(adminPassword))
+            {
+                throw new Exception("CRITICAL ERROR: AdminSettings (DefaultEmail or DefaultPassword) are missing in Configuration or User Secrets. Application cannot start securely.");
+            }
 
             var passwordHasher = new PasswordHasher<AdminUser>();
             var defaultAdmin = new AdminUser
@@ -82,6 +97,7 @@ using (var scope = app.Services.CreateScope())
                 Email = adminEmail
             };
 
+            // هش کردن قطعی و امن پسورد
             defaultAdmin.Password = passwordHasher.HashPassword(defaultAdmin, adminPassword);
 
             context.AdminUsers.Add(defaultAdmin);
@@ -91,14 +107,15 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while seeding the database.");
+        logger.LogCritical(ex, "Application startup failed during database initialization.");
+        throw; // توقف اپلیکیشن در محیط Production
     }
 }
 // =======================================================
 
 app.UseForwardedHeaders();
 
-// 🚀 امنیت (رفع باگ Information Disclosure)
+// 🚀 مدیریت خطاها بر اساس محیط
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -106,18 +123,21 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
+    app.UseHsts(); // فعال‌سازی HSTS
 }
+
+// 🚀 SEO: هدایت خطاهای 404 به صفحه اختصاصی برای جلوگیری از ایندکس صفحات شکسته
+app.UseStatusCodePagesWithReExecute("/Home/PageNotFound", "?statusCode={0}");
 
 app.UseHttpsRedirection();
 app.UseResponseCompression();
 
-// 🚀 پرفورمنس: کش فایل‌های استاتیک
+// 🚀 پرفورمنس: کشینگ فایل‌های استاتیک
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
     {
-        ctx.Context.Response.Headers["Cache-Control"] = "public,max-age=2592000";
+        ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=2592000"); // 30 روز
     }
 });
 

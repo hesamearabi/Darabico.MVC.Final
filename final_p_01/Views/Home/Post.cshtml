@@ -23,6 +23,18 @@
     sanitizer.AllowedAttributes.Add("class");
     sanitizer.AllowedAttributes.Add("id");
 
+    // 🔒 P0 SECURITY FIX: مسدود کردن iframeهای مخرب. فقط دامنه آپارات مجاز است.
+    sanitizer.FilterUrl += (sender, args) =>
+    {
+        if (args.Tag.TagName.ToLower() == "iframe")
+        {
+            if (!args.OriginalUrl.StartsWith("https://www.aparat.com/"))
+            {
+                args.SanitizedUrl = null; // این کار باعث حذف خصلت src و بی‌اثر شدن iframe مخرب می‌شود
+            }
+        }
+    };
+
     string processedContent = sanitizer.Sanitize(Model.Post.Content ?? "");
 }
 
@@ -92,6 +104,7 @@
                 align-items: center;
                 background: rgba(255, 255, 255, 0.1);
                 backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
                 padding: 8px 24px;
                 border-radius: 50px;
                 border: 1px solid rgba(255,255,255,0.1);
@@ -572,6 +585,7 @@
                         <details class="pd-details">
                             <summary class="pd-summary">@faq.Question</summary>
                             <div class="pd-answer">
+                                <!-- 🚀 امن‌سازی پاسخ‌های FAQ -->
                                 @Html.Raw(sanitizer.Sanitize((faq.Answer ?? "").Replace("\n", "<br/>")))
                             </div>
                         </details>
@@ -603,7 +617,6 @@
 
     </main>
 
-    <!-- مقالات مرتبط (خوانده شده از طریق ViewModel) -->
     @if (Model.RelatedPosts != null && Model.RelatedPosts.Any())
     {
         <section class="pd-related-section">
