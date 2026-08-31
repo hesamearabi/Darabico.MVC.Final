@@ -7,6 +7,10 @@ using Microsoft.EntityFrameworkCore;
 using final_p_01.Infrastructure.Data;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace final_p_01.Controllers
 {
@@ -43,7 +47,7 @@ namespace final_p_01.Controllers
         public async Task<IActionResult> Post([FromRoute] string? slug, [FromQuery(Name = "slug")] string? querySlug)
         {
             var actualSlug = slug ?? querySlug;
-            if (string.IsNullOrEmpty(actualSlug)) return base.NotFound();
+            if (string.IsNullOrEmpty(actualSlug)) return NotFound();
 
             if (string.IsNullOrEmpty(slug) && !string.IsNullOrEmpty(querySlug))
             {
@@ -56,7 +60,7 @@ namespace final_p_01.Controllers
                 .Include(p => p.Faqs)
                 .FirstOrDefaultAsync(p => p.Slug == actualSlug && p.IsPublished);
 
-            if (post == null) return base.NotFound();
+            if (post == null) return NotFound();
 
             var relatedPosts = await _context.Posts
                 .AsNoTracking()
@@ -86,8 +90,7 @@ namespace final_p_01.Controllers
         {
             if (Request.Path.Value != null && Request.Path.Value.Contains("Home/Blog", StringComparison.OrdinalIgnoreCase))
             {
-                string targetUrl = page > 1 ? $"/blog?page={page}" : "/blog";
-                return RedirectPermanent(targetUrl);
+                return RedirectPermanent(page > 1 ? $"/blog?page={page}" : "/blog");
             }
 
             int pageSize = _configuration.GetValue<int>("SiteSettings:BlogPageSize", 9);
@@ -129,7 +132,7 @@ namespace final_p_01.Controllers
 
             if (guidePost == null)
             {
-                return base.NotFound();
+                return NotFound();
             }
 
             return View(guidePost);
@@ -147,16 +150,16 @@ namespace final_p_01.Controllers
 
         [Route("about-us")]
         [Route("Home/about")]
-        public IActionResult about()
+        public IActionResult About()
         {
             if (Request.Path.Value != null && Request.Path.Value.Contains("Home/about", StringComparison.OrdinalIgnoreCase))
                 return RedirectPermanent("/about-us");
 
-            return View();
+            return View("about");
         }
 
-        public IActionResult padelgrass() { return View(); }
-        public IActionResult structure() { return View(); }
+        public IActionResult PadelGrass() { return View("padelgrass"); }
+        public IActionResult Structure() { return View("structure"); }
         public IActionResult Resume() { return View(); }
         public IActionResult CostArticle() { return View(); }
         public IActionResult GlassArticle() { return View(); }
@@ -169,57 +172,48 @@ namespace final_p_01.Controllers
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
         public async Task<IActionResult> Sitemap()
         {
+            // فقط فیلدهای مورد نیاز واکشی می‌شوند
             var posts = await _context.Posts
                 .AsNoTracking()
                 .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide")
                 .OrderByDescending(p => p.CreatedAt)
+                .Select(p => new { p.Slug, p.CreatedAt })
                 .ToListAsync();
 
             var xml = new StringBuilder();
             xml.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
             xml.AppendLine("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">");
 
-            var staticPages = new List<(string? Url, string ChangeFreq, string Priority)>
+            // تنظیم خودکار Base URL بر بستر HTTPS
+            var baseUrl = $"https://{Request.Host}";
+
+            var staticPages = new List<(string Url, string ChangeFreq, string Priority)>
             {
-                (Url.Action("Index", "Home", null, Request.Scheme), "daily", "1.0"),
-                (Url.Action("about", "Home", null, Request.Scheme), "monthly", "0.8"),
-                (Url.Action("Contact", "Home", null, Request.Scheme), "monthly", "0.8"),
-                (Url.Action("Blog", "Home", null, Request.Scheme), "daily", "0.9"),
-                (Url.Action("PadelGuide", "Home", null, Request.Scheme), "weekly", "0.9")
+                ($"{baseUrl}/", "daily", "1.0"),
+                ($"{baseUrl}/about-us", "monthly", "0.8"),
+                ($"{baseUrl}/contact-us", "monthly", "0.8"),
+                ($"{baseUrl}/blog", "daily", "0.9"),
+                ($"{baseUrl}/padel-court-construction-guide", "weekly", "0.9")
             };
 
             foreach (var page in staticPages)
             {
-                if (!string.IsNullOrEmpty(page.Url))
-                {
-                    string cleanUrl = page.Url
-                        .Replace("/Home/Contact", "/contact-us", StringComparison.OrdinalIgnoreCase)
-                        .Replace("/Home/about", "/about-us", StringComparison.OrdinalIgnoreCase)
-                        .Replace("/Home/Blog", "/blog", StringComparison.OrdinalIgnoreCase);
-
-                    if (cleanUrl.StartsWith("http://")) cleanUrl = cleanUrl.Replace("http://", "https://");
-
-                    xml.AppendLine("  <url>");
-                    xml.AppendLine($"    <loc>{cleanUrl}</loc>");
-                    xml.AppendLine($"    <changefreq>{page.ChangeFreq}</changefreq>");
-                    xml.AppendLine($"    <priority>{page.Priority}</priority>");
-                    xml.AppendLine("  </url>");
-                }
+                xml.AppendLine("  <url>");
+                xml.AppendLine($"    <loc>{page.Url}</loc>");
+                xml.AppendLine($"    <changefreq>{page.ChangeFreq}</changefreq>");
+                xml.AppendLine($"    <priority>{page.Priority}</priority>");
+                xml.AppendLine("  </url>");
             }
 
             foreach (var post in posts)
             {
-                var postUrl = $"https://{Request.Host}/blog/{post.Slug}";
-
-                if (!string.IsNullOrEmpty(postUrl))
-                {
-                    xml.AppendLine("  <url>");
-                    xml.AppendLine($"    <loc>{postUrl}</loc>");
-                    xml.AppendLine($"    <lastmod>{post.CreatedAt:yyyy-MM-dd}</lastmod>");
-                    xml.AppendLine("    <changefreq>weekly</changefreq>");
-                    xml.AppendLine("    <priority>0.7</priority>");
-                    xml.AppendLine("  </url>");
-                }
+                var postUrl = $"{baseUrl}/blog/{post.Slug}";
+                xml.AppendLine("  <url>");
+                xml.AppendLine($"    <loc>{postUrl}</loc>");
+                xml.AppendLine($"    <lastmod>{post.CreatedAt:yyyy-MM-dd}</lastmod>");
+                xml.AppendLine("    <changefreq>weekly</changefreq>");
+                xml.AppendLine("    <priority>0.7</priority>");
+                xml.AppendLine("  </url>");
             }
 
             xml.AppendLine("</urlset>");

@@ -2,14 +2,25 @@
 @using System.Linq
 
 @{
-    ViewData["Title"] = "مرجع تخصصی ساخت و تجهیز زمین های پدل | دارابی کو";
+    ViewData["Title"] = "مرجع تخصصی ساخت و تجهیز زمین های پدل";
+    ViewData["MetaDescription"] = "دارابی کو؛ تولیدکننده انحصاری شیشه پدل و مجری تخصصی صفر تا صد ساخت زمین پدل در ایران. مشاوره رایگان و استعلام هزینه احداث زمین پدل استاندارد.";
 }
 
 @section Head {
-    <!-- 🚀 پرفورمنس: Preload برای تصویر پس‌زمینه Hero -->
     <link rel="preload" as="image" href="@Url.Content("~/H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp")" fetchpriority="high">
-
     <link rel="stylesheet" href="~/CSS-SOURCE/index.css" asp-append-version="true" />
+
+    <script type="application/ld+json">
+        {
+          "@@context": "https://schema.org",
+          "@@type": "WebSite",
+          "name": "دارابی کو",
+          "alternateName": "Darabico",
+          "url": "@($"https://{Context.Request.Host}/")",
+          "inLanguage": "fa-IR",
+          "description": "مرجع تخصصی ساخت و تجهیز زمین های پدل در ایران"
+        }
+    </script>
 
     <style>
         :root {
@@ -24,24 +35,38 @@
             box-sizing: border-box;
         }
 
-        /* ========================================= */
-        /* Hero Section Background Override          */
-        /* ========================================= */
         .hero {
-            background-image: url('@Url.Content("~/H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp")');
-            background-size: cover;
-            background-position: center 35%;
-            background-repeat: no-repeat;
             position: relative;
+            height: 100vh;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .hero-bg-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 35%;
+            z-index: 0;
         }
 
         .hero-overlay {
+            position: absolute;
+            inset: 0;
             background: linear-gradient(to bottom, rgba(10, 25, 47, 0.7), rgba(10, 25, 47, 0.85)) !important;
+            z-index: 1;
         }
 
-        /* ========================================= */
-        /* Services Section Styles                   */
-        /* ========================================= */
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
         .services-section {
             padding: 50px 0;
             background-color: var(--bg-gray-light);
@@ -139,11 +164,12 @@
             font-size: 0.85rem;
             line-height: 1.6;
             color: #ddd;
-            height: 0;
+            max-height: 0;
             opacity: 0;
             overflow: hidden;
             transition: var(--transition);
             text-align: justify;
+            transform: translateY(10px);
         }
 
         .service-number {
@@ -167,18 +193,15 @@
         }
 
         .service-card:hover .service-description {
-            height: 65px;
+            max-height: 65px;
             opacity: 1;
-            margin-top: 8px;
+            transform: translateY(0);
         }
 
         .service-card:hover .service-info {
             padding-bottom: 35px;
         }
 
-        /* ========================================= */
-        /* Community Section Styles                 */
-        /* ========================================= */
         .community-section-wrap {
             padding: 50px 0;
             background-color: #fff;
@@ -332,9 +355,6 @@
             text-align: justify;
         }
 
-        /* ========================================= */
-        /* Modern Gallery Projects Section           */
-        /* ========================================= */
         .projects-gallery-section {
             padding: 80px 0;
             background-color: #fff;
@@ -435,12 +455,9 @@
             transform: translateY(0);
         }
 
-        /* ========================================= */
-        /* Blog Cards Fix (SEO & UI Update)          */
-        /* ========================================= */
         .blog-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
             gap: 25px;
             max-width: 1300px;
             margin: 0 auto;
@@ -501,7 +518,15 @@
             overflow: hidden;
         }
 
-        /* Mobile specific adjustments */
+        /* اصلاح استایل اعداد آمار برای جلوگیری از استفاده هدر */
+        .about__stat-number-ui {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--primary-blue);
+            margin: 0 0 5px 0;
+            display: block;
+        }
+
         @@media (max-width: 992px) {
             .services-header {
                 flex-direction: column;
@@ -550,7 +575,7 @@
             .community-title {
                 font-size: 1.6rem;
             }
-            /* Gallery Mobile */
+
             .gallery-grid {
                 grid-template-columns: 1fr;
                 grid-template-rows: auto;
@@ -586,6 +611,7 @@
 
 @section Hero {
     <div class="hero">
+        <img src="@Url.Content("~/H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp")" alt="طراحی و ساخت زمین پدل استاندارد" class="hero-bg-img" fetchpriority="high" decoding="async" width="1920" height="1080">
         <div class="hero-overlay"></div>
         <div class="hero-content">
             <h1 class="hero-title">
@@ -602,7 +628,7 @@
                    style="padding: 12px 30px; background: rgba(255,255,255,0.1); color:#fff; border: 2px solid #fff; border-radius:50px; text-decoration:none; font-weight:bold; backdrop-filter: blur(5px); transition: 0.3s;"
                    onmouseover="this.style.background='#fff'; this.style.color='var(--primary-blue)';"
                    onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#fff';">
-                    راهنمای جامع 0 تا 100 ساخت زمین پدل
+                    راهنمای صفر تا صد پدل
                 </a>
             </div>
         </div>
@@ -613,34 +639,33 @@
     <div class="about__container">
         <div class="about__media">
             <figure class="about__image-box">
-                <!-- 🚀 پرفورمنس: تخصیص fetchpriority و حذف lazy load -->
-                <img src="@Url.Content("~/H-IMG/222.webp")" alt="بازیکن پدل در زمین دارابی کو" class="about__image" width="800" height="600" fetchpriority="high" />
+                <img src="@Url.Content("~/H-IMG/222.webp")" alt="بازیکن پدل" class="about__image" width="800" height="600" loading="lazy" decoding="async" />
                 <figcaption class="about__caption">
-                    <p class="about__caption-text">کیفیت و امنیت در زمین‌های پدل دارابی کو</p>
+                    <p class="about__caption-text">کیفیت و امنیت در زمین‌های پدل دارابی</p>
                     <a asp-controller="Home" asp-action="About" class="about__caption-link">مشاهده داستان ما →</a>
                 </figcaption>
             </figure>
         </div>
         <div class="about__content">
             <div class="about__tag"><span class="about__tag-dot"></span> درباره ما</div>
-            <h2 class="about__title">گروه تولیدی دارابی کو؛<br>تلفیق ۵۰ سال تجربه شیشه با هیجان پدل</h2>
+            <h2 class="about__title">گروه تولیدی هلدینگ دارابی؛<br>تلفیق ۵۰ سال تجربه شیشه با هیجان پدل</h2>
 
             <p class="about__desc">
-                گروه تولیدی دارابی کو با پشتوانه نیم‌قرن تجربه در صنعت شیشه، اکنون به عنوان <strong>مجری تخصصی ساخت زمین پدل</strong> در سراسر ایران شناخته می‌شود. ما تنها مجموعه‌ای هستیم که <strong>شیشه زمین پدل</strong> را با ضخامت ۱۰ و ۱۲ میل سکوریت و مطابق با استانداردهای فدراسیون جهانی (FIP) در کارخانه اختصاصی خود تولید می‌کنیم.
+                گروه تولیدی هلدینگ دارابی با پشتوانه نیم‌قرن تجربه در صنعت شیشه، اکنون به عنوان <strong>مجری تخصصی ساخت زمین پدل</strong> در سراسر ایران شناخته می‌شود. ما تنها مجموعه‌ای هستیم که <strong>شیشه زمین پدل</strong> را با ضخامت ۱۰ و ۱۲ میل سکوریت و مطابق با استانداردهای فدراسیون جهانی (FIP) در کارخانه اختصاصی خود تولید می‌کنیم.
             </p>
             <p class="about__desc">
-                تیم مهندسی ما با ارائه <strong>مشاوره رایگان ساخت زمین پدل</strong>، از مرحله برآورد هزینه‌ها و انتخاب زمین مناسب تا اجرای دقیق <strong>ابعاد استاندارد زمین پدل</strong> همراه شماست. اگر قصد <strong>سرمایه‌گذاری در پدل</strong> را دارید، ما با حذف واسطه‌ها و تولید مستقیم سازه و شیشه، <strong>هزینه ساخت زمین پدل</strong> را برای شما بهینه کرده و پروژه‌ای با گارانتی معتبر و کیفیت صادراتی تحویل می‌دهیم.
+                تیم مهندسی ما با ارائه <strong>مشاوره رایگان ساخت زمین پدل</strong>، از مرحله برآورد هزینه‌ها و انتخاب زمین مناسب تا اجرای دقیق <strong>ابعاد استاندارد زمین پدل</strong>   همراه شماست. اگر قصد <strong>سرمایه‌گذاری در پدل</strong> را دارید، ما با حذف واسطه‌ها و تولید مستقیم سازه و شیشه، <strong>هزینه ساخت زمین پدل</strong> را برای شما بهینه کرده و پروژه‌ای با گارانتی معتبر و کیفیت صادراتی تحویل می‌دهیم.
             </p>
 
             <div class="about__stats">
-                <div class="about__stat"><h3 class="about__stat-number" data-value="1350">1340</h3><span class="about__stat-label">سال آغاز</span></div>
-                <div class="about__stat"><h3 class="about__stat-number" data-value="500" data-prefix="+">+500</h3><span class="about__stat-label">پروژه موفق</span></div>
-                <div class="about__stat"><h3 class="about__stat-number" data-value="5" data-prefix="+">+5</h3><span class="about__stat-label">در حال اجرا</span></div>
+                <div class="about__stat"><span class="about__stat-number-ui about__stat-number" data-value="1350">1340</span><span class="about__stat-label">سال آغاز</span></div>
+                <div class="about__stat"><span class="about__stat-number-ui about__stat-number" data-value="500" data-prefix="+">+500</span><span class="about__stat-label">پروژه موفق</span></div>
+                <div class="about__stat"><span class="about__stat-number-ui about__stat-number" data-value="5" data-prefix="+">+5</span><span class="about__stat-label">در حال اجرا</span></div>
             </div>
 
             <div style="margin-top: 30px;">
                 <a asp-controller="Home" asp-action="About" class="btn-primary-glow" style="display:inline-block; padding: 12px 30px; background:var(--primary-blue); color:#fff; border-radius:50px; text-decoration:none; font-weight:bold; font-size:0.9rem;">
-                    بیشتر درباره دارابی کو بدانید
+                    بیشتر درباره هلدینگ بدانید
                 </a>
             </div>
         </div>
@@ -651,7 +676,7 @@
     <div class="services-container">
         <div class="services-header">
             <div class="header-left">
-                <h2 class="title">خدمات دارابی کو</h2>
+                <h2 class="title">خدمات هلدینگ دارابی</h2>
             </div>
             <a asp-controller="home" asp-action="contact" class="view-all">مشاوره فنی <span>➜</span></a>
         </div>
@@ -659,7 +684,7 @@
 
             <a asp-controller="home" asp-action="blog" class="service-card">
                 <span class="service-number">01</span>
-                <img src="@Url.Content("~/H-IMG/02-compressed (2).webp")" alt="ساخت زمین پدل" class="service-img" loading="lazy" />
+                <img src="@Url.Content("~/H-IMG/02-compressed (2).webp")" alt="ساخت زمین پدل" class="service-img" loading="lazy" decoding="async" width="400" height="300" />
                 <div class="service-overlay"></div>
                 <div class="service-info">
                     <h3>ساخت و احداث زمین</h3>
@@ -669,7 +694,7 @@
 
             <a asp-controller="home" asp-action="blog" class="service-card">
                 <span class="service-number">02</span>
-                <img src="@Url.Content("~/H-IMG/05-compressed.webp")" alt="خدمات پس از فروش" class="service-img" loading="lazy" />
+                <img src="@Url.Content("~/H-IMG/05-compressed.webp")" alt="خدمات پس از فروش" class="service-img" loading="lazy" decoding="async" width="400" height="300" />
                 <div class="service-overlay"></div>
                 <div class="service-info">
                     <h3>نگهداری و آموزش</h3>
@@ -679,7 +704,7 @@
 
             <a asp-controller="home" asp-action="blog" class="service-card">
                 <span class="service-number">03</span>
-                <img src="@Url.Content("~/H-IMG/003-compressed.webp")" alt="تجهیزات پدل" class="service-img" loading="lazy" />
+                <img src="@Url.Content("~/H-IMG/003-compressed.webp")" alt="تجهیزات پدل" class="service-img" loading="lazy" decoding="async" width="400" height="300" />
                 <div class="service-overlay"></div>
                 <div class="service-info">
                     <h3>تجهیزات تخصصی کورت</h3>
@@ -689,7 +714,7 @@
 
             <a asp-controller="home" asp-action="blog" class="service-card">
                 <span class="service-number">04</span>
-                <img src="@Url.Content("~/H-IMG/04-compressed.webp")" alt="رزرو و سرمایه گذاری" class="service-img" loading="lazy" />
+                <img src="@Url.Content("~/H-IMG/04-compressed.webp")" alt="رزرو و سرمایه گذاری" class="service-img" loading="lazy" decoding="async" width="400" height="300" />
                 <div class="service-overlay"></div>
                 <div class="service-info">
                     <h3>طرح‌های سرمایه‌گذاری</h3>
@@ -704,11 +729,13 @@
 <section class="community-section-wrap">
     <div class="community-grid">
         <div class="community-media">
-            <div class="community-img-box"><img src="@Url.Content("~/H-IMG/11-compressed.webp")" alt="راکت پدل" class="community-img" loading="lazy" /></div>
+            <div class="community-img-box">
+                <img src="@Url.Content("~/H-IMG/11-compressed.webp")" alt="راکت پدل" class="community-img" loading="lazy" decoding="async" width="600" height="450" />
+            </div>
             <div class="community-promo-card"><h3>سرمایه‌گذاری مطمئن<br>در صنعت ورزش پدل</h3><a asp-controller="home" asp-action="contact" class="promo-link">دریافت مشاوره تخصصی ➜</a></div>
         </div>
         <div class="community-content">
-            <div class="community-label"><span class="dot"></span> دارابی کو؛ فراتر از یک پیمانکار</div>
+            <div class="community-label"><span class="dot"></span> هلدینگ دارابی؛ فراتر از یک پیمانکار</div>
             <h2 class="community-title">از خط تولید شیشه تا<br>هیجان بازی در زمین پدل</h2>
             <div class="features-list">
                 <div class="feature-item"><div class="feature-icon-box">📱</div><div class="feature-content"><h4>شفافیت در اجرا</h4><p>مشاهده آنلاین فیلم‌های <strong>تست مقاومت شیشه‌ها</strong> و گزارش مراحل ساخت.</p></div></div>
@@ -718,7 +745,7 @@
     </div>
 </section>
 
-<section class="blog-tips-section" dir="rtl">
+<section class="blog-tips-section">
     <div class="blog-header">
         <div class="label">دانشنامه تخصصی پدل</div>
         <h2>آخرین مقالات و راهنما</h2>
@@ -729,17 +756,17 @@
     <div class="blog-cards">
         @if (Model != null && Model.Any())
         {
-            @foreach (var post in Model.OrderByDescending(p => p.Id).Take(3))
+            @foreach (var post in Model)
             {
                 <a asp-controller="Home" asp-action="Post" asp-route-slug="@post.Slug" class="blog-card">
                     <div class="blog-img">
                         @if (!string.IsNullOrEmpty(post.CoverImagePath))
                         {
-                            <img src="@post.CoverImagePath" alt="@post.Title" loading="lazy">
+                            <img src="@post.CoverImagePath" alt="@post.Title" loading="lazy" decoding="async" width="400" height="250">
                         }
                         else
                         {
-                            <img src="@Url.Content("~/H-IMG/133.webp")" alt="@post.Title" loading="lazy">
+                            <img src="@Url.Content("~/H-IMG/133.webp")" alt="@post.Title" loading="lazy" decoding="async" width="400" height="250">
                         }
                     </div>
                     <div class="blog-info">
@@ -767,16 +794,16 @@
 
     <div class="gallery-grid">
         <div class="gallery-item large">
-            <img src="@Url.Content("~/H-IMG/166.webp")" alt="اجرای زمین پدل استاندارد" loading="lazy">
+            <img src="@Url.Content("~/H-IMG/166.webp")" alt="اجرای زمین پدل استاندارد" loading="lazy" decoding="async" width="600" height="600">
             <div class="gallery-overlay">
                 <div class="gallery-content">
-                    <p>اجرای کورت استاندارد با شیشه ۱۲ میل سکوریت</p>
+                    <p>اجرای  کورت استاندارد با شیشه ۱۲ میل سکوریت</p>
                 </div>
             </div>
         </div>
 
         <div class="gallery-item">
-            <img src="@Url.Content("~/H-IMG/227.webp")" alt="نصب سازه پدل" loading="lazy">
+            <img src="@Url.Content("~/H-IMG/227.webp")" alt="نصب سازه پدل" loading="lazy" decoding="async" width="300" height="300">
             <div class="gallery-overlay">
                 <div class="gallery-content">
                     <p>نصب سازه فلزی و چمن موندو</p>
@@ -785,28 +812,27 @@
         </div>
 
         <div class="gallery-item">
-            <img src="@Url.Content("~/H-IMG/225.webp")" alt="طراحی و اجرای زمین پدل با برند دارابی کو" loading="lazy">
+            <img src="@Url.Content("~/H-IMG/225.webp")" alt="طراحی و اجرای زمین پدل با برند دارابیکو" loading="lazy" decoding="async" width="300" height="300">
             <div class="gallery-overlay">
                 <div class="gallery-content">
-                    <p>طراحی و اجرای زمین پدل با برند دارابی کو</p>
+                    <p>طراحی و اجرای زمین پدل با برند دارابیکو</p>
                 </div>
             </div>
         </div>
 
         <div class="gallery-item">
-            <img src="@Url.Content("~/H-IMG/666.webp")" alt="تجهیز کامل زمین پدل" loading="lazy">
+            <img src="@Url.Content("~/H-IMG/666.webp")" alt="تجهیز کامل زمین پدل" loading="lazy" decoding="async" width="300" height="300">
             <div class="gallery-overlay">
                 <div class="gallery-content">
-                    <p>تجهیز کامل زمین پدل</p>
+                    <p>تجهیز کامل زمین پدل </p>
                 </div>
             </div>
         </div>
-
         <div class="gallery-item">
-            <img src="@Url.Content("~/H-IMG/16.webp")" alt="نصب چمن کورت" loading="lazy">
+            <img src="@Url.Content("~/H-IMG/16.webp")" alt="نصب چمن کورت" loading="lazy" decoding="async" width="300" height="300">
             <div class="gallery-overlay">
                 <div class="gallery-content">
-                    <p>نصب چمن کورت</p>
+                    <p>نصب چمن کورت </p>
                 </div>
             </div>
         </div>

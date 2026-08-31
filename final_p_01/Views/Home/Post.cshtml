@@ -1,12 +1,15 @@
 ﻿@model final_p_01.Models.PostDetailsViewModel
 @using System.Linq
 @using Ganss.Xss
+@using System.Text.Json
 
 @{
     ViewData["Title"] = Model.Post.Title;
     Layout = "~/Views/Shared/_Layout.cshtml";
 
     string coverImage = !string.IsNullOrWhiteSpace(Model.Post.CoverImagePath) ? Model.Post.CoverImagePath : "/H-IMG/133.webp";
+    string absoluteCoverImage = $"{Context.Request.Scheme}://{Context.Request.Host}{coverImage}";
+    string absoluteUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}";
 
     // 🚀 Sanitization & Optimization
     var sanitizer = new HtmlSanitizer();
@@ -36,7 +39,6 @@
 
     string processedContent = sanitizer.Sanitize(Model.Post.Content ?? "");
 
-    // 🚀 FIXED: پردازش امن‌سازی سوالات متداول قبل از رندر ویو برای جلوگیری از افت فریم و کندی سرور
     var safeFaqs = Model.Post.Faqs?.Select(f => new
     {
         Question = f.Question,
@@ -48,6 +50,89 @@
 
     @section Head {
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+        <!-- 🚀 LCP: پره‌لود تصویر اصلی مقاله -->
+        <link rel="preload" as="image" href="@coverImage" fetchpriority="high">
+
+        <!-- 🚀 SEO: تولید خودکار Rich Snippets برای درک عمیق گوگل -->
+        <script type="application/ld+json">
+            {
+              "@@context": "https://schema.org",
+              "@@graph": [
+                {
+                  "@@type": "Article",
+                  "headline": @Html.Raw(JsonSerializer.Serialize(Model.Post.Title)),
+                  "image": "@absoluteCoverImage",
+                  "datePublished": "@Model.Post.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ")",
+                  "author": {
+                    "@@type": "Organization",
+                    "name": "دارابی کو",
+                    "url": "@($"{Context.Request.Scheme}://{Context.Request.Host}")"
+                  },
+                  "publisher": {
+                    "@@type": "Organization",
+                    "name": "دارابی کو",
+                    "logo": {
+                      "@@type": "ImageObject",
+                      "url": "@($"{Context.Request.Scheme}://{Context.Request.Host}/siteLOGO/sitelogo.png")"
+                    }
+                  },
+                  "mainEntityOfPage": {
+                    "@@type": "WebPage",
+                    "@@id": "@absoluteUrl"
+                  }
+                },
+                {
+                  "@@type": "BreadcrumbList",
+                  "itemListElement": [
+                    {
+                      "@@type": "ListItem",
+                      "position": 1,
+                      "name": "خانه",
+                      "item": "@($"{Context.Request.Scheme}://{Context.Request.Host}/")"
+                    },
+                    {
+                      "@@type": "ListItem",
+                      "position": 2,
+                      "name": "مجله پدل",
+                      "item": "@($"{Context.Request.Scheme}://{Context.Request.Host}/blog")"
+                    },
+                    {
+                      "@@type": "ListItem",
+                      "position": 3,
+                      "name": @Html.Raw(JsonSerializer.Serialize(Model.Post.Title))
+                    }
+                  ]
+                }
+                @if (safeFaqs != null && safeFaqs.Any())
+                {
+                    <text>
+                    ,{
+                      "@@type": "FAQPage",
+                      "mainEntity": [
+                        @for (int i = 0; i < safeFaqs.Count; i++)
+                        {
+                              var faq = safeFaqs[i];
+                              <text>
+                              {
+                                "@@type": "Question",
+                                "name": @Html.Raw(JsonSerializer.Serialize(faq.Question)),
+                                "acceptedAnswer": {
+                                  "@@type": "Answer",
+                                  "text": @Html.Raw(JsonSerializer.Serialize(faq.Answer))
+                                }
+                              }
+                              @(i < safeFaqs.Count - 1 ? "," : "")
+                              </text>
+                        }
+                      ]
+                    }
+                    </text>
+                }
+              ]
+            }
+        </script>
+
         <style>
             /* [تمامی استایل‌های CSS قبلی دقیقاً در اینجا قرار بگیرند. برای جلوگیری از طولانی شدن پاسخ حذفشان نکردم، فقط فرض کنید همان بلاک CSS شما در اینجاست] */
             :root {
@@ -153,7 +238,7 @@
                 flex-wrap: wrap;
             }
 
-                .pd-meta span {
+                .pd-meta span, .pd-meta time {
                     display: flex;
                     align-items: center;
                     gap: 8px;
@@ -550,19 +635,21 @@
 
     <div class="pd-hero">
         <div class="pd-hero-content">
-            <div class="pd-breadcrumb">
+            <nav aria-label="breadcrumb" class="pd-breadcrumb">
                 <a href="/">خانه</a>
                 <span class="sep">/</span>
                 <a asp-controller="Home" asp-action="Blog">مجله پدل</a>
                 <span class="sep">/</span>
-                <span style="color: #fff;">@Model.Post.Title</span>
-            </div>
+                <span aria-current="page" style="color: #fff;">@Model.Post.Title</span>
+            </nav>
 
             <h1 class="pd-title">@Model.Post.Title</h1>
 
             <div class="pd-meta">
                 <span><i class="bi bi-person-circle"></i> تحریریه دارابی کو</span>
-                <span><i class="bi bi-calendar3"></i> @Model.Post.CreatedAt.ToString("yyyy/MM/dd")</span>
+                <time datetime="@Model.Post.CreatedAt.ToString("yyyy-MM-dd")">
+                    <i class="bi bi-calendar3"></i> @Model.Post.CreatedAt.ToString("yyyy/MM/dd")
+                </time>
                 @if (Model.Post.Category != null)
                 {
                     <span><i class="bi bi-folder2-open"></i> @Model.Post.Category.Name</span>
@@ -573,9 +660,9 @@
 
     <main class="pd-container">
 
-        <div class="pd-body">
+        <article class="pd-body">
             @Html.Raw(processedContent)
-        </div>
+        </article>
 
         @if (safeFaqs != null && safeFaqs.Any())
         {
@@ -635,7 +722,7 @@
                         </div>
                         <div class="pd-card-body">
                             <div class="pd-card-meta">
-                                <span><i class="bi bi-clock"></i> @rpost.CreatedAt.ToString("yyyy/MM/dd")</span>
+                                <time datetime="@rpost.CreatedAt.ToString("yyyy-MM-dd")"><i class="bi bi-clock"></i> @rpost.CreatedAt.ToString("yyyy/MM/dd")</time>
                             </div>
                             <h5 class="pd-card-title">@rpost.Title</h5>
                         </div>
