@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using final_p_01.Domain.Entities;
 using final_p_01.Infrastructure.Data;
 using Microsoft.AspNetCore.Http;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using SixLabors.ImageSharp;
 
 namespace final_p_01.Areas.Admin.Controllers
@@ -21,31 +23,36 @@ namespace final_p_01.Areas.Admin.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<PostsController> _logger;
+        private readonly IConfiguration _configuration;
 
-        public PostsController(ApplicationDbContext context, ILogger<PostsController> logger)
+        public PostsController(ApplicationDbContext context, ILogger<PostsController> logger, IConfiguration configuration)
         {
             _context = context;
             _logger = logger;
+            _configuration = configuration;
         }
 
-        // 🚀 BUG 1 & 3: بررسی واقعی محتوای تصویر با بالاترین استاندارد (جلوگیری از RCE و Polyglot)
         private async Task<string> ProcessAndSaveImageAsync(IFormFile file, string subFolder)
         {
             if (file == null || file.Length == 0) throw new InvalidOperationException("فایلی ارسال نشده است.");
 
-            const long maxFileSize = 3 * 1024 * 1024; // 3MB
-            if (file.Length > maxFileSize)
-                throw new InvalidOperationException("حجم تصویر نباید بیشتر از 3 مگابایت باشد.");
+            // 🚀 CLEAN CODE: خواندن مقادیر از AppSettings
+            int maxMb = _configuration.GetValue<int>("SiteSettings:MaxImageUploadSizeMB", 3);
+            long maxFileSize = maxMb * 1024 * 1024;
 
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+            if (file.Length > maxFileSize)
+                throw new InvalidOperationException($"حجم تصویر نباید بیشتر از {maxMb} مگابایت باشد.");
+
+            var allowedExtString = _configuration.GetValue<string>("SiteSettings:AllowedImageExtensions", ".jpg,.jpeg,.png,.webp,.gif");
+            var allowedExtensions = allowedExtString.Split(',', StringSplitOptions.RemoveEmptyEntries);
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
             if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
                 throw new InvalidOperationException("فرمت فایل معتبر نیست.");
 
             if (!file.ContentType.StartsWith("image/"))
                 throw new InvalidOperationException("نوع محتوای فایل (MIME) معتبر نیست.");
 
-            // باز کردن سربرگ فایل برای بررسی معماری واقعی عکس (Real Image Decode)
             try
             {
                 using var stream = file.OpenReadStream();
@@ -73,7 +80,6 @@ namespace final_p_01.Areas.Admin.Controllers
             return $"/uploads/{subFolder}/{uniqueFileName}";
         }
 
-        // 🚀 BUG 2: استفاده از Canonical Path برای حبس کردن دسترسی فقط به پوشه مجاز (Path Containment)
         private void DeleteSecurely(string relativePath)
         {
             if (string.IsNullOrEmpty(relativePath)) return;
@@ -81,15 +87,11 @@ namespace final_p_01.Areas.Admin.Controllers
             try
             {
                 string webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-
-                // جایگزینی اسلش‌ها بر اساس سیستم عامل
                 string normalizedRelativePath = relativePath.Replace('/', Path.DirectorySeparatorChar)
                                                             .Replace('\\', Path.DirectorySeparatorChar)
                                                             .TrimStart(Path.DirectorySeparatorChar);
 
                 string targetPath = Path.GetFullPath(Path.Combine(webRootPath, normalizedRelativePath));
-
-                // ساخت مسیر مطلقِ پوشه آپلود (حتما با کاراکتر جداکننده در انتها تا هکر نتواند فولدر uploads_backup بسازد)
                 string allowedDirectory = Path.GetFullPath(Path.Combine(webRootPath, "uploads")) + Path.DirectorySeparatorChar;
 
                 if (targetPath.StartsWith(allowedDirectory, StringComparison.OrdinalIgnoreCase) && System.IO.File.Exists(targetPath))
@@ -140,7 +142,7 @@ namespace final_p_01.Areas.Admin.Controllers
                     return View(post);
                 }
 
-                string? uploadedImagePath = null; // برای Cleanup
+                string? uploadedImagePath = null;
 
                 try
                 {
@@ -158,13 +160,12 @@ namespace final_p_01.Areas.Admin.Controllers
                 }
                 catch (InvalidOperationException ex)
                 {
-                    ModelState.AddModelError("CoverImagePath", ex.Message); // خطای Validation معتبر
+                    ModelState.AddModelError("CoverImagePath", ex.Message);
                     ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
                     return View(post);
                 }
                 catch (Exception ex)
                 {
-                    // 🚀 BUG 4 & 5: جلوگیری از باقی ماندن فایل یتیم در سرور هنگام خطای دیتابیس
                     if (!string.IsNullOrEmpty(uploadedImagePath)) DeleteSecurely(uploadedImagePath);
 
                     _logger.LogError(ex, "System Error during Post Create.");
@@ -219,7 +220,7 @@ namespace final_p_01.Areas.Admin.Controllers
                 existingPost.IsPublished = post.IsPublished;
 
                 string? oldImagePathToDelete = null;
-                string? newlyUploadedImagePath = null; // برای Cleanup
+                string? newlyUploadedImagePath = null;
 
                 try
                 {
@@ -244,7 +245,6 @@ namespace final_p_01.Areas.Admin.Controllers
 
                     await _context.SaveChangesAsync();
 
-                    // 🚀 BUG 4: اگر دیتابیس سیو شد، عکس قبلی را پاک کن
                     if (!string.IsNullOrEmpty(oldImagePathToDelete)) DeleteSecurely(oldImagePathToDelete);
 
                     return RedirectToAction("Index");
@@ -257,7 +257,6 @@ namespace final_p_01.Areas.Admin.Controllers
                 }
                 catch (Exception ex)
                 {
-                    // 🚀 BUG 5: اگر ذخیره با خطا روبرو شد، عکس آپلود شده‌ی جدید را پاک کن تا فضا اشغال نکند
                     if (!string.IsNullOrEmpty(newlyUploadedImagePath)) DeleteSecurely(newlyUploadedImagePath);
 
                     _logger.LogError(ex, "Error updating Post ID: {PostId}", existingPost.Id);
@@ -288,7 +287,6 @@ namespace final_p_01.Areas.Admin.Controllers
             return RedirectToAction("Index");
         }
 
-        // 🚀 BUG 9 & 10: ایمن شده در برابر CSRF و هماهنگ با TinyMCE
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadArticleImage(IFormFile upload)
@@ -300,7 +298,6 @@ namespace final_p_01.Areas.Admin.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                // ارورهای Validation
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
@@ -310,7 +307,6 @@ namespace final_p_01.Areas.Admin.Controllers
             }
         }
 
-        // 🚀 متد جدید برای آپلود ویدیوی مستقیم در ادیتور + CSRF
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadArticleVideo(IFormFile file)
@@ -319,12 +315,40 @@ namespace final_p_01.Areas.Admin.Controllers
             {
                 if (file == null || file.Length == 0) return BadRequest("فایلی ارسال نشده است.");
 
-                const long maxFileSize = 50 * 1024 * 1024; // 50MB
-                if (file.Length > maxFileSize) return BadRequest("حجم ویدیو نباید بیشتر از 50 مگابایت باشد.");
+                // 🚀 CLEAN CODE
+                int maxMb = _configuration.GetValue<int>("SiteSettings:MaxVideoUploadSizeMB", 50);
+                long maxFileSize = maxMb * 1024 * 1024;
 
-                var allowedExtensions = new[] { ".mp4", ".webm", ".ogg" };
+                if (file.Length > maxFileSize)
+                    return BadRequest($"حجم ویدیو نباید بیشتر از {maxMb} مگابایت باشد.");
+
+                var allowedExtString = _configuration.GetValue<string>("SiteSettings:AllowedVideoExtensions", ".mp4,.webm,.ogg");
+                var allowedExtensions = allowedExtString.Split(',', StringSplitOptions.RemoveEmptyEntries);
                 var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-                if (!allowedExtensions.Contains(extension)) return BadRequest("فقط فرمت‌های mp4, webm, ogg مجاز هستند.");
+
+                if (!allowedExtensions.Contains(extension))
+                    return BadRequest("فرمت ویدیو مجاز نیست.");
+
+                if (!file.ContentType.StartsWith("video/")) return BadRequest("نوع محتوای فایل معتبر نیست.");
+
+                using var stream = file.OpenReadStream();
+                var buffer = new byte[8];
+                await stream.ReadAsync(buffer, 0, 8);
+
+                var signatures = new List<byte[]>
+                {
+                    new byte[] { 0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70 },
+                    new byte[] { 0x1A, 0x45, 0xDF, 0xA3 },
+                    new byte[] { 0x4F, 0x67, 0x67, 0x53 }
+                };
+
+                bool isSignatureValid = signatures.Any(sig => buffer.Take(sig.Length).SequenceEqual(sig));
+                if (!isSignatureValid)
+                {
+                    return BadRequest("ساختار فایل دستکاری شده و نامعتبر است.");
+                }
+
+                stream.Position = 0;
 
                 string uniqueFileName = $"{Guid.NewGuid()}{extension}";
                 string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "article-videos");
@@ -333,7 +357,7 @@ namespace final_p_01.Areas.Admin.Controllers
                 string filePath = Path.Combine(uploadsFolder, uniqueFileName);
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
-                    await file.CopyToAsync(fileStream);
+                    await stream.CopyToAsync(fileStream);
                 }
 
                 return Json(new { location = $"/uploads/article-videos/{uniqueFileName}" });

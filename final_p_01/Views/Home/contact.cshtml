@@ -6,17 +6,15 @@
 @section Head {
     <style>
         :root {
-            --primary-color: #0056b3; /* آبی سازمانی */
-            --dark-header: #111827; /* رنگ تیره برای هدر */
-            --bg-gray: #f3f4f6; /* رنگ پس زمینه کلی */
+            --primary-color: #0056b3;
+            --dark-header: #111827;
+            --bg-gray: #f3f4f6;
         }
 
-        /* 1. اصلاح مشکل هدر: ایجاد یک نوار تیره در بالای صفحه */
         .page-title-section {
             background-color: var(--dark-header);
-            /* اضافه کردن پترن برای زیبایی */
             background-image: radial-gradient(circle at 10% 20%, rgba(0, 86, 179, 0.2) 0%, transparent 20%);
-            padding: 160px 0 80px; /* فاصله از بالا برای قرارگیری زیر منو */
+            padding: 160px 0 80px;
             color: white;
             text-align: center;
             position: relative;
@@ -35,7 +33,6 @@
                 margin: 0 auto;
             }
 
-        /* 2. بدنه اصلی که روی هدر تیره قرار می‌گیرد (Negative Margin) */
         .contact-body {
             background-color: var(--bg-gray);
             min-height: 60vh;
@@ -44,7 +41,7 @@
 
         .floating-container {
             max-width: 1200px;
-            margin: -60px auto 0; /* کشیدن باکس‌ها به سمت بالا */
+            margin: -60px auto 0;
             padding: 0 20px;
             position: relative;
             z-index: 10;
@@ -52,11 +49,10 @@
 
         .grid-layout {
             display: grid;
-            grid-template-columns: 2fr 1fr; /* تقسیم فضا: لیست تماس‌ها بزرگتر */
+            grid-template-columns: 2fr 1fr;
             gap: 30px;
         }
 
-        /* استایل کارت‌های تماس */
         .contact-list-box {
             background: white;
             border-radius: 20px;
@@ -113,7 +109,6 @@
                 color: var(--primary-color);
             }
 
-        /* استایل باکس کناری (سئو و مشاوره) */
         .side-info-box {
             background: #0056b3;
             color: white;
@@ -145,7 +140,6 @@
                 font-weight: 600;
             }
 
-        /* ریسپانسیو */
         @@media (max-width: 992px) {
             .grid-layout {
                 grid-template-columns: 1fr;
@@ -168,96 +162,84 @@
             .page-title-section {
                 padding-top: 140px;
             }
-            /* تنظیم ارتفاع هدر در موبایل */
         }
     </style>
 }
 
-@section Hero {
-}
+@section Hero { }
 
-<div class="page-title-section">
-    <div class="container">
-        <h1>تماس با ما</h1>
-        <p>مشاوره تخصصی و استعلام هزینه ساخت زمین پدل</p>
-    </div>
-</div>
-
-<div class="contact-body">
-    <div class="floating-container">
-        <div class="grid-layout">
-
-            <div class="contact-list-box">
-
-                <div class="contact-item-row">
-                    <div class="c-label">
-                        <span class="c-icon">📞</span>
-                        <span>مدیریت فروش و قراردادها</span>
-                    </div>
-                    <a href="tel:09111515971" class="c-value">0911 151 5971</a>
-                </div>
-
-                <div class="contact-item-row">
-                    <div class="c-label">
-                        <span class="c-icon">👷</span>
-                        <span>مدیریت فنی و اجرایی</span>
-                    </div>
-                    <a href="tel:09121729882" class="c-value">0912 172 9882</a>
-                </div>
-
-                <div class="contact-item-row">
-                    <div class="c-label">
-                        <span class="c-icon">🏭</span>
-                        <span>کارخانه تولید شیشه و سازه</span>
-                    </div>
-                    <span class="c-value" style="font-size:1rem; direction:rtl;">شهرک صنعتی شماره ۲، قطعه D5</span>
-                </div>
-
-                <div class="contact-item-row">
-                    <div class="c-label">
-                        <span class="c-icon">📍</span>
-                        <span>دفتر مرکزی هلدینگ</span>
-                    </div>
-                    <span class="c-value" style="font-size:1rem; direction:rtl;">ساری، بلوار خزر، خیابان دریا 4 ، فروشگاه دارابی</span>
-                </div>
-
-
-
-            </div>
-
-            <div class="side-info-box">
-                <h2>مشاوره قبل از ساخت</h2>
-                <p>
-                    تیم مهندسی دارابی به عنوان <strong>مجری ساخت زمین پدل</strong>، آماده ارائه دقیق‌ترین آنالیز از <strong>هزینه ساخت زمین پدل</strong> به کارفرمایان محترم می‌باشد.
-                </p>
-                <p>
-                    رعایت دقیق <strong>ابعاد استاندارد زمین پدل</strong> (۱۰ در ۲۰ متر) و استفاده از شیشه‌های سکوریت با استاندارد جهانی، تخصص ماست.
-                </p>
-                <p>
-                    اگر در جستجوی اطلاعات شفاف درباره <strong>مراحل ساخت زمین پدل</strong> و بازگشت سرمایه هستید، همین حالا با کارشناسان ما تماس بگیرید.
-                </p>
-                <div style="margin-top:20px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.2); font-size:0.8rem; opacity:0.7;">
-                    ساعات پاسخگویی: شنبه تا چهارشنبه ۸ الی ۱۷
-                </div>
-            </div>
-
+    <div class="page-title-section">
+        <div class="container">
+            <h1>تماس با ما</h1>
+            <p>مشاوره تخصصی و استعلام هزینه ساخت زمین پدل</p>
         </div>
     </div>
-</div>
 
-@section Scripts {
-    <script>
-        // انیمیشن نرم برای ظاهر شدن باکس‌ها
-        document.addEventListener("DOMContentLoaded", () => {
-            const container = document.querySelector('.floating-container');
-            container.style.opacity = '0';
-            container.style.transform = 'translateY(30px)';
-            container.style.transition = 'all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    <div class="contact-body">
+        <div class="floating-container">
+            <div class="grid-layout">
 
-            setTimeout(() => {
-                container.style.opacity = '1';
-                container.style.transform = 'translateY(0)';
-            }, 200);
-        });
-    </script>
-}
+                <div class="contact-list-box">
+                    <div class="contact-item-row">
+                        <div class="c-label">
+                            <!-- 🚀 FIX: افزودن aria-hidden برای جلوگیری از خوانده شدن آیکون توسط صفحه‌خوان -->
+                            <span class="c-icon" aria-hidden="true">📞</span>
+                            <span>مدیریت فروش و قراردادها</span>
+                        </div>
+                        <a href="tel:09111515971" class="c-value" dir="ltr">0911 151 5971</a>
+                    </div>
+
+                    <div class="contact-item-row">
+                        <div class="c-label">
+                            <span class="c-icon" aria-hidden="true">👷</span>
+                            <span>مدیریت فنی و اجرایی</span>
+                        </div>
+                        <a href="tel:09121729882" class="c-value" dir="ltr">0912 172 9882</a>
+                    </div>
+
+                    <div class="contact-item-row">
+                        <div class="c-label">
+                            <span class="c-icon" aria-hidden="true">🏭</span>
+                            <span>کارخانه تولید شیشه و سازه</span>
+                        </div>
+                        <span class="c-value" style="font-size:1rem; direction:rtl;">شهرک صنعتی شماره ۲، قطعه D5</span>
+                    </div>
+
+                    <div class="contact-item-row">
+                        <div class="c-label">
+                            <span class="c-icon" aria-hidden="true">📍</span>
+                            <span>دفتر مرکزی هلدینگ</span>
+                        </div>
+                        <span class="c-value" style="font-size:1rem; direction:rtl;">ساری، بلوار خزر، خیابان دریا 4 ، فروشگاه دارابی</span>
+                    </div>
+                </div>
+
+                <div class="side-info-box">
+                    <h2>مشاوره قبل از ساخت</h2>
+                    <p>تیم مهندسی دارابی به عنوان <strong>مجری ساخت زمین پدل</strong>، آماده ارائه دقیق‌ترین آنالیز از <strong>هزینه ساخت زمین پدل</strong> به کارفرمایان محترم می‌باشد.</p>
+                    <p>رعایت دقیق <strong>ابعاد استاندارد زمین پدل</strong> (۱۰ در ۲۰ متر) و استفاده از شیشه‌های سکوریت با استاندارد جهانی، تخصص ماست.</p>
+                    <p>اگر در جستجوی اطلاعات شفاف درباره <strong>مراحل ساخت زمین پدل</strong> و بازگشت سرمایه هستید، همین حالا با کارشناسان ما تماس بگیرید.</p>
+                    <div style="margin-top:20px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.2); font-size:0.8rem; opacity:0.7;">
+                        ساعات پاسخگویی: شنبه تا چهارشنبه ۸ الی ۱۷
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    @section Scripts {
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const container = document.querySelector('.floating-container');
+                container.style.opacity = '0';
+                container.style.transform = 'translateY(30px)';
+                container.style.transition = 'all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)';
+
+                setTimeout(() => {
+                    container.style.opacity = '1';
+                    container.style.transform = 'translateY(0)';
+                }, 200);
+            });
+        </script>
+    }

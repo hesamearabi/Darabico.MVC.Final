@@ -1,22 +1,37 @@
-﻿<!DOCTYPE html>
+﻿@{
+    // هدرهای امنیتی
+    Context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    Context.Response.Headers.Append("X-Frame-Options", "SAMEORIGIN");
+    Context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+}
+<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="دارابی کو، مجری تخصصی ساخت زمین پدل و تولیدکننده شیشه‌های استاندارد پدل با ۵۰ سال تجربه. مشاوره رایگان هزینه ساخت در سراسر ایران.">
+
+    <!-- 🚀 SEO Fix: متادسکریپشن داینامیک و تگ‌های ضروری خزنده -->
+    <meta name="description" content="@(ViewData["MetaDescription"] ?? "دارابی کو، مجری تخصصی ساخت زمین پدل و تولیدکننده شیشه‌های استاندارد پدل با ۵۰ سال تجربه. مشاوره رایگان هزینه ساخت در سراسر ایران.")">
     <meta name="keywords" content="ساخت زمین پدل, هزینه ساخت زمین پدل, شیشه زمین پدل, ابعاد زمین پدل, دارابی کو">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="@($"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}")" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+
+    <!-- 🚀 SEO Fix: الزام HTTPS در کانونیکال و Open Graph -->
+    <link rel="canonical" href="@($"https://{Context.Request.Host}{Context.Request.Path}")" />
 
     <meta property="og:site_name" content="دارابی کو">
-    <meta property="og:title" content="دارابی کو | @(ViewData["Title"] ?? "مرجع تخصصی ساخت و تجهیز زمین های پدل")">
+    <meta property="og:title" content="@(ViewData["Title"] != null ? $"{ViewData["Title"]} | دارابی کو" : "دارابی کو | مرجع تخصصی ساخت زمین پدل")">
     <meta property="og:type" content="website">
-    <meta property="og:description" content="صفر تا صد ساخت زمین پدل با شیشه‌های نشکن استاندارد جهانی.">
+    <meta property="og:description" content="@(ViewData["MetaDescription"] ?? "صفر تا صد ساخت زمین پدل با شیشه‌های نشکن استاندارد جهانی.")">
+    <meta property="og:image" content="@($"https://{Context.Request.Host}/siteLOGO/sitelogo.png")">
+    <meta property="og:url" content="@($"https://{Context.Request.Host}{Context.Request.Path}")">
 
-    <meta property="og:image" content="@($"{Context.Request.Scheme}://{Context.Request.Host}/siteLOGO/sitelogo.png")">
-    <meta property="og:url" content="@($"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}")">
+    <!-- 🚀 SEO Fix: Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="@(ViewData["Title"] != null ? $"{ViewData["Title"]} | دارابی کو" : "دارابی کو | مرجع تخصصی ساخت زمین پدل")">
+    <meta name="twitter:description" content="@(ViewData["MetaDescription"] ?? "دارابی کو، مجری تخصصی ساخت زمین پدل و تولیدکننده شیشه‌های استاندارد پدل.")">
+    <meta name="twitter:image" content="@($"https://{Context.Request.Host}/siteLOGO/sitelogo.png")">
 
-    <title>دارابی کو | @(ViewData["Title"] ?? "مرجع تخصصی ساخت و تجهیز زمین های پدل")</title>
+    <title>@(ViewData["Title"] != null ? $"{ViewData["Title"]} | دارابی کو" : "دارابی کو | مرجع تخصصی ساخت و تجهیز زمین های پدل")</title>
 
     <link rel="icon" type="image/png" href="/siteLOGO/favicon.png" asp-append-version="true">
     <link rel="apple-touch-icon" href="/siteLOGO/favicon.png">
@@ -24,7 +39,6 @@
     <link rel="stylesheet" href="/CSS-SOURCE/layouts.css" asp-append-version="true">
 
     <style>
-        /* تعریف انیمیشن‌ها (استفاده از @@ برای جلوگیری از خطای Razor) */
         @@keyframes pulse-logo {
             0% {
                 transform: scale(1);
@@ -56,7 +70,6 @@
             }
         }
 
-        /* استایل بدنه لودر */
         #brand-loader {
             position: fixed;
             top: 0;
@@ -111,7 +124,6 @@
             overflow: hidden !important;
         }
 
-        /* استایل دکمه‌های بخش Hero */
         .hero-actions {
             display: flex;
             gap: 15px;
@@ -175,8 +187,8 @@
           "@@context": "https://schema.org",
           "@@type": "GeneralContractor",
           "name": "دارابی کو",
-          "url": "@($"{Context.Request.Scheme}://{Context.Request.Host}")",
-          "logo": "@($"{Context.Request.Scheme}://{Context.Request.Host}/siteLOGO/sitelogo.png")",
+          "url": "@($"https://{Context.Request.Host}")",
+          "logo": "@($"https://{Context.Request.Host}/siteLOGO/sitelogo.png")",
           "contactPoint": {
             "@@type": "ContactPoint",
             "telephone": "+989111515971",
@@ -356,7 +368,6 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            // Header Scroll Effect
             const header = document.getElementById("main-header");
             if (header) {
                 window.addEventListener("scroll", () => {
@@ -364,7 +375,6 @@
                 });
             }
 
-            // Mobile Menu
             const mobileMenu = document.getElementById("mobile-menu");
             const overlay = document.getElementById("mobile-overlay");
             const hamburgerBtn = document.getElementById("hamburger-btn");
@@ -392,7 +402,6 @@
                 });
             }
 
-            // Go Top Button
             const goTopBtn = document.querySelector('.go-top-btn');
             if (goTopBtn) {
                 goTopBtn.addEventListener('click', function (e) {
@@ -402,20 +411,23 @@
             }
         });
 
-        // Splash Screen Logic
-        window.addEventListener("load", function () {
+        window.addEventListener("DOMContentLoaded", function () {
             const loader = document.getElementById("brand-loader");
             const body = document.body;
+            let isLoaded = false;
 
-            setTimeout(() => {
-                if (loader) {
-                    loader.classList.add("loader-hidden");
-                    loader.addEventListener("transitionend", () => {
-                        body.classList.remove("loading-state");
-                        loader.remove();
-                    });
-                }
-            }, 800);
+            function removeLoader() {
+                if (isLoaded || !loader) return;
+                isLoaded = true;
+                loader.classList.add("loader-hidden");
+                loader.addEventListener("transitionend", () => {
+                    body.classList.remove("loading-state");
+                    loader.remove();
+                });
+            }
+
+            window.addEventListener("load", removeLoader);
+            setTimeout(removeLoader, 3000);
         });
     </script>
 </body>

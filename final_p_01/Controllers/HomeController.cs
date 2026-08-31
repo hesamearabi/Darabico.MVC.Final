@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using final_p_01.Infrastructure.Data;
+using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 
 namespace final_p_01.Controllers
 {
@@ -12,28 +14,30 @@ namespace final_p_01.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _configuration;
 
-        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context)
+        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, IConfiguration configuration)
         {
             _logger = logger;
             _context = context;
+            _configuration = configuration;
         }
 
-        // --- 1. صفحه اصلی ---
         public async Task<IActionResult> Index()
         {
+            int homePagePostsCount = _configuration.GetValue<int>("SiteSettings:HomePagePostsCount", 6);
+
             var latestPosts = await _context.Posts
                 .AsNoTracking()
                 .Include(p => p.Category)
                 .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide")
                 .OrderByDescending(p => p.CreatedAt)
-                .Take(6)
+                .Take(homePagePostsCount)
                 .ToListAsync();
 
             return View(latestPosts);
         }
 
-        // --- 2. صفحه ادامه مطلب مقاله ---
         [Route("blog/{slug}")]
         [Route("Home/Post")]
         public async Task<IActionResult> Post([FromRoute] string? slug, [FromQuery(Name = "slug")] string? querySlug)
@@ -41,7 +45,6 @@ namespace final_p_01.Controllers
             var actualSlug = slug ?? querySlug;
             if (string.IsNullOrEmpty(actualSlug)) return base.NotFound();
 
-            // 🚀 BUG FIX: استفاده از مسیر متنی صریح برای جلوگیری از لوپ (Infinite Redirect Loop)
             if (string.IsNullOrEmpty(slug) && !string.IsNullOrEmpty(querySlug))
             {
                 return RedirectPermanent($"/blog/{actualSlug}");
@@ -68,22 +71,27 @@ namespace final_p_01.Controllers
                 RelatedPosts = relatedPosts
             };
 
+            ViewData["Title"] = post.Title;
+            if (!string.IsNullOrWhiteSpace(post.MetaDescription))
+            {
+                ViewData["MetaDescription"] = post.MetaDescription;
+            }
+
             return View(viewModel);
         }
 
-        // --- 3. صفحه لیست کل بلاگ‌ها همراه با Pagination ---
         [Route("blog")]
         [Route("Home/Blog")]
         public async Task<IActionResult> Blog([FromQuery] int page = 1)
         {
-            // 🚀 BUG FIX: استفاده از مسیر متنی صریح برای جلوگیری از لوپ
             if (Request.Path.Value != null && Request.Path.Value.Contains("Home/Blog", StringComparison.OrdinalIgnoreCase))
             {
                 string targetUrl = page > 1 ? $"/blog?page={page}" : "/blog";
                 return RedirectPermanent(targetUrl);
             }
 
-            int pageSize = 9; // تعداد مقاله در هر صفحه
+            int pageSize = _configuration.GetValue<int>("SiteSettings:BlogPageSize", 9);
+
             var query = _context.Posts
                 .AsNoTracking()
                 .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide");
@@ -111,9 +119,6 @@ namespace final_p_01.Controllers
             return View(viewModel);
         }
 
-        // =========================================================
-        // 🚀 صفحه مستقل (Main Page): راهنمای ۰ تا ۱۰۰ ساخت زمین پدل
-        // =========================================================
         [Route("padel-court-construction-guide")]
         public async Task<IActionResult> PadelGuide()
         {
@@ -130,12 +135,10 @@ namespace final_p_01.Controllers
             return View(guidePost);
         }
 
-        // --- صفحات استاتیک ---
         [Route("contact-us")]
         [Route("Home/Contact")]
         public IActionResult Contact()
         {
-            // 🚀 BUG FIX: جلوگیری از لوپ ریدایرکت
             if (Request.Path.Value != null && Request.Path.Value.Contains("Home/Contact", StringComparison.OrdinalIgnoreCase))
                 return RedirectPermanent("/contact-us");
 
@@ -146,7 +149,6 @@ namespace final_p_01.Controllers
         [Route("Home/about")]
         public IActionResult about()
         {
-            // 🚀 BUG FIX: جلوگیری از لوپ ریدایرکت
             if (Request.Path.Value != null && Request.Path.Value.Contains("Home/about", StringComparison.OrdinalIgnoreCase))
                 return RedirectPermanent("/about-us");
 
@@ -156,7 +158,6 @@ namespace final_p_01.Controllers
         public IActionResult padelgrass() { return View(); }
         public IActionResult structure() { return View(); }
         public IActionResult Resume() { return View(); }
-
         public IActionResult CostArticle() { return View(); }
         public IActionResult GlassArticle() { return View(); }
         public IActionResult DimensionsArticle() { return View(); }
@@ -164,9 +165,6 @@ namespace final_p_01.Controllers
         public IActionResult CoverArticle() { return View(); }
         public IActionResult ClubManagementArticle() { return View(); }
 
-        // =========================================================
-        // 🚀 4. SEO: تولید خودکار نقشه سایت (Dynamic Sitemap)
-        // =========================================================
         [Route("sitemap.xml")]
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
         public async Task<IActionResult> Sitemap()
@@ -194,11 +192,12 @@ namespace final_p_01.Controllers
             {
                 if (!string.IsNullOrEmpty(page.Url))
                 {
-                    // 🚀 هماهنگ‌سازی آدرس‌های تولید شده در نقشه سایت با روت‌های تمیز جدید
                     string cleanUrl = page.Url
                         .Replace("/Home/Contact", "/contact-us", StringComparison.OrdinalIgnoreCase)
                         .Replace("/Home/about", "/about-us", StringComparison.OrdinalIgnoreCase)
                         .Replace("/Home/Blog", "/blog", StringComparison.OrdinalIgnoreCase);
+
+                    if (cleanUrl.StartsWith("http://")) cleanUrl = cleanUrl.Replace("http://", "https://");
 
                     xml.AppendLine("  <url>");
                     xml.AppendLine($"    <loc>{cleanUrl}</loc>");
@@ -210,8 +209,7 @@ namespace final_p_01.Controllers
 
             foreach (var post in posts)
             {
-                // تولید آدرس کاملاً منطبق با روت جدید
-                var postUrl = $"{Request.Scheme}://{Request.Host}/blog/{post.Slug}";
+                var postUrl = $"https://{Request.Host}/blog/{post.Slug}";
 
                 if (!string.IsNullOrEmpty(postUrl))
                 {
@@ -229,11 +227,11 @@ namespace final_p_01.Controllers
             return Content(xml.ToString(), "application/xml");
         }
 
-        // --- 5. مدیریت خطاها ---
         [Route("Home/PageNotFound")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult PageNotFound(int statusCode)
         {
+            Response.StatusCode = 404;
             ViewBag.StatusCode = statusCode;
             return View("NotFound");
         }

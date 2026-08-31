@@ -1,12 +1,18 @@
-﻿using final_p_01.Domain.Entities;
+﻿using System.ComponentModel.DataAnnotations;
 
-public class Faq
+namespace final_p_01.Domain.Entities
 {
-    public int Id { get; set; }
-    public string Question { get; set; } // متن سوال
-    public string Answer { get; set; }   // متن جواب
+    public class Faq
+    {
+        public int Id { get; set; }
 
-    // ارتباط با مقاله
-    public int PostId { get; set; }
-    public Post? Post { get; set; }
+        [Required, MaxLength(500)]
+        public string Question { get; set; }
+
+        [Required]
+        public string Answer { get; set; }
+
+        public int PostId { get; set; }
+        public Post? Post { get; set; }
+    }
 }

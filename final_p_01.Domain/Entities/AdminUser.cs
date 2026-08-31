@@ -6,12 +6,13 @@ namespace final_p_01.Domain.Entities
     {
         public int Id { get; set; }
 
-        [Required]
+        [Required, MaxLength(150)]
         public string Email { get; set; }
 
-        [Required]
+        [Required, MaxLength(500)] // طول بیشتر برای هش پسورد
         public string Password { get; set; }
 
+        [MaxLength(100)]
         public string FullName { get; set; } = "مدیر دارابیکو";
     }
 }

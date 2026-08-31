@@ -1,11 +1,10 @@
-﻿// final_p_01.Infrastructure/Data/ApplicationDbContext.cs
-using final_p_01.Domain.Entities;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using final_p_01.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace final_p_01.Infrastructure.Data
 {
-    public class ApplicationDbContext : IdentityDbContext
+    // 🚀 تغییر به DbContext سبک (حذف جداول اضافی Identity)
+    public class ApplicationDbContext : DbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
@@ -13,23 +12,35 @@ namespace final_p_01.Infrastructure.Data
 
         public DbSet<Post> Posts { get; set; }
         public DbSet<Category> Categories { get; set; }
-        public DbSet<final_p_01.Domain.Entities.AdminUser> AdminUsers { get; set; }
-
-        // 👇 این همون کمد جدیدیه که برای سوالات متداول ساختیم
+        public DbSet<AdminUser> AdminUsers { get; set; }
         public DbSet<Faq> Faqs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            // تنظیمات Fluent API برای بهینه‌سازی دیتابیس و سئو
+            // ایندکس‌های سئو
             builder.Entity<Post>()
                 .HasIndex(p => p.Slug)
-                .IsUnique(); // ایجاد ایندکس منحصربه‌فرد روی Slug برای افزایش فوق‌العاده سرعت جستجوی مقالات
+                .IsUnique();
 
             builder.Entity<Category>()
                 .HasIndex(c => c.Slug)
                 .IsUnique();
+
+            // 🚀 Database Fix 1: جلوگیری قطعی از حذف مقالات هنگام حذف دسته‌بندی (Restrict)
+            builder.Entity<Post>()
+                .HasOne(p => p.Category)
+                .WithMany(c => c.Posts)
+                .HasForeignKey(p => p.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // 🚀 Database Fix 2: حذف خودکار سوالات متداول در صورت پاک شدن مقاله اصلی (Cascade)
+            builder.Entity<Faq>()
+                .HasOne(f => f.Post)
+                .WithMany(p => p.Faqs)
+                .HasForeignKey(f => f.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

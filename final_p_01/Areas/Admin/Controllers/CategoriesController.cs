@@ -25,8 +25,10 @@ namespace final_p_01.Areas.Admin.Controllers
         [HttpGet]
         public IActionResult Index()
         {
+            // 🚀 پرفورمنس: جلوگیری از خطای N+1 با Include مستقیم برای شمارش در View
             var categories = _context.Categories
-                .AsNoTracking() // معجزه نمایش فوری
+                .AsNoTracking()
+                .Include(c => c.Posts)
                 .OrderByDescending(c => c.Id)
                 .ToList();
 
@@ -98,13 +100,13 @@ namespace final_p_01.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id)
         {
-            // اینجا دات‌نت را می‌فرستیم چک کند آیا مقاله‌ای به این دسته‌بندی وصل است یا نه
-            var category = _context.Categories.Include(c => c.Posts).FirstOrDefault(c => c.Id == id);
-
+            var category = _context.Categories.Find(id);
             if (category != null)
             {
-                // اگر حتی یک مقاله داخل این دسته‌بندی بود، اخطار بده و حذف نکن!
-                if (category.Posts != null && category.Posts.Any())
+                // 🚀 پرفورمنس (Memory Fix): بررسی وجود مقاله بدون لود کردن کل مقالات در RAM
+                bool hasPosts = _context.Posts.Any(p => p.CategoryId == id);
+
+                if (hasPosts)
                 {
                     TempData["ErrorMessage"] = $"نمی‌توانید '{category.Name}' را حذف کنید! ابتدا مقالاتِ داخل این دسته‌بندی را پاک کرده یا تغییر دهید.";
                     return RedirectToAction("Index");

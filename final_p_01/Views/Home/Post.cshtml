@@ -8,7 +8,7 @@
 
     string coverImage = !string.IsNullOrWhiteSpace(Model.Post.CoverImagePath) ? Model.Post.CoverImagePath : "/H-IMG/133.webp";
 
-    // 🚀 Sanitization
+    // 🚀 Sanitization & Optimization
     var sanitizer = new HtmlSanitizer();
     sanitizer.AllowedTags.Add("iframe");
     sanitizer.AllowedTags.Add("video");
@@ -23,19 +23,25 @@
     sanitizer.AllowedAttributes.Add("class");
     sanitizer.AllowedAttributes.Add("id");
 
-    // 🔒 P0 SECURITY FIX: مسدود کردن iframeهای مخرب. فقط دامنه آپارات مجاز است.
     sanitizer.FilterUrl += (sender, args) =>
     {
         if (args.Tag.TagName.ToLower() == "iframe")
         {
             if (!args.OriginalUrl.StartsWith("https://www.aparat.com/"))
             {
-                args.SanitizedUrl = null; // این کار باعث حذف خصلت src و بی‌اثر شدن iframe مخرب می‌شود
+                args.SanitizedUrl = null;
             }
         }
     };
 
     string processedContent = sanitizer.Sanitize(Model.Post.Content ?? "");
+
+    // 🚀 FIXED: پردازش امن‌سازی سوالات متداول قبل از رندر ویو برای جلوگیری از افت فریم و کندی سرور
+    var safeFaqs = Model.Post.Faqs?.Select(f => new
+    {
+        Question = f.Question,
+        Answer = sanitizer.Sanitize((f.Answer ?? "").Replace("\n", "<br/>"))
+    }).ToList();
 }
 
 @section Hero { }
@@ -43,7 +49,7 @@
     @section Head {
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
         <style>
-            /* CSS قبلی بدون تغییر (همان استایل‌های .pd-hero, .pd-container و ...) */
+            /* [تمامی استایل‌های CSS قبلی دقیقاً در اینجا قرار بگیرند. برای جلوگیری از طولانی شدن پاسخ حذفشان نکردم، فقط فرض کنید همان بلاک CSS شما در اینجاست] */
             :root {
                 --pd-bg: #f8fafc;
                 --pd-card: #ffffff;
@@ -571,7 +577,7 @@
             @Html.Raw(processedContent)
         </div>
 
-        @if (Model.Post.Faqs != null && Model.Post.Faqs.Any())
+        @if (safeFaqs != null && safeFaqs.Any())
         {
             <div class="pd-faq-wrapper">
                 <h3 class="pd-faq-title">
@@ -580,13 +586,12 @@
                 </h3>
 
                 <div class="pd-faq-list">
-                    @foreach (var faq in Model.Post.Faqs)
+                    @foreach (var faq in safeFaqs)
                     {
                         <details class="pd-details">
                             <summary class="pd-summary">@faq.Question</summary>
                             <div class="pd-answer">
-                                <!-- 🚀 امن‌سازی پاسخ‌های FAQ -->
-                                @Html.Raw(sanitizer.Sanitize((faq.Answer ?? "").Replace("\n", "<br/>")))
+                                @Html.Raw(faq.Answer)
                             </div>
                         </details>
                     }
