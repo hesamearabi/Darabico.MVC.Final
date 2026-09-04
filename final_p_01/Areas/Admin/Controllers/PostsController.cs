@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using final_p_01.Domain.Entities;
 using final_p_01.Infrastructure.Data;
 using Microsoft.AspNetCore.Http;
@@ -13,6 +14,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Webp;
+using SixLabors.ImageSharp.Processing;
 
 namespace final_p_01.Areas.Admin.Controllers
 {
@@ -32,39 +35,41 @@ namespace final_p_01.Areas.Admin.Controllers
             _configuration = configuration;
         }
 
+        // 🚀 SEO Helper: متد استانداردسازی قطعی Slug برای جلوگیری از %20 و حروف بزرگ
+        private string GenerateSeoFriendlySlug(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return string.Empty;
+
+            // 1. تبدیل به حروف کوچک و حذف فاصله‌های ابتدا و انتها
+            text = text.ToLowerInvariant().Trim();
+
+            // 2. جایگزینی تمام فاصله‌ها و کاراکترهای جداکننده با خط تیره (-)
+            text = Regex.Replace(text, @"\s+", "-");
+
+            // 3. حذف تمام کاراکترهای غیرمجاز (فقط حروف انگلیسی، اعداد، حروف فارسی/عربی و خط تیره مجاز است)
+            text = Regex.Replace(text, @"[^a-z0-9\u0600-\u06FF\-]+", "");
+
+            // 4. حذف خط تیره‌های تکراری (مثل ---)
+            text = Regex.Replace(text, @"-+", "-");
+
+            return text.Trim('-');
+        }
+
+        // 🚀 Performance: متد فشرده‌سازی و تبدیل اجباری تمام تصاویر به فرمت WebP
         private async Task<string> ProcessAndSaveImageAsync(IFormFile file, string subFolder)
         {
             if (file == null || file.Length == 0) throw new InvalidOperationException("فایلی ارسال نشده است.");
 
-            // 🚀 CLEAN CODE: خواندن مقادیر از AppSettings
             int maxMb = _configuration.GetValue<int>("SiteSettings:MaxImageUploadSizeMB", 3);
             long maxFileSize = maxMb * 1024 * 1024;
 
             if (file.Length > maxFileSize)
                 throw new InvalidOperationException($"حجم تصویر نباید بیشتر از {maxMb} مگابایت باشد.");
 
-            var allowedExtString = _configuration.GetValue<string>("SiteSettings:AllowedImageExtensions", ".jpg,.jpeg,.png,.webp,.gif");
-            var allowedExtensions = allowedExtString.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-
-            if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
-                throw new InvalidOperationException("فرمت فایل معتبر نیست.");
-
             if (!file.ContentType.StartsWith("image/"))
-                throw new InvalidOperationException("نوع محتوای فایل (MIME) معتبر نیست.");
+                throw new InvalidOperationException("نوع محتوای فایل معتبر نیست.");
 
-            try
-            {
-                using var stream = file.OpenReadStream();
-                var imageInfo = await Image.IdentifyAsync(stream);
-                if (imageInfo == null) throw new Exception();
-            }
-            catch
-            {
-                throw new InvalidOperationException("محتوای فایل نامعتبر یا خراب است.");
-            }
-
-            string uniqueFileName = $"{Guid.NewGuid()}{extension}";
+            string uniqueFileName = $"{Guid.NewGuid()}.webp"; // 🚀 اجبار به فرمت WebP
             string webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             string uploadsFolder = Path.Combine(webRootPath, "uploads", subFolder);
 
@@ -72,9 +77,20 @@ namespace final_p_01.Areas.Admin.Controllers
 
             string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            try
             {
-                await file.CopyToAsync(fileStream);
+                using var stream = file.OpenReadStream();
+                using var image = await Image.LoadAsync(stream);
+
+                // 🚀 تنظیم کیفیت فشرده‌سازی روی 80 درصد برای بالاترین سرعت لود بدون افت کیفیت ظاهری
+                var encoder = new WebpEncoder { Quality = 80 };
+
+                await image.SaveAsWebpAsync(filePath, encoder);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطا در پردازش تصویر با ImageSharp");
+                throw new InvalidOperationException("محتوای فایل نامعتبر یا خراب است.");
             }
 
             return $"/uploads/{subFolder}/{uniqueFileName}";
@@ -134,10 +150,13 @@ namespace final_p_01.Areas.Admin.Controllers
 
             if (ModelState.IsValid)
             {
+                // 🚀 SEO: تولید یا اصلاح خودکار Slug از روی عنوان یا اسلاگ وارد شده
+                post.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(post.Slug) ? post.Title : post.Slug);
+
                 bool isSlugExist = await _context.Posts.AnyAsync(p => p.Slug == post.Slug);
                 if (isSlugExist)
                 {
-                    ModelState.AddModelError("Slug", "این آدرس (URL) قبلاً ثبت شده است.");
+                    ModelState.AddModelError("Slug", "این آدرس (URL) قبلاً ثبت شده یا مشابه آدرس دیگری است.");
                     ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
                     return View(post);
                 }
@@ -201,10 +220,13 @@ namespace final_p_01.Areas.Admin.Controllers
 
             if (ModelState.IsValid)
             {
+                // 🚀 SEO: استانداردسازی اسلاگ در هنگام ویرایش
+                post.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(post.Slug) ? post.Title : post.Slug);
+
                 bool isSlugExist = await _context.Posts.AnyAsync(p => p.Slug == post.Slug && p.Id != post.Id);
                 if (isSlugExist)
                 {
-                    ModelState.AddModelError("Slug", "این آدرس (URL) قبلاً ثبت شده است.");
+                    ModelState.AddModelError("Slug", "این آدرس (URL) قبلاً ثبت شده یا مشابه آدرس دیگری است.");
                     ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
                     return View(post);
                 }
@@ -293,6 +315,7 @@ namespace final_p_01.Areas.Admin.Controllers
         {
             try
             {
+                // 🚀 حالا عکس‌هایی که داخل متن TinyMCE قرار می‌گیرند هم WebP و کم‌حجم می‌شوند!
                 string url = await ProcessAndSaveImageAsync(upload, "article-images");
                 return Json(new { location = url });
             }
@@ -315,7 +338,6 @@ namespace final_p_01.Areas.Admin.Controllers
             {
                 if (file == null || file.Length == 0) return BadRequest("فایلی ارسال نشده است.");
 
-                // 🚀 CLEAN CODE
                 int maxMb = _configuration.GetValue<int>("SiteSettings:MaxVideoUploadSizeMB", 50);
                 long maxFileSize = maxMb * 1024 * 1024;
 

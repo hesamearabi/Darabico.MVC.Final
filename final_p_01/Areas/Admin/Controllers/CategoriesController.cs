@@ -1,4 +1,7 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using final_p_01.Domain.Entities;
 using final_p_01.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -19,18 +22,29 @@ namespace final_p_01.Areas.Admin.Controllers
             _context = context;
         }
 
+        // 🚀 SEO Helper: متد استانداردسازی اسلاگ برای جلوگیری از خطای دیتابیس و URLهای خراب
+        private string GenerateSeoFriendlySlug(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return string.Empty;
+            text = text.ToLowerInvariant().Trim();
+            text = Regex.Replace(text, @"\s+", "-");
+            text = Regex.Replace(text, @"[^a-z0-9\u0600-\u06FF\-]+", "");
+            text = Regex.Replace(text, @"-+", "-");
+            return text.Trim('-');
+        }
+
         // ==========================================
         // ۱. لیست دسته‌بندی‌ها
         // ==========================================
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            // 🚀 پرفورمنس: جلوگیری از خطای N+1 با Include مستقیم برای شمارش در View
-            var categories = _context.Categories
+            // 🚀 پرفورمنس: تبدیل به Async/Await
+            var categories = await _context.Categories
                 .AsNoTracking()
                 .Include(c => c.Posts)
                 .OrderByDescending(c => c.Id)
-                .ToList();
+                .ToListAsync();
 
             return View(categories);
         }
@@ -46,33 +60,46 @@ namespace final_p_01.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Category category)
+        public async Task<IActionResult> Create(Category category)
         {
-            ModelState.Remove("Posts"); // خنثی کردن گیرهای دات‌نت
+            ModelState.Remove("Posts");
 
             if (ModelState.IsValid)
             {
+                // تولید خودکار اسلاگ سئو در صورت خالی بودن
+                category.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(category.Slug) ? category.Name : category.Slug);
+
+                // 🚀 جلوگیری قطعی از کِرَش دیتابیس (جلوگیری از نقض ایندکس IsUnique)
+                bool exists = await _context.Categories.AnyAsync(c => c.Slug == category.Slug);
+                if (exists)
+                {
+                    ModelState.AddModelError("Slug", "این دسته‌بندی (یا اسلاگ آن) قبلاً ثبت شده است.");
+                    return View(category);
+                }
+
                 _context.Categories.Add(category);
-                _context.SaveChanges();
-                return RedirectToAction("Index");
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "دسته‌بندی با موفقیت ایجاد شد.";
+                return RedirectToAction(nameof(Index));
             }
             return View(category);
         }
 
         // ==========================================
-        // ۳. ویرایش دسته‌بندی (رفع ارور ۴۰۴)
+        // ۳. ویرایش دسته‌بندی
         // ==========================================
         [HttpGet]
-        public IActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int id)
         {
-            var category = _context.Categories.Find(id);
+            var category = await _context.Categories.FindAsync(id);
             if (category == null) return NotFound();
             return View(category);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, Category category)
+        public async Task<IActionResult> Edit(int id, Category category)
         {
             if (id != category.Id) return NotFound();
 
@@ -80,15 +107,26 @@ namespace final_p_01.Areas.Admin.Controllers
 
             if (ModelState.IsValid)
             {
-                var existingCategory = _context.Categories.Find(id);
+                category.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(category.Slug) ? category.Name : category.Slug);
+
+                // بررسی یکتایی اسلاگ به جز دسته‌بندی فعلی
+                bool exists = await _context.Categories.AnyAsync(c => c.Slug == category.Slug && c.Id != id);
+                if (exists)
+                {
+                    ModelState.AddModelError("Slug", "این اسلاگ (URL) توسط دسته‌بندی دیگری استفاده شده است.");
+                    return View(category);
+                }
+
+                var existingCategory = await _context.Categories.FindAsync(id);
                 if (existingCategory == null) return NotFound();
 
-                // آپدیت نام و اسلاگ
                 existingCategory.Name = category.Name;
                 existingCategory.Slug = category.Slug;
 
-                _context.SaveChanges();
-                return RedirectToAction("Index");
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "تغییرات با موفقیت ذخیره شد.";
+                return RedirectToAction(nameof(Index));
             }
             return View(category);
         }
@@ -98,24 +136,26 @@ namespace final_p_01.Areas.Admin.Controllers
         // ==========================================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var category = _context.Categories.Find(id);
+            var category = await _context.Categories.FindAsync(id);
             if (category != null)
             {
-                // 🚀 پرفورمنس (Memory Fix): بررسی وجود مقاله بدون لود کردن کل مقالات در RAM
-                bool hasPosts = _context.Posts.Any(p => p.CategoryId == id);
+                // 🚀 پرفورمنس (Memory Fix): بررسی Async بدون لود کردن جداول سنگین
+                bool hasPosts = await _context.Posts.AnyAsync(p => p.CategoryId == id);
 
                 if (hasPosts)
                 {
                     TempData["ErrorMessage"] = $"نمی‌توانید '{category.Name}' را حذف کنید! ابتدا مقالاتِ داخل این دسته‌بندی را پاک کرده یا تغییر دهید.";
-                    return RedirectToAction("Index");
+                    return RedirectToAction(nameof(Index));
                 }
 
                 _context.Categories.Remove(category);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "دسته‌بندی حذف شد.";
             }
-            return RedirectToAction("Index");
+            return RedirectToAction(nameof(Index));
         }
     }
 }

@@ -1,15 +1,23 @@
-﻿<!DOCTYPE html>
+﻿@{
+    // هدرهای امنیتی برای محافظت از بازدیدکنندگان
+    Context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    Context.Response.Headers.Append("X-Frame-Options", "SAMEORIGIN");
+    Context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+}
+<!DOCTYPE html>
 <html lang="fa-IR" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- 🚀 SEO Meta Tags -->
     <meta name="description" content="@(ViewData["MetaDescription"] ?? "دارابی کو، مجری تخصصی ساخت زمین پدل و تولیدکننده شیشه‌های استاندارد پدل با ۵۰ سال تجربه. مشاوره رایگان هزینه ساخت در سراسر ایران.")">
     <meta name="keywords" content="ساخت زمین پدل, هزینه ساخت زمین پدل, شیشه زمین پدل, ابعاد زمین پدل, دارابی کو">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 
     <link rel="canonical" href="@($"https://{Context.Request.Host}{Context.Request.Path}")" />
 
+    <!-- 🚀 Open Graph (Facebook, LinkedIn, WhatsApp) -->
     <meta property="og:site_name" content="دارابی کو">
     <meta property="og:title" content="@(ViewData["Title"] != null ? $"دارابی کو | {ViewData["Title"]}" : "دارابی کو | مرجع تخصصی ساخت زمین پدل")">
     <meta property="og:type" content="website">
@@ -17,20 +25,23 @@
     <meta property="og:image" content="@($"https://{Context.Request.Host}/siteLOGO/sitelogo.png")">
     <meta property="og:url" content="@($"https://{Context.Request.Host}{Context.Request.Path}")">
 
+    <!-- 🚀 Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="@(ViewData["Title"] != null ? $"دارابی کو | {ViewData["Title"]}" : "دارابی کو | مرجع تخصصی ساخت زمین پدل")">
     <meta name="twitter:description" content="@(ViewData["MetaDescription"] ?? "دارابی کو، مجری تخصصی ساخت زمین پدل و تولیدکننده شیشه‌های استاندارد پدل.")">
     <meta name="twitter:image" content="@($"https://{Context.Request.Host}/siteLOGO/sitelogo.png")">
 
-    <!-- اصلاح جایگاه نام برند در تب مرورگر -->
     <title>@(ViewData["Title"] != null ? $"دارابی کو | {ViewData["Title"]}" : "دارابی کو | مرجع تخصصی ساخت و تجهیز زمین های پدل")</title>
 
+    <!-- 🚀 Favicons -->
     <link rel="icon" type="image/png" href="/siteLOGO/favicon.png" asp-append-version="true">
     <link rel="apple-touch-icon" href="/siteLOGO/favicon.png">
 
+    <!-- 🚀 Stylesheets -->
     <link rel="stylesheet" href="/CSS-SOURCE/layouts.css" asp-append-version="true">
 
     <style>
+        /* انیمیشن‌ها (استفاده از @@ برای جلوگیری از خطای Razor) */
         @@keyframes pulse-logo {
             0% {
                 transform: scale(1);
@@ -62,6 +73,7 @@
             }
         }
 
+        /* استایل بدنه لودر */
         #brand-loader {
             position: fixed;
             top: 0;
@@ -116,6 +128,7 @@
             overflow: hidden !important;
         }
 
+        /* دکمه‌های بخش Hero */
         .hero-actions {
             display: flex;
             gap: 15px;
@@ -149,6 +162,7 @@
                 box-shadow: 0 10px 20px rgba(0,0,0,0.15);
             }
 
+        /* فوتر کپی رایت */
         .sub-footer {
             background: #0a0c12;
             border-top: 1px solid rgba(255,255,255,0.05);
@@ -174,6 +188,7 @@
                 }
     </style>
 
+    <!-- 🚀 JSON-LD Schema -->
     <script type="application/ld+json">
         {
           "@@context": "https://schema.org",
@@ -190,11 +205,13 @@
           }
         }
     </script>
+
     @await RenderSectionAsync("Head", required: false)
 </head>
 
 <body class="loading-state">
 
+    <!-- 🚀 Loader -->
     <div id="brand-loader">
         <div class="loader-content">
             <img src="/siteLOGO/sitelogo.png" alt="DarabiCo Loader" class="loader-logo" width="110" height="40" fetchpriority="high" decoding="async">
@@ -204,6 +221,7 @@
         </div>
     </div>
 
+    <!-- 🚀 Header -->
     <header class="site-header" id="main-header">
         <div class="header-container">
             <div class="logo">
@@ -218,7 +236,6 @@
                     <li><a href="/#services-section" class="nav-link">خدمات</a></li>
                     <li><a href="/#projects-section" class="nav-link">پروژه‌ها</a></li>
                     <li><a asp-controller="Home" asp-action="Blog" class="nav-link">مقالات</a></li>
-                    <!-- متن دقیق درخواستی در منوی اصلی -->
                     <li><a asp-controller="Home" asp-action="PadelGuide" class="nav-link">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
                 </ul>
             </nav>
@@ -243,7 +260,6 @@
                     <li><a href="/#services-section" class="mobile-link">خدمات ما</a></li>
                     <li><a href="/#projects-section" class="mobile-link">نمونه کارها</a></li>
                     <li><a asp-controller="Home" asp-action="Blog" class="mobile-link">وبلاگ آموزشی</a></li>
-                    <!-- متن دقیق درخواستی در منوی موبایل -->
                     <li><a asp-controller="Home" asp-action="PadelGuide" class="mobile-link">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
                 </ul>
             </nav>
@@ -255,6 +271,7 @@
         <div class="mobile-overlay" id="mobile-overlay"></div>
     </header>
 
+    <!-- 🚀 Hero Section -->
     @if (IsSectionDefined("Hero"))
     {
         @await RenderSectionAsync("Hero", required: false)
@@ -274,9 +291,8 @@
 
                 <div class="hero-actions">
                     <a asp-controller="Home" asp-action="Contact" class="hero-consult-btn">دریافت مشاوره و قیمت</a>
-                    <!-- متن دقیق درخواستی در دکمه هیرو -->
                     <a asp-controller="Home" asp-action="PadelGuide" class="hero-guide-btn" title="راهنمای جامع 0 تا 100 ساخت زمین پدل">
-                        راهنمای جامع 0 تا 100 ساخت زمین پدل
+                        راهنمای ۰ تا ۱۰۰ ساخت پدل
                     </a>
                 </div>
             </div>
@@ -289,10 +305,12 @@
         </section>
     }
 
+    <!-- 🚀 Main Content -->
     <main role="main" class="main-content-wrapper">
         @RenderBody()
     </main>
 
+    <!-- 🚀 Footer -->
     <footer class="site-footer">
         <div class="footer-container">
             <div class="footer-top">
@@ -317,7 +335,6 @@
                         <li><a asp-controller="Home" asp-action="Blog">مجله آموزشی پدل</a></li>
                         <li><a asp-controller="Home" asp-action="About">درباره ما</a></li>
                         <li><a asp-controller="Home" asp-action="Contact">ارتباط با ما</a></li>
-                        <!-- متن دقیق درخواستی در منوی فوتر -->
                         <li><a asp-controller="Home" asp-action="PadelGuide">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
                     </ul>
                 </div>
@@ -326,9 +343,7 @@
                     <h3 class="footer-title">ارتباط با ما</h3>
                     <div class="contact-item">
                         <img src="/footerimg/location-map-pin-3.svg" alt="آدرس" width="20" height="20" loading="lazy" decoding="async">
-                        <span>
-                            دفتر مرکزی: ساری، بلوار خزر، خیابان دریا ۴ , فروشگاه دارابی
-                        </span>
+                        <span>دفتر مرکزی: ساری، بلوار خزر، خیابان دریا ۴ , فروشگاه دارابی</span>
                     </div>
                     <div class="contact-item">
                         <img src="/footerimg/location-map-pin-3.svg" alt="کارخانه" width="20" height="20" loading="lazy" decoding="async">
@@ -361,6 +376,7 @@
         </div>
     </div>
 
+    <!-- 🚀 Scripts -->
     <script src="/JS-SOURCE/minislider.js" asp-append-version="true" defer></script>
     <script src="/JS-SOURCE/slider-body.js" asp-append-version="true" defer></script>
     @await RenderSectionAsync("Scripts", required: false)

@@ -3,39 +3,105 @@
     ViewData["Title"] = "افزودن دسته‌بندی";
 }
 
-<h2>افزودن دسته‌بندی جدید</h2>
-<hr />
+<style>
+    :root {
+        --brand-navy: #121D35;
+        --brand-gold: #C5A66B;
+        --border-color: #e2e8f0;
+    }
+
+    .darabico-form-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 35px;
+        box-shadow: 0 10px 30px rgba(18, 29, 53, 0.05);
+        border: 1px solid var(--border-color);
+    }
+
+    .form-label {
+        font-weight: 800;
+        color: var(--brand-navy);
+        margin-bottom: 8px;
+    }
+
+    .form-control {
+        border-radius: 12px;
+        border: 2px solid var(--border-color);
+        padding: 14px 18px;
+        transition: all 0.3s;
+        background-color: #fcfcfc;
+    }
+
+        .form-control:focus {
+            border-color: var(--brand-gold);
+            background-color: #fff;
+            box-shadow: 0 0 0 4px rgba(197, 166, 107, 0.15);
+        }
+
+    .btn-submit-darabico {
+        background: var(--brand-navy);
+        color: #fff;
+        padding: 16px 30px;
+        border-radius: 14px;
+        font-weight: 800;
+        font-size: 1.1rem;
+        border: none;
+        transition: all 0.3s;
+    }
+
+        .btn-submit-darabico:hover {
+            background: var(--brand-gold);
+            color: var(--brand-navy);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(197, 166, 107, 0.3);
+        }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 fw-bold" style="color: var(--brand-navy);">افزودن دسته‌بندی جدید</h1>
+    <a asp-action="Index" class="btn btn-light border fw-bold text-secondary rounded-pill px-4">
+        <i class="bi bi-arrow-right me-2"></i> بازگشت به لیست
+    </a>
+</div>
 
 <div class="row">
-    <div class="col-md-6">
-        <form asp-action="Create" method="post">
-            <div class="mb-3">
-                <label asp-for="Name" class="form-label">نام دسته‌بندی</label>
-                <input asp-for="Name" id="txtName" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
+    <div class="col-lg-7">
+        <div class="darabico-form-card">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
 
-            <div class="mb-3">
-                <label asp-for="Slug" class="form-label">اسلاگ سئو (آدرس URL)</label>
-                <input asp-for="Slug" id="txtSlug" class="form-control" dir="ltr" />
-                <span asp-validation-for="Slug" class="text-danger"></span>
-            </div>
+                <div asp-validation-summary="All" class="alert alert-danger p-3 mb-4 rounded-3 border-0 shadow-sm" style="display: @(ViewData.ModelState.IsValid ? "none" : "block")"></div>
 
-            <button type="submit" class="btn btn-success">ذخیره رکورد</button>
-            <a asp-action="Index" class="btn btn-secondary">بازگشت به لیست</a>
-        </form>
-        <div asp-validation-summary="All" class="alert-danger p-2 mb-3 rounded" style="display: @(ViewData.ModelState.IsValid ? "none" : "block")"></div>
+                <div class="mb-4">
+                    <label asp-for="Name" class="form-label">نام دسته‌بندی <span class="text-danger">*</span></label>
+                    <input asp-for="Name" id="txtName" class="form-control" placeholder="مثلاً: آموزش پدل" required />
+                </div>
+
+                <div class="mb-5">
+                    <label asp-for="Slug" class="form-label text-muted d-flex justify-content-between">
+                        <span>اسلاگ (URL)</span>
+                        <small class="fw-normal text-info">تولید خودکار در صورت خالی بودن</small>
+                    </label>
+                    <input asp-for="Slug" id="txtSlug" class="form-control text-muted" dir="ltr" placeholder="amoozesh-padel" />
+                </div>
+
+                <button type="submit" class="btn-submit-darabico w-100 shadow-sm">
+                    <i class="bi bi-check2-circle me-2"></i> ذخیره دسته‌بندی
+                </button>
+            </form>
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        // ساخت خودکار اسلاگ استاندارد با تایپ کاربر
+        // UX: تولید زنده (Live Feedback) اسلاگ با تایپ کاربر (بدون باگ اسپیس‌های تکراری)
         document.getElementById("txtName").addEventListener("input", function () {
             let text = this.value;
             let slug = text.toLowerCase()
-                .replace(/[^a-z0-9آ-ی\s]/g, '') // حذف کاراکترهای غیرمجاز
-                .replace(/\s+/g, '-'); // جایگزینی اسپیس با خط تیره
+                .replace(/[^a-z0-9آ-ی\s\-]/g, '') // فقط حروف، اعداد و خط تیره مجاز است
+                .replace(/\s+/g, '-')             // تبدیل فاصله‌ها به خط تیره
+                .replace(/-+/g, '-');             // حذف خط‌تیره‌های پشت‌سرهم
             document.getElementById("txtSlug").value = slug;
         });
     </script>

@@ -2,39 +2,122 @@
 @{
     ViewData["Title"] = "مدیریت دسته‌بندی‌ها";
 }
+
+<style>
+    :root {
+        --brand-navy: #121D35;
+        --brand-gold: #C5A66B;
+    }
+
+    .darabico-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(18, 29, 53, 0.05);
+        border: 1px solid #e2e8f0;
+    }
+
+    .darabico-table th {
+        background-color: #f8fafc;
+        color: var(--brand-navy);
+        font-weight: 800;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 18px 15px;
+    }
+
+    .darabico-table td {
+        padding: 15px;
+        vertical-align: middle;
+        color: #475569;
+    }
+
+    .btn-darabico-primary {
+        background: var(--brand-navy);
+        color: #fff;
+        border-radius: 12px;
+        padding: 12px 24px;
+        font-weight: bold;
+        transition: 0.3s;
+        border: none;
+    }
+
+        .btn-darabico-primary:hover {
+            background: var(--brand-gold);
+            color: var(--brand-navy);
+            box-shadow: 0 8px 20px rgba(197, 166, 107, 0.3);
+        }
+
+    .alert-custom {
+        border-radius: 12px;
+        font-weight: 600;
+        border: none;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 fw-bold" style="color: var(--brand-navy);">مدیریت دسته‌بندی‌ها</h1>
+    <a asp-action="Create" class="btn-darabico-primary text-decoration-none">
+        <i class="bi bi-plus-lg me-1"></i> دسته‌بندی جدید
+    </a>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-custom shadow-sm mb-4" style="background-color: #ecfdf5; color: #0369a1;">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+    </div>
+}
 @if (TempData["ErrorMessage"] != null)
 {
-    <div class="alert alert-danger fw-bold shadow-sm rounded-3 mt-3">
+    <div class="alert alert-danger alert-custom shadow-sm mb-4" style="background-color: #fef2f2; color: #b91c1c;">
         <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
     </div>
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>مدیریت دسته‌بندی‌ها</h2>
-    <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> دسته‌بندی جدید</a>
+<div class="darabico-card">
+    <div class="table-responsive">
+        <table class="table darabico-table mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th width="5%">#</th>
+                    <th>نام دسته‌بندی</th>
+                    <th dir="ltr" class="text-end">اسلاگ (URL)</th>
+                    <th class="text-center">تعداد مقالات</th>
+                    <th class="text-center" width="25%">عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="5" class="text-center py-5 text-muted">هیچ دسته‌بندی یافت نشد.</td></tr>
+                }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="fw-bold text-muted">@item.Id</td>
+                        <td class="fw-bold" style="color: var(--brand-navy); font-size: 1.1rem;">@item.Name</td>
+                        <td dir="ltr" class="text-end text-muted font-monospace small">@item.Slug</td>
+                        <td class="text-center">
+                            <span class="badge" style="background-color: #f1f5f9; color: var(--brand-navy); font-size: 0.9rem; padding: 8px 15px; border-radius: 50px;">
+                                @(item.Posts?.Count ?? 0) مقاله
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex justify-content-center gap-2">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-light border text-primary fw-bold rounded-3 px-3 py-2">
+                                    <i class="bi bi-pencil me-1"></i> ویرایش
+                                </a>
+                                <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('آیا از حذف دسته‌بندی «@item.Name» مطمئن هستید؟');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-light border text-danger fw-bold rounded-3 px-3 py-2">
+                                        <i class="bi bi-trash3 me-1"></i> حذف
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
-
-<table class="table table-bordered table-striped text-center align-middle">
-    <thead class="table-dark">
-        <tr>
-            <th>نام دسته‌بندی</th>
-            <th>اسلاگ سئو (Slug)</th>
-            <th>عملیات</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@item.Name</td>
-                <td dir="ltr">@item.Slug</td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm"><i class="bi bi-pencil"></i> ویرایش</a>
-                    <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('آیا از حذف این دسته‌بندی مطمئن هستید؟');">
-                        <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i> حذف</button>
-                    </form>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>

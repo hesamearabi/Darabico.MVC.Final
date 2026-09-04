@@ -14,7 +14,6 @@ using Microsoft.AspNetCore.Authorization;
 namespace final_p_01.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    // 🚀 جلوگیری قطعی از کش شدن صفحات حساس لاگین توسط مرورگر یا پروکسی‌ها
     [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
     public class AuthController : Controller
     {
@@ -31,6 +30,7 @@ namespace final_p_01.Areas.Admin.Controllers
         [AllowAnonymous]
         public IActionResult Login()
         {
+            // هدایت کاربر لاگین شده به پنل
             if (User.Identity != null && User.Identity.IsAuthenticated)
             {
                 return RedirectToAction("Index", "Posts", new { area = "Admin" });
@@ -43,45 +43,80 @@ namespace final_p_01.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid) return View(model);
+
+            // 1. پیدا کردن کاربر بر اساس ایمیل وارد شده
+            var user = await _context.AdminUsers.FirstOrDefaultAsync(u => u.Email == model.Email);
+
+            if (user != null && !string.IsNullOrEmpty(user.Password))
             {
-                var user = await _context.AdminUsers.FirstOrDefaultAsync(u => u.Email == model.Email);
+                bool isPasswordValid = false;
+                bool needsUpgrade = false;
 
-                if (user != null)
+                try
                 {
-                    var passwordVerification = _passwordHasher.VerifyHashedPassword(user, user.Password, model.Password);
+                    // 2. تلاش برای اعتبارسنجی هش استاندارد امنیتی
+                    var verificationResult = _passwordHasher.VerifyHashedPassword(user, user.Password, model.Password);
 
-                    if (passwordVerification == PasswordVerificationResult.Success || passwordVerification == PasswordVerificationResult.SuccessRehashNeeded)
+                    if (verificationResult == PasswordVerificationResult.Success)
                     {
-                        var claims = new List<Claim>
-                        {
-                            new Claim(ClaimTypes.Name, user.Email),
-                            new Claim(ClaimTypes.Role, "Administrator")
-                        };
-                        var identity = new ClaimsIdentity(claims, "DarabicoAuth");
-                        var principal = new ClaimsPrincipal(identity);
-
-                        var authProperties = new AuthenticationProperties
-                        {
-                            IsPersistent = true,
-                            ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
-                        };
-
-                        await HttpContext.SignInAsync("DarabicoAuth", principal, authProperties);
-                        return RedirectToAction("Index", "Posts", new { area = "Admin" });
+                        isPasswordValid = true;
+                    }
+                    else if (verificationResult == PasswordVerificationResult.SuccessRehashNeeded)
+                    {
+                        isPasswordValid = true;
+                        needsUpgrade = true;
+                    }
+                }
+                catch (Exception)
+                {
+                    // 3. 🚀 رفع باگ Base-64: اگر پسورد در دیتابیس Plain-Text باشد، سیستم کرش نمی‌کند
+                    if (user.Password == model.Password)
+                    {
+                        isPasswordValid = true;
+                        needsUpgrade = true; // علامت‌گذاری برای ارتقا به هش امن
                     }
                 }
 
-                // 🚀 Tarpit Mechanism: تاخیر تصادفی بین 1 تا 2.5 ثانیه برای کُند کردن ربات‌های هکر
-                // این وقفه فقط برای لاگین‌های ناموفق اعمال می‌شود تا پرفورمنس کاربران واقعی افت نکند
-                await Task.Delay(new Random().Next(1000, 2500));
+                if (isPasswordValid)
+                {
+                    // 4. 🚀 عملیات ارتقای پسورد (Migration) به صورت خودکار
+                    if (needsUpgrade)
+                    {
+                        user.Password = _passwordHasher.HashPassword(user, model.Password);
+                        _context.AdminUsers.Update(user);
+                        await _context.SaveChangesAsync();
+                    }
 
-                ModelState.AddModelError(string.Empty, "ایمیل یا رمز عبور اشتباه است.");
+                    // 5. ورود موفق و صدور کوکی امن
+                    var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.Name, user.Email),
+                        new Claim(ClaimTypes.Role, "Administrator")
+                    };
+
+                    var identity = new ClaimsIdentity(claims, "DarabicoAuth");
+                    var principal = new ClaimsPrincipal(identity);
+
+                    var authProperties = new AuthenticationProperties
+                    {
+                        IsPersistent = true,
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                    };
+
+                    await HttpContext.SignInAsync("DarabicoAuth", principal, authProperties);
+
+                    return RedirectToAction("Index", "Posts", new { area = "Admin" });
+                }
             }
+
+            // 🚀 مکانیزم Tarpit: ایجاد تاخیر تصادفی (۱ تا ۲ ثانیه) فقط برای ورودهای ناموفق جهت خنثی کردن هکرها
+            await Task.Delay(Random.Shared.Next(1000, 2000));
+
+            ModelState.AddModelError(string.Empty, "ایمیل یا رمز عبور اشتباه است.");
             return View(model);
         }
 
-        // 🚀 ایمن‌سازی متد خروج از سیستم در برابر حملات CSRF
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize]

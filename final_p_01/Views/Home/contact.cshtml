@@ -1,9 +1,63 @@
 ﻿@{
     Layout = "_Layout";
     ViewData["Title"] = "ارتباط با ما";
+    string absoluteUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}";
 }
 
 @section Head {
+    <!-- 🚀 Local SEO: معرفی دقیق شرکت فیزیکی، شعب و ساعات کاری به گوگل -->
+    <script type="application/ld+json">
+        {
+          "@@context": "https://schema.org",
+          "@@graph": [
+            {
+              "@@type": "ContactPage",
+              "@@id": "@absoluteUrl",
+              "url": "@absoluteUrl",
+              "name": "تماس با دارابی کو",
+              "description": "راه‌های ارتباطی با دفتر مرکزی و کارخانه تولیدی هلدینگ دارابی جهت مشاوره و استعلام هزینه ساخت زمین پدل."
+            },
+            {
+              "@@type": "GeneralContractor",
+              "name": "هلدینگ دارابی (دارابی کو)",
+              "image": "@($"{Context.Request.Scheme}://{Context.Request.Host}/siteLOGO/sitelogo.png")",
+              "url": "@($"{Context.Request.Scheme}://{Context.Request.Host}")",
+              "telephone": ["+989111515971", "+989121729882"],
+              "address": [
+                {
+                  "@@type": "PostalAddress",
+                  "streetAddress": "بلوار خزر، خیابان دریا ۴، فروشگاه دارابی",
+                  "addressLocality": "ساری",
+                  "addressRegion": "مازندران",
+                  "addressCountry": "IR",
+                  "name": "دفتر مرکزی هلدینگ"
+                },
+                {
+                  "@@type": "PostalAddress",
+                  "streetAddress": "کیلومتر ۲۰ جاده فرح آباد، شهرک صنعتی شماره ۲، قطعه D5",
+                  "addressLocality": "ساری",
+                  "addressRegion": "مازندران",
+                  "addressCountry": "IR",
+                  "name": "کارخانه تولید شیشه و سازه"
+                }
+              ],
+              "openingHoursSpecification": {
+                "@@type": "OpeningHoursSpecification",
+                "dayOfWeek": [
+                  "Saturday",
+                  "Sunday",
+                  "Monday",
+                  "Tuesday",
+                  "Wednesday"
+                ],
+                "opens": "08:00",
+                "closes": "17:00"
+              }
+            }
+          ]
+        }
+    </script>
+
     <style>
         :root {
             --primary-color: #0056b3;
@@ -182,7 +236,6 @@
                 <div class="contact-list-box">
                     <div class="contact-item-row">
                         <div class="c-label">
-                            <!-- 🚀 FIX: افزودن aria-hidden برای جلوگیری از خوانده شدن آیکون توسط صفحه‌خوان -->
                             <span class="c-icon" aria-hidden="true">📞</span>
                             <span>مدیریت فروش و قراردادها</span>
                         </div>

@@ -3,50 +3,150 @@
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
 }
 
-<div class="mb-4">
-    <h1 class="h3 fw-bold" style="color: #121D35;">👋 به پنل مدیریت دارابیکو خوش آمدید</h1>
-    <p class="text-muted">خلاصه وضعیت سیستم و محتوای سایت در یک نگاه</p>
+<style>
+    .stat-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(18, 29, 53, 0.03);
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(18, 29, 53, 0.08);
+            border-color: #C5A66B;
+        }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+    }
+
+    .icon-navy {
+        background: rgba(18, 29, 53, 0.05);
+        color: #121D35;
+    }
+
+    .icon-gold {
+        background: rgba(197, 166, 107, 0.1);
+        color: #C5A66B;
+    }
+
+    .icon-blue {
+        background: rgba(0, 86, 179, 0.08);
+        color: #0056b3;
+    }
+
+    .stat-info h5 {
+        font-size: 0.95rem;
+        color: #64748b;
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+
+    .stat-info h2 {
+        font-size: 1.8rem;
+        color: #121D35;
+        font-weight: 900;
+        margin: 0;
+    }
+
+    .quick-access-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(18, 29, 53, 0.03);
+        border: 1px solid #e2e8f0;
+    }
+
+    .btn-darabico {
+        background: #121D35;
+        color: #fff;
+        padding: 12px 25px;
+        border-radius: 12px;
+        font-weight: 700;
+        transition: 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .btn-darabico:hover {
+            background: #C5A66B;
+            color: #121D35;
+            transform: translateY(-2px);
+        }
+
+    .btn-darabico-outline {
+        background: transparent;
+        color: #121D35;
+        border: 2px solid #e2e8f0;
+        padding: 10px 25px;
+        border-radius: 12px;
+        font-weight: 700;
+        transition: 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .btn-darabico-outline:hover {
+            border-color: #121D35;
+            background: rgba(18, 29, 53, 0.02);
+            transform: translateY(-2px);
+        }
+</style>
+
+<div class="mb-5">
+    <h1 class="h3 fw-bold" style="color: #121D35;">👋 به اتاق فرمان دارابیکو خوش آمدید</h1>
+    <p class="text-muted mt-2">خلاصه وضعیت سیستم و محتوای سایت در یک نگاه</p>
 </div>
 
 <div class="row g-4 mb-5">
     <div class="col-md-4">
-        <div class="card border-0 shadow-sm" style="border-radius: 16px; transition: 0.3s;">
-            <div class="card-body p-4 d-flex align-items-center">
-                <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-4">
-                    <i class="bi bi-journal-text fs-1 text-primary"></i>
-                </div>
-                <div>
-                    <h5 class="text-muted mb-1 fs-6">کل مقالات</h5>
-                    <h2 class="fw-bold mb-0" style="color: #121D35;">@ViewBag.TotalPosts</h2>
-                </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-navy">
+                <i class="bi bi-journal-richtext"></i>
+            </div>
+            <div class="stat-info">
+                <h5>کل مقالات</h5>
+                <h2>@ViewBag.TotalPosts</h2>
             </div>
         </div>
     </div>
 
     <div class="col-md-4">
-        <div class="card border-0 shadow-sm" style="border-radius: 16px;">
-            <div class="card-body p-4 d-flex align-items-center">
-                <div class="bg-success bg-opacity-10 p-3 rounded-circle me-4">
-                    <i class="bi bi-check-circle-fill fs-1 text-success"></i>
-                </div>
-                <div>
-                    <h5 class="text-muted mb-1 fs-6">مقالات منتشر شده</h5>
-                    <h2 class="fw-bold mb-0" style="color: #121D35;">@ViewBag.PublishedPosts</h2>
-                </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-gold">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+            <div class="stat-info">
+                <h5>مقالات منتشر شده</h5>
+                <h2>@ViewBag.PublishedPosts</h2>
             </div>
         </div>
     </div>
 
     <div class="col-md-4">
-        <div class="card border-0 shadow-sm" style="border-radius: 16px;">
-            <div class="card-body p-4 d-flex align-items-center">
-                <div class="bg-warning bg-opacity-10 p-3 rounded-circle me-4">
-                    <i class="bi bi-tags-fill fs-1 text-warning"></i>
-                </div>
-                <div>
-                    <h5 class="text-muted mb-1 fs-6">دسته‌بندی‌ها</h5>
-                    <h2 class="fw-bold mb-0" style="color: #121D35;">@ViewBag.TotalCategories</h2>
-                </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-blue">
+                <i class="bi bi-tags-fill"></i>
+            </div>
+            <div class="stat-info">
+                <h5>دسته‌بندی‌ها</h5>
+                <h2>@ViewBag.TotalCategories</h2>
             </div>
         </div>
     </div>
@@ -54,11 +154,18 @@
 
 <div class="row">
     <div class="col-12">
-        <div class="card border-0 shadow-sm p-4" style="border-radius: 16px;">
-            <h5 class="fw-bold mb-3"><i class="bi bi-lightning-charge-fill text-warning me-2"></i> دسترسی سریع</h5>
-            <div class="d-flex gap-3">
-                <a href="/Admin/Posts/Create" class="btn btn-dark px-4 py-2" style="border-radius: 8px;">+ نوشتن مقاله جدید</a>
-                <a href="/Admin/Categories/Create" class="btn btn-outline-secondary px-4 py-2" style="border-radius: 8px;">+ ساخت دسته‌بندی</a>
+        <div class="quick-access-card">
+            <h5 class="fw-bold mb-4" style="color: #121D35;">
+                <i class="bi bi-lightning-charge-fill me-2" style="color: #C5A66B;"></i> دسترسی سریع
+            </h5>
+            <div class="d-flex flex-wrap gap-3">
+                <!-- 🚀 Routing امن جایگزین هاردکد شد -->
+                <a asp-area="Admin" asp-controller="Posts" asp-action="Create" class="btn-darabico">
+                    <i class="bi bi-plus-lg"></i> نوشتن مقاله جدید
+                </a>
+                <a asp-area="Admin" asp-controller="Categories" asp-action="Create" class="btn-darabico-outline">
+                    <i class="bi bi-folder-plus"></i> ساخت دسته‌بندی
+                </a>
             </div>
         </div>
     </div>

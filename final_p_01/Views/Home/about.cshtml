@@ -1,9 +1,54 @@
 ﻿@{
     Layout = "_Layout";
     ViewData["Title"] = "درباره ما | ۵۰ سال افتخار";
+    string absoluteUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}";
 }
 
 @section Head {
+    <!-- 🚀 Corporate SEO: معرفی ساختار هلدینگ، قدمت و زیرمجموعه‌ها به گوگل -->
+    <script type="application/ld+json">
+        {
+          "@@context": "https://schema.org",
+          "@@graph": [
+            {
+              "@@type": "AboutPage",
+              "@@id": "@absoluteUrl",
+              "url": "@absoluteUrl",
+              "name": "درباره هلدینگ دارابی",
+              "description": "گروه تولیدی هلدینگ دارابی با نیم قرن تجربه در صنعت شیشه و مجری تخصصی ساخت زمین پدل در ایران."
+            },
+            {
+              "@@type": "Organization",
+              "name": "هلدینگ توسعه سرمایه‌گذاری دارابی",
+              "alternateName": "دارابی کو",
+              "foundingDate": "1971",
+              "url": "@($"{Context.Request.Scheme}://{Context.Request.Host}")",
+              "logo": "@($"{Context.Request.Scheme}://{Context.Request.Host}/siteLOGO/sitelogo.png")",
+              "description": "گروه دارابی از سال ۱۳۵۰ فعالیت خود را در زمینه شیشه‌های ساختمانی آغاز نمود و اکنون در حوزه‌های ماشین‌سازی کارن، ساری پن و دپارتمان تخصصی پدل (دارابی کو) فعالیت دارد.",
+              "subOrganization": [
+                {
+                  "@@type": "Organization",
+                  "name": "ماشین‌سازی کارن",
+                  "url": "https://karen-machine.com/"
+                },
+                {
+                  "@@type": "Organization",
+                  "name": "ساری پن"
+                },
+                {
+                  "@@type": "Organization",
+                  "name": "کاسپین توری‌ساز"
+                },
+                {
+                  "@@type": "Organization",
+                  "name": "دارابی کو (دپارتمان تخصصی پدل)"
+                }
+              ]
+            }
+          ]
+        }
+    </script>
+
     <style>
         :root {
             --primary-blue: #0056b3;
@@ -19,14 +64,13 @@
         /* ========================================= */
         .about-hero {
             position: relative;
-            height: 65vh; /* ارتفاع مناسب برای نمایش عکس */
+            height: 65vh;
             min-height: 500px;
             background-color: var(--secondary-navy);
-            /* تصویر پس‌زمینه با افکت پارالاکس */
             background-image: url('/H-IMG/15-3.webp');
             background-size: cover;
             background-position: center center;
-            background-attachment: fixed; /* افکت پارالاکس */
+            background-attachment: fixed;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -35,12 +79,10 @@
             overflow: hidden;
         }
 
-            /* لایه تاریک هوشمند برای خوانایی متن */
             .about-hero::before {
                 content: '';
                 position: absolute;
                 inset: 0;
-                /* گرادینت: بالا تیره‌تر برای متن، پایین روشن‌تر برای دیدن عکس */
                 background: linear-gradient(to bottom, rgba(10, 25, 47, 0.8) 0%, rgba(10, 25, 47, 0.6) 60%, rgba(10, 25, 47, 0.8) 100%);
                 z-index: 1;
             }
@@ -50,7 +92,7 @@
             z-index: 2;
             padding: 0 20px;
             max-width: 850px;
-            animation: fadeInUp 1s ease-out; /* انیمیشن ورود نرم */
+            animation: fadeInUp 1s ease-out;
         }
 
         .about-hero h1 {
@@ -70,7 +112,7 @@
             text-shadow: 0 2px 10px rgba(0,0,0,0.4);
         }
 
-        /* نشانگر اسکرول (UX Feature) */
+        /* نشانگر اسکرول */
         .scroll-indicator {
             position: absolute;
             bottom: 30px;
@@ -220,7 +262,6 @@
                 border-color: var(--primary-blue);
             }
 
-            /* کارت لینک‌دار */
             .subsidiary-card.has-link {
                 background: #f0f7ff;
                 color: var(--primary-blue);
@@ -408,7 +449,6 @@
             text-align: justify;
         }
 
-        /* دکمه لینک داخل تایم‌لاین */
         .timeline-link-btn {
             display: inline-flex;
             align-items: center;
@@ -470,7 +510,7 @@
         }
 
         /* ========================================= */
-        /* CTA Section (Professional)               */
+        /* CTA Section                              */
         /* ========================================= */
         .cta-section {
             position: relative;
@@ -589,14 +629,11 @@
                 border-color: #fff;
             }
 
-        /* ========================================= */
-        /* Responsive                               */
-        /* ========================================= */
         @@media (max-width: 992px) {
             .about-hero {
                 background-attachment: scroll;
             }
-            /* غیرفعال کردن پارالاکس در موبایل */
+
             .timeline-section {
                 direction: rtl;
             }
@@ -648,190 +685,190 @@
 
 @section Hero { }
 
-<div class="about-hero">
-    <div class="about-hero-content">
-        <h1>ریشه در خاک، سر در ابرها</h1>
-        <p>از سال ۱۳۴۰ تا امروز؛ مسیری که از کوره‌های شیشه‌گری آغاز شد و به تکنولوژی ساخت مدرن‌ترین زمین‌های ورزشی رسید.</p>
-    </div>
-
-    <div class="scroll-indicator">
-        <div class="mouse">
-            <div class="wheel"></div>
+    <div class="about-hero">
+        <div class="about-hero-content">
+            <h1>ریشه در خاک، سر در ابرها</h1>
+            <p>از سال ۱۳۴۰ تا امروز؛ مسیری که از کوره‌های شیشه‌گری آغاز شد و به تکنولوژی ساخت مدرن‌ترین زمین‌های ورزشی رسید.</p>
         </div>
-    </div>
-</div>
 
-<section class="story-section">
-    <div class="container-custom">
-        <div class="story-content-centered">
-            <div class="story-text">
-                <h2>هلدینگ توسعه سرمایه‌گذاری دارابی</h2>
-                <p>
-                    گروه دارابی از سال ۱۳۵۳ تحت عنوان صنایع شیشه دارابی با هدف توسعه صنعت ساختمان و با تمرکز بر به‌کارگیری اصولی سرمایه در یک حوزه حیاتی و مهم، فعالیت خود را در زمینه ساخت و پخش و نصب شیشه‌های ساختمانی، سکوریت و تزئینی آغاز نمود. این مجموعه از سال ۱۳۸۵ به منظور گسترش و نوسازی صنایع و اشتغال‌زایی در استان مازندران، فعالیت خود را با راه‌اندازی خط تولید درب و پنجره‌ی UPVC و شیشه‌های دوجداره وسعت بخشید.
-                </p>
-                <p>
-                    هم‌اکنون هلدینگ توسعه سرمایه‌گذاری دارابی، با تکیه بر نیم قرن تجربه، متشکل از شرکت‌های تخصصی زیر است که زنجیره‌ای کامل از خدمات مهندسی، تولیدی و اجرایی را ارائه می‌دهند:
-                </p>
-
-                <div class="subsidiaries-grid">
-                    <div class="subsidiary-card">ساری پن</div>
-
-                    <a href="https://karen-machine.com/" target="_blank" class="subsidiary-card has-link" title="بازدید از وب‌سایت کارن ماشین">
-                        ماشین‌سازی کارن
-                        <span class="link-icon">↗</span>
-                    </a>
-
-                    <div class="subsidiary-card">کاسپین توری‌ساز</div>
-                    <div class="subsidiary-card">توسعه پردیس</div>
-                    <div class="subsidiary-card">ساختمان پزشکان سینوهه</div>
-                </div>
+        <div class="scroll-indicator">
+            <div class="mouse">
+                <div class="wheel"></div>
             </div>
         </div>
     </div>
-</section>
 
-<section class="timeline-section">
-    <div class="container-custom">
-        <div class="section-header">
-            <h2>مسیر رشد ما</h2>
-            <p style="color:var(--text-gray)">نقاط عطفی که ما را به جایگاه امروز رساندند (برای جزئیات کلیک کنید)</p>
-        </div>
+    <section class="story-section">
+        <div class="container-custom">
+            <div class="story-content-centered">
+                <div class="story-text">
+                    <h2>هلدینگ توسعه سرمایه‌گذاری دارابی</h2>
+                    <p>
+                        گروه دارابی از سال ۱۳۵۳ تحت عنوان صنایع شیشه دارابی با هدف توسعه صنعت ساختمان و با تمرکز بر به‌کارگیری اصولی سرمایه در یک حوزه حیاتی و مهم، فعالیت خود را در زمینه ساخت و پخش و نصب شیشه‌های ساختمانی، سکوریت و تزئینی آغاز نمود. این مجموعه از سال ۱۳۸۵ به منظور گسترش و نوسازی صنایع و اشتغال‌زایی در استان مازندران، فعالیت خود را با راه‌اندازی خط تولید درب و پنجره‌ی UPVC و شیشه‌های دوجداره وسعت بخشید.
+                    </p>
+                    <p>
+                        هم‌اکنون هلدینگ توسعه سرمایه‌گذاری دارابی، با تکیه بر نیم قرن تجربه، متشکل از شرکت‌های تخصصی زیر است که زنجیره‌ای کامل از خدمات مهندسی، تولیدی و اجرایی را ارائه می‌دهند:
+                    </p>
 
-        <div class="timeline-container">
+                    <div class="subsidiaries-grid">
+                        <div class="subsidiary-card">ساری پن</div>
 
-            <div class="timeline-item item-left" onclick="toggleTimeline(this)">
-                <div class="timeline-content">
-                    <span class="toggle-btn">+</span>
-                    <span class="year-tag">۱۳۵۰</span>
-                    <h3>تاسیس صنایع شیشه دارابی</h3>
-                    <p>آغاز فعالیت در صنعت شیشه با تمرکز بر شیشه‌های ساختمانی، سکوریت و تزئینی.</p>
-                    <div class="hidden-details">
-                        <p>گروه دارابی تحت عنوان صنایع شیشه دارابی با هدف توسعه صنعت ساختمان و با تمرکز بر به‌کارگیری اصولی سرمایه در یک حوزه حیاتی، فعالیت خود را در زمینه ساخت، پخش و نصب شیشه‌های ساختمانی، سکوریت و تزئینی آغاز نمود.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="timeline-item item-right" onclick="toggleTimeline(this)">
-                <div class="timeline-content">
-                    <span class="toggle-btn">+</span>
-                    <span class="year-tag">۱۳۸۲</span>
-                    <h3>راه‌اندازی ساری پن</h3>
-                    <p>گسترش فعالیت با خط تولید درب و پنجره UPVC و شیشه‌های دوجداره.</p>
-                    <div class="hidden-details">
-                        <p>این مجموعه به منظور گسترش و نوسازی صنایع و اشتغال‌زایی در استان مازندران، فعالیت خود را با راه‌اندازی خط تولید پیشرفته درب و پنجره‌ی UPVC و شیشه‌های دوجداره تحت عنوان برند «ساری پن» وسعت بخشید.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="timeline-item item-left" onclick="toggleTimeline(this)">
-                <div class="timeline-content">
-                    <span class="toggle-btn">+</span>
-                    <span class="year-tag">۱۳۹۲</span>
-                    <h3>تاسیس ماشین‌سازی کارن</h3>
-                    <p>تولید و واردات انواع ماشین‌آلات شیشه دوجداره و درب و پنجره.</p>
-                    <div class="hidden-details">
-                        <p>مهندسان و متخصصان مجرب کارن ماشین با هدف تولید و عرضه مطلوب در جهت ارتقاء کیفیت صنعت ساختمان و با عنایت به اصل ۱۹ مقررات ملی ساختمان (کاهش اتلاف انرژی)، آمادگی خود را جهت همکاری در زمینه تولید و نصب جدیدترین ماشین‌آلات شیشه‌های دوجداره و چند جداره اعلام می‌دارند.</p>
-
-                        <a href="https://karen-machine.com/" target="_blank" class="timeline-link-btn" onclick="event.stopPropagation()">
-                            بازدید از وب‌سایت کارن ماشین ↗
+                        <a href="https://karen-machine.com/" target="_blank" class="subsidiary-card has-link" title="بازدید از وب‌سایت کارن ماشین">
+                            ماشین‌سازی کارن
+                            <span class="link-icon">↗</span>
                         </a>
+
+                        <div class="subsidiary-card">کاسپین توری‌ساز</div>
+                        <div class="subsidiary-card">توسعه پردیس</div>
+                        <div class="subsidiary-card">ساختمان پزشکان سینوهه</div>
                     </div>
                 </div>
             </div>
+        </div>
+    </section>
 
-            <div class="timeline-item item-right" onclick="toggleTimeline(this)">
-                <div class="timeline-content">
-                    <span class="toggle-btn">+</span>
-                    <span class="year-tag">۱۴۰۳</span>
-                    <h3>دپارتمان پدل دارابی</h3>
-                    <p>تخصصی‌ترین مرجع ساخت زمین پدل با شیشه‌های استاندارد.</p>
-                    <div class="hidden-details">
-                        <p>با تکیه بر نیم قرن تجربه در تولید شیشه و سازه، دپارتمان تخصصی پدل دارابی در سال ۱۴۰۳ تاسیس شد. ما به عنوان تنها مجموعه‌ای که تولیدکننده اصلی‌ترین متریال زمین پدل (شیشه و سازه) است، خدمات صفر تا صد ساخت، نصب و گارانتی زمین‌های پدل را با بالاترین کیفیت به سرمایه‌گذاران ورزشی ارائه می‌دهیم.</p>
+    <section class="timeline-section">
+        <div class="container-custom">
+            <div class="section-header">
+                <h2>مسیر رشد ما</h2>
+                <p style="color:var(--text-gray)">نقاط عطفی که ما را به جایگاه امروز رساندند (برای جزئیات کلیک کنید)</p>
+            </div>
+
+            <div class="timeline-container">
+
+                <div class="timeline-item item-left" onclick="toggleTimeline(this)">
+                    <div class="timeline-content">
+                        <span class="toggle-btn">+</span>
+                        <span class="year-tag">۱۳۵۰</span>
+                        <h3>تاسیس صنایع شیشه دارابی</h3>
+                        <p>آغاز فعالیت در صنعت شیشه با تمرکز بر شیشه‌های ساختمانی، سکوریت و تزئینی.</p>
+                        <div class="hidden-details">
+                            <p>گروه دارابی تحت عنوان صنایع شیشه دارابی با هدف توسعه صنعت ساختمان و با تمرکز بر به‌کارگیری اصولی سرمایه در یک حوزه حیاتی، فعالیت خود را در زمینه ساخت، پخش و نصب شیشه‌های ساختمانی، سکوریت و تزئینی آغاز نمود.</p>
+                        </div>
                     </div>
                 </div>
+
+                <div class="timeline-item item-right" onclick="toggleTimeline(this)">
+                    <div class="timeline-content">
+                        <span class="toggle-btn">+</span>
+                        <span class="year-tag">۱۳۸۲</span>
+                        <h3>راه‌اندازی ساری پن</h3>
+                        <p>گسترش فعالیت با خط تولید درب و پنجره UPVC و شیشه‌های دوجداره.</p>
+                        <div class="hidden-details">
+                            <p>این مجموعه به منظور گسترش و نوسازی صنایع و اشتغال‌زایی در استان مازندران، فعالیت خود را با راه‌اندازی خط تولید پیشرفته درب و پنجره‌ی UPVC و شیشه‌های دوجداره تحت عنوان برند «ساری پن» وسعت بخشید.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item item-left" onclick="toggleTimeline(this)">
+                    <div class="timeline-content">
+                        <span class="toggle-btn">+</span>
+                        <span class="year-tag">۱۳۹۲</span>
+                        <h3>تاسیس ماشین‌سازی کارن</h3>
+                        <p>تولید و واردات انواع ماشین‌آلات شیشه دوجداره و درب و پنجره.</p>
+                        <div class="hidden-details">
+                            <p>مهندسان و متخصصان مجرب کارن ماشین با هدف تولید و عرضه مطلوب در جهت ارتقاء کیفیت صنعت ساختمان و با عنایت به اصل ۱۹ مقررات ملی ساختمان (کاهش اتلاف انرژی)، آمادگی خود را جهت همکاری در زمینه تولید و نصب جدیدترین ماشین‌آلات شیشه‌های دوجداره و چند جداره اعلام می‌دارند.</p>
+
+                            <a href="https://karen-machine.com/" target="_blank" class="timeline-link-btn" onclick="event.stopPropagation()">
+                                بازدید از وب‌سایت کارن ماشین ↗
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item item-right" onclick="toggleTimeline(this)">
+                    <div class="timeline-content">
+                        <span class="toggle-btn">+</span>
+                        <span class="year-tag">۱۴۰۳</span>
+                        <h3>دپارتمان پدل دارابی</h3>
+                        <p>تخصصی‌ترین مرجع ساخت زمین پدل با شیشه‌های استاندارد.</p>
+                        <div class="hidden-details">
+                            <p>با تکیه بر نیم قرن تجربه در تولید شیشه و سازه، دپارتمان تخصصی پدل دارابی در سال ۱۴۰۳ تاسیس شد. ما به عنوان تنها مجموعه‌ای که تولیدکننده اصلی‌ترین متریال زمین پدل (شیشه و سازه) است، خدمات صفر تا صد ساخت، نصب و گارانتی زمین‌های پدل را با بالاترین کیفیت به سرمایه‌گذاران ورزشی ارائه می‌دهیم.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section class="values-section">
+        <div class="container-custom">
+            <div class="section-header">
+                <h2 style="color:#fff">چرا هلدینگ دارابی؟</h2>
+                <p style="color:#aaa">تفاوت ما در زنجیره کامل تولید و اجراست</p>
+            </div>
+            <div class="values-grid">
+                <div class="value-card">
+                    <div class="value-icon">🏭</div>
+                    <h3>تولیدکننده واقعی</h3>
+                    <p style="color:#ccc; line-height:1.7">ما واسطه نیستیم؛ از ماشین‌آلات تا شیشه و سازه، در کارخانجات هلدینگ تولید می‌شود.</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">📐</div>
+                    <h3>تکنولوژی روز</h3>
+                    <p style="color:#ccc; line-height:1.7">بهره‌گیری از ماشین‌آلات پیشرفته کارن ماشین برای تضمین دقت و کیفیت محصولات.</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">🛡️</div>
+                    <h3>تنوع خدمات</h3>
+                    <p style="color:#ccc; line-height:1.7">از شیشه ساختمانی تا زمین ورزشی و صنعت گردشگری؛ ما در تمام مراحل کنار شما هستیم.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <div class="cta-container">
+            <h2 class="cta-title">مسیر موفقیت پروژه شما از اینجا آغاز می‌شود</h2>
+            <p class="cta-desc">
+                ما در هلدینگ دارابی، فقط پیمانکار شما نیستیم؛ شریک تجاری شما هستیم. با تکیه بر ۵۰ سال تجربه تولید و اجرا، ریسک سرمایه‌گذاری شما را به صفر می‌رسانیم.
+            </p>
+
+            <div class="cta-benefits">
+                <div class="benefit-item"><span class="benefit-icon">✓</span> مشاوره رایگان تخصصی</div>
+                <div class="benefit-item"><span class="benefit-icon">✓</span> بازدید حضوری از محل</div>
+                <div class="benefit-item"><span class="benefit-icon">✓</span> گارانتی ۱۰ ساله کتبی</div>
             </div>
 
-        </div>
-    </div>
-</section>
-
-<section class="values-section">
-    <div class="container-custom">
-        <div class="section-header">
-            <h2 style="color:#fff">چرا هلدینگ دارابی؟</h2>
-            <p style="color:#aaa">تفاوت ما در زنجیره کامل تولید و اجراست</p>
-        </div>
-        <div class="values-grid">
-            <div class="value-card">
-                <div class="value-icon">🏭</div>
-                <h3>تولیدکننده واقعی</h3>
-                <p style="color:#ccc; line-height:1.7">ما واسطه نیستیم؛ از ماشین‌آلات تا شیشه و سازه، در کارخانجات هلدینگ تولید می‌شود.</p>
-            </div>
-            <div class="value-card">
-                <div class="value-icon">📐</div>
-                <h3>تکنولوژی روز</h3>
-                <p style="color:#ccc; line-height:1.7">بهره‌گیری از ماشین‌آلات پیشرفته کارن ماشین برای تضمین دقت و کیفیت محصولات.</p>
-            </div>
-            <div class="value-card">
-                <div class="value-icon">🛡️</div>
-                <h3>تنوع خدمات</h3>
-                <p style="color:#ccc; line-height:1.7">از شیشه ساختمانی تا زمین ورزشی و صنعت گردشگری؛ ما در تمام مراحل کنار شما هستیم.</p>
+            <div class="cta-actions">
+                <a asp-controller="home" asp-action="contact" class="btn-primary-glow">
+                    دریافت مشاوره و استعلام قیمت
+                </a>
+                <a asp-controller="home" asp-action="contact" class="btn-secondary-outline">
+                    <span>📞</span> تماس مستقیم با مهندسین
+                </a>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<section class="cta-section">
-    <div class="cta-container">
-        <h2 class="cta-title">مسیر موفقیت پروژه شما از اینجا آغاز می‌شود</h2>
-        <p class="cta-desc">
-            ما در هلدینگ دارابی، فقط پیمانکار شما نیستیم؛ شریک تجاری شما هستیم. با تکیه بر ۵۰ سال تجربه تولید و اجرا، ریسک سرمایه‌گذاری شما را به صفر می‌رسانیم.
-        </p>
+    <script>
+        function toggleTimeline(element) {
+            const content = element.querySelector('.timeline-content');
+            const isActive = content.classList.contains('active');
 
-        <div class="cta-benefits">
-            <div class="benefit-item"><span class="benefit-icon">✓</span> مشاوره رایگان تخصصی</div>
-            <div class="benefit-item"><span class="benefit-icon">✓</span> بازدید حضوری از محل</div>
-            <div class="benefit-item"><span class="benefit-icon">✓</span> گارانتی ۱۰ ساله کتبی</div>
-        </div>
-
-        <div class="cta-actions">
-            <a asp-controller="home" asp-action="contact" class="btn-primary-glow">
-                دریافت مشاوره و استعلام قیمت
-            </a>
-            <a asp-controller="home" asp-action="contact" class="btn-secondary-outline">
-                <span>📞</span> تماس مستقیم با مهندسین
-            </a>
-        </div>
-    </div>
-</section>
-
-<script>
-    function toggleTimeline(element) {
-        const content = element.querySelector('.timeline-content');
-        const isActive = content.classList.contains('active');
-
-        document.querySelectorAll('.timeline-content').forEach(c => c.classList.remove('active'));
-        if (!isActive) content.classList.add('active');
-    }
-
-    document.addEventListener("DOMContentLoaded", function() {
-        const items = document.querySelectorAll('.timeline-content');
-        if ('IntersectionObserver' in window) {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.style.opacity = 1;
-                        entry.target.style.transform = 'translateY(0)';
-                    }
-                });
-            }, { threshold: 0.1 });
-
-            items.forEach(item => {
-                item.style.opacity = 0;
-                item.style.transform = 'translateY(20px)';
-                item.style.transition = 'all 0.6s ease-out';
-                observer.observe(item);
-            });
+            document.querySelectorAll('.timeline-content').forEach(c => c.classList.remove('active'));
+            if (!isActive) content.classList.add('active');
         }
-    });
-</script>
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const items = document.querySelectorAll('.timeline-content');
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.style.opacity = 1;
+                            entry.target.style.transform = 'translateY(0)';
+                        }
+                    });
+                }, { threshold: 0.1 });
+
+                items.forEach(item => {
+                    item.style.opacity = 0;
+                    item.style.transform = 'translateY(20px)';
+                    item.style.transition = 'all 0.6s ease-out';
+                    observer.observe(item);
+                });
+            }
+        });
+    </script>
