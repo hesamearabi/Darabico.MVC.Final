@@ -6,6 +6,7 @@ using final_p_01.Infrastructure.Data;
 using System.IO.Compression;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
+using Microsoft.AspNetCore.Identity; // اضافه شده برای PasswordHasher
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,14 +24,14 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// تنظیمات سئو برای URLها (حروف کوچک و حذف اسلش اضافه)
+// تنظیمات سئو برای URLها
 builder.Services.AddRouting(options =>
 {
     options.LowercaseUrls = true;
     options.AppendTrailingSlash = false;
 });
 
-// 🚀 تنظیمات سئو و پرفورمنس: فشرده‌سازی پیشرفته با Brotli و Gzip
+// 🚀 تنظیمات سئو و پرفورمنس
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true;
@@ -40,7 +41,7 @@ builder.Services.AddResponseCompression(options =>
 builder.Services.Configure<BrotliCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
 builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
 
-// 🚀 امنیت (HSTS): تنظیم Strict-Transport-Security
+// 🚀 امنیت (HSTS)
 builder.Services.AddHsts(options =>
 {
     options.Preload = true;
@@ -48,7 +49,7 @@ builder.Services.AddHsts(options =>
     options.MaxAge = TimeSpan.FromDays(365);
 });
 
-// 🚀 پرفورمنس: سیاست کش خروجی (استثنا برای ادمین)
+// 🚀 پرفورمنس: سیاست کش خروجی
 builder.Services.AddOutputCache(options =>
 {
     options.AddBasePolicy(b =>
@@ -58,22 +59,20 @@ builder.Services.AddOutputCache(options =>
 
 builder.Services.AddControllersWithViews();
 
-// تنظیمات دیتابیس (همراه با رفع خطای Assembly)
+// تنظیمات دیتابیس
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        b => b.MigrationsAssembly("final_p_01.Infrastructure") // معرفی لایه زیرساخت
+        b => b.MigrationsAssembly("final_p_01.Infrastructure")
     ));
 
-// تنظیمات احراز هویت (امنیت کوکی مخصوص دارابیکو)
+// تنظیمات احراز هویت
 builder.Services.AddAuthentication("DarabicoAuth")
     .AddCookie("DarabicoAuth", options =>
     {
         options.LoginPath = "/Admin/Auth/Login";
         options.LogoutPath = "/Admin/Auth/Logout";
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
-
-        // 🚀 Security: محافظت پیشرفته از کوکی
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.Strict;
@@ -82,7 +81,7 @@ builder.Services.AddAuthentication("DarabicoAuth")
 var app = builder.Build();
 
 // ==========================================
-// اجرای خودکار Migration روی سرور (ساخت جداول)
+// اجرای خودکار Migration و ساخت ادمین با هش معتبر
 // ==========================================
 using (var scope = app.Services.CreateScope())
 {
@@ -90,16 +89,28 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.Migrate(); // این خط تمام جداول را در اولین اجرا می‌سازد
+        context.Database.Migrate();
+
+        // تولید هش استاندارد دات‌نت به صورت قطعی
+        var hasher = new PasswordHasher<object>();
+        var hashedPassword = hasher.HashPassword(null, "2081189526Hesam");
+
+        // درج یا آپدیت مستقیم در دیتابیس (بدون نیاز به معرفی کلاس مدل)
+        context.Database.ExecuteSqlRaw(
+            "IF NOT EXISTS (SELECT 1 FROM AdminUsers WHERE Email = 'admin@darabico.com') " +
+            "BEGIN INSERT INTO AdminUsers (Email, Password, FullName) VALUES ('admin@darabico.com', {0}, N'مدیر دارابیکو') END " +
+            "ELSE " +
+            "BEGIN UPDATE AdminUsers SET Password = {0} WHERE Email = 'admin@darabico.com' END",
+            hashedPassword
+        );
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "خطایی هنگام اعمال Migration در دیتابیس رخ داد.");
+        logger.LogError(ex, "خطایی در دیتابیس رخ داد.");
     }
 }
 
-// تنظیمات Pipeline
 app.UseForwardedHeaders();
 
 if (!app.Environment.IsDevelopment())
@@ -112,25 +123,20 @@ else
     app.UseDeveloperExceptionPage();
 }
 
-// 🚀 SEO: هدایت خطاهای 404 به ویو اختصاصی
 app.UseStatusCodePagesWithReExecute("/Home/PageNotFound", "?statusCode={0}");
-
 app.UseHttpsRedirection();
 
-// 🚀 پرفورمنس: هدرهای کش برای تصاویر و CSS/JS
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
     {
-        ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=2592000"); // 30 روز
+        ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=2592000");
     }
 });
 
 app.UseResponseCompression();
 app.UseOutputCache();
 app.UseRouting();
-
-// فعال‌سازی نگهبان‌ها
 app.UseAuthentication();
 app.UseAuthorization();
 
