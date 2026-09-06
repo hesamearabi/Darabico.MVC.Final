@@ -15,13 +15,14 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Webp;
-using SixLabors.ImageSharp.Processing;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace final_p_01.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Authorize]
     [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
+    [OutputCache(NoStore = true)]
     public class PostsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -35,27 +36,17 @@ namespace final_p_01.Areas.Admin.Controllers
             _configuration = configuration;
         }
 
-        // 🚀 SEO Helper: متد استانداردسازی قطعی Slug برای جلوگیری از %20 و حروف بزرگ
         private string GenerateSeoFriendlySlug(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return string.Empty;
 
-            // 1. تبدیل به حروف کوچک و حذف فاصله‌های ابتدا و انتها
             text = text.ToLowerInvariant().Trim();
-
-            // 2. جایگزینی تمام فاصله‌ها و کاراکترهای جداکننده با خط تیره (-)
             text = Regex.Replace(text, @"\s+", "-");
-
-            // 3. حذف تمام کاراکترهای غیرمجاز (فقط حروف انگلیسی، اعداد، حروف فارسی/عربی و خط تیره مجاز است)
             text = Regex.Replace(text, @"[^a-z0-9\u0600-\u06FF\-]+", "");
-
-            // 4. حذف خط تیره‌های تکراری (مثل ---)
             text = Regex.Replace(text, @"-+", "-");
-
             return text.Trim('-');
         }
 
-        // 🚀 Performance: متد فشرده‌سازی و تبدیل اجباری تمام تصاویر به فرمت WebP
         private async Task<string> ProcessAndSaveImageAsync(IFormFile file, string subFolder)
         {
             if (file == null || file.Length == 0) throw new InvalidOperationException("فایلی ارسال نشده است.");
@@ -69,7 +60,7 @@ namespace final_p_01.Areas.Admin.Controllers
             if (!file.ContentType.StartsWith("image/"))
                 throw new InvalidOperationException("نوع محتوای فایل معتبر نیست.");
 
-            string uniqueFileName = $"{Guid.NewGuid()}.webp"; // 🚀 اجبار به فرمت WebP
+            string uniqueFileName = $"{Guid.NewGuid()}.webp";
             string webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             string uploadsFolder = Path.Combine(webRootPath, "uploads", subFolder);
 
@@ -82,9 +73,7 @@ namespace final_p_01.Areas.Admin.Controllers
                 using var stream = file.OpenReadStream();
                 using var image = await Image.LoadAsync(stream);
 
-                // 🚀 تنظیم کیفیت فشرده‌سازی روی 80 درصد برای بالاترین سرعت لود بدون افت کیفیت ظاهری
                 var encoder = new WebpEncoder { Quality = 80 };
-
                 await image.SaveAsWebpAsync(filePath, encoder);
             }
             catch (Exception ex)
@@ -124,6 +113,11 @@ namespace final_p_01.Areas.Admin.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
+            // 🚀 FIX: تزریق دستی و سختگیرانه هدرهای ضد-کش برای دور زدن فایروال‌ها و CDNها
+            Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
+            Response.Headers.Append("Pragma", "no-cache");
+            Response.Headers.Append("Expires", "0");
+
             var posts = await _context.Posts
                 .AsNoTracking()
                 .Include(p => p.Category)
@@ -147,12 +141,12 @@ namespace final_p_01.Areas.Admin.Controllers
             ModelState.Remove("Category");
             ModelState.Remove("CoverImagePath");
             ModelState.Remove("Faqs");
+            ModelState.Remove("Slug");
+
+            post.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(post.Slug) ? post.Title : post.Slug);
 
             if (ModelState.IsValid)
             {
-                // 🚀 SEO: تولید یا اصلاح خودکار Slug از روی عنوان یا اسلاگ وارد شده
-                post.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(post.Slug) ? post.Title : post.Slug);
-
                 bool isSlugExist = await _context.Posts.AnyAsync(p => p.Slug == post.Slug);
                 if (isSlugExist)
                 {
@@ -175,7 +169,9 @@ namespace final_p_01.Areas.Admin.Controllers
                     _context.Posts.Add(post);
                     await _context.SaveChangesAsync();
 
-                    return RedirectToAction("Index");
+                    TempData["SuccessMessage"] = "مقاله با موفقیت ذخیره و منتشر شد.";
+                    // 🚀 FIX: استفاده از Cache-Buster برای مجبور کردن مرورگر به لود اطلاعات جدید
+                    return RedirectToAction("Index", new { t = DateTime.UtcNow.Ticks });
                 }
                 catch (InvalidOperationException ex)
                 {
@@ -217,12 +213,12 @@ namespace final_p_01.Areas.Admin.Controllers
             ModelState.Remove("Category");
             ModelState.Remove("CoverImagePath");
             ModelState.Remove("Faqs");
+            ModelState.Remove("Slug");
+
+            post.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(post.Slug) ? post.Title : post.Slug);
 
             if (ModelState.IsValid)
             {
-                // 🚀 SEO: استانداردسازی اسلاگ در هنگام ویرایش
-                post.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(post.Slug) ? post.Title : post.Slug);
-
                 bool isSlugExist = await _context.Posts.AnyAsync(p => p.Slug == post.Slug && p.Id != post.Id);
                 if (isSlugExist)
                 {
@@ -269,7 +265,9 @@ namespace final_p_01.Areas.Admin.Controllers
 
                     if (!string.IsNullOrEmpty(oldImagePathToDelete)) DeleteSecurely(oldImagePathToDelete);
 
-                    return RedirectToAction("Index");
+                    TempData["SuccessMessage"] = "تغییرات مقاله با موفقیت ذخیره شد.";
+                    // 🚀 FIX: استفاده از Cache-Buster
+                    return RedirectToAction("Index", new { t = DateTime.UtcNow.Ticks });
                 }
                 catch (InvalidOperationException ex)
                 {
@@ -305,8 +303,11 @@ namespace final_p_01.Areas.Admin.Controllers
                 await _context.SaveChangesAsync();
 
                 DeleteSecurely(imagePathToDelete);
+
+                TempData["SuccessMessage"] = "مقاله به طور کامل حذف شد.";
             }
-            return RedirectToAction("Index");
+            // 🚀 FIX: استفاده از Cache-Buster
+            return RedirectToAction("Index", new { t = DateTime.UtcNow.Ticks });
         }
 
         [HttpPost]
@@ -315,7 +316,6 @@ namespace final_p_01.Areas.Admin.Controllers
         {
             try
             {
-                // 🚀 حالا عکس‌هایی که داخل متن TinyMCE قرار می‌گیرند هم WebP و کم‌حجم می‌شوند!
                 string url = await ProcessAndSaveImageAsync(upload, "article-images");
                 return Json(new { location = url });
             }

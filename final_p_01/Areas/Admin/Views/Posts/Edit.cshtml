@@ -184,12 +184,14 @@
 
                 <div class="mb-4">
                     <label asp-for="Slug" class="form-label">اسلاگ (URL) <span class="form-hint">انگلیسی یا فینگلیش با خط تیره</span></label>
-                    <input asp-for="Slug" class="form-control" style="direction: ltr; text-align: left;" required />
+                    <!-- 🚀 FIX: حذف required از اسلاگ -->
+                    <input asp-for="Slug" class="form-control" style="direction: ltr; text-align: left;" />
                 </div>
 
                 <div class="mb-5">
                     <label asp-for="Content" class="form-label">متن اصلی مقاله</label>
-                    <textarea asp-for="Content" id="Content" class="form-control" rows="15" required></textarea>
+                    <!-- 🚀 FIX: حذف required از تکست‌اریایی که توسط TinyMCE مخفی می‌شود -->
+                    <textarea asp-for="Content" id="Content" class="form-control" rows="15"></textarea>
                 </div>
 
                 <div class="p-4 rounded-4" style="background: #f8fafc; border: 2px dashed var(--border-color);">

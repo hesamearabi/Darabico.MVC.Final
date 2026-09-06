@@ -227,7 +227,8 @@
                             <span class="fw-bold d-block" style="color: var(--brand-navy);">آپلود تصویر</span>
                             <span class="text-muted small">فرمت‌های مجاز: JPG, PNG, WEBP</span>
                         </div>
-                        <input type="file" name="coverImage" id="coverImage" class="d-none" accept="image/*" onchange="previewFile(this);" required />
+                        <!-- 🚀 FIX: حذف required از تگ مخفی -->
+                        <input type="file" name="coverImage" id="coverImage" class="d-none" accept="image/*" onchange="previewFile(this);" />
                     </div>
                 </div>
 
@@ -294,7 +295,7 @@
                    'allowFullScreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe></div><p><br></p>';
         }
 
-        // TinyMCE Init (Your existing config)
+        // TinyMCE Init
         tinymce.init({
             selector: '#Content',
             directionality: 'rtl',

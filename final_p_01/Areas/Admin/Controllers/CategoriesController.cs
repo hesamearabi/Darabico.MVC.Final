@@ -7,12 +7,14 @@ using final_p_01.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.OutputCaching; // 🚀 اضافه شده برای کنترل کش سرور
 
 namespace final_p_01.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Authorize] // قفل امنیتی
-    [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)] // جلوگیری از کش شدن و نمایش فوری
+    [Authorize]
+    [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)] // غیرفعال‌سازی کش مرورگر
+    [OutputCache(NoStore = true)] // 🚀 FIX: غیرفعال‌سازی قطعی کش سرور برای جلوگیری از تاخیر در نمایش
     public class CategoriesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -22,7 +24,6 @@ namespace final_p_01.Areas.Admin.Controllers
             _context = context;
         }
 
-        // 🚀 SEO Helper: متد استانداردسازی اسلاگ برای جلوگیری از خطای دیتابیس و URLهای خراب
         private string GenerateSeoFriendlySlug(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return string.Empty;
@@ -33,13 +34,9 @@ namespace final_p_01.Areas.Admin.Controllers
             return text.Trim('-');
         }
 
-        // ==========================================
-        // ۱. لیست دسته‌بندی‌ها
-        // ==========================================
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            // 🚀 پرفورمنس: تبدیل به Async/Await
             var categories = await _context.Categories
                 .AsNoTracking()
                 .Include(c => c.Posts)
@@ -49,9 +46,6 @@ namespace final_p_01.Areas.Admin.Controllers
             return View(categories);
         }
 
-        // ==========================================
-        // ۲. ساخت دسته‌بندی جدید
-        // ==========================================
         [HttpGet]
         public IActionResult Create()
         {
@@ -63,13 +57,12 @@ namespace final_p_01.Areas.Admin.Controllers
         public async Task<IActionResult> Create(Category category)
         {
             ModelState.Remove("Posts");
+            ModelState.Remove("Slug");
+
+            category.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(category.Slug) ? category.Name : category.Slug);
 
             if (ModelState.IsValid)
             {
-                // تولید خودکار اسلاگ سئو در صورت خالی بودن
-                category.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(category.Slug) ? category.Name : category.Slug);
-
-                // 🚀 جلوگیری قطعی از کِرَش دیتابیس (جلوگیری از نقض ایندکس IsUnique)
                 bool exists = await _context.Categories.AnyAsync(c => c.Slug == category.Slug);
                 if (exists)
                 {
@@ -86,9 +79,6 @@ namespace final_p_01.Areas.Admin.Controllers
             return View(category);
         }
 
-        // ==========================================
-        // ۳. ویرایش دسته‌بندی
-        // ==========================================
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -104,12 +94,12 @@ namespace final_p_01.Areas.Admin.Controllers
             if (id != category.Id) return NotFound();
 
             ModelState.Remove("Posts");
+            ModelState.Remove("Slug");
+
+            category.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(category.Slug) ? category.Name : category.Slug);
 
             if (ModelState.IsValid)
             {
-                category.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(category.Slug) ? category.Name : category.Slug);
-
-                // بررسی یکتایی اسلاگ به جز دسته‌بندی فعلی
                 bool exists = await _context.Categories.AnyAsync(c => c.Slug == category.Slug && c.Id != id);
                 if (exists)
                 {
@@ -131,9 +121,6 @@ namespace final_p_01.Areas.Admin.Controllers
             return View(category);
         }
 
-        // ==========================================
-        // ۴. حذف دسته‌بندی (محافظت شده در برابر کرش)
-        // ==========================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
@@ -141,7 +128,6 @@ namespace final_p_01.Areas.Admin.Controllers
             var category = await _context.Categories.FindAsync(id);
             if (category != null)
             {
-                // 🚀 پرفورمنس (Memory Fix): بررسی Async بدون لود کردن جداول سنگین
                 bool hasPosts = await _context.Posts.AnyAsync(p => p.CategoryId == id);
 
                 if (hasPosts)
@@ -153,7 +139,7 @@ namespace final_p_01.Areas.Admin.Controllers
                 _context.Categories.Remove(category);
                 await _context.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = "دسته‌بندی حذف شد.";
+                TempData["SuccessMessage"] = "دسته‌بندی با موفقیت حذف شد.";
             }
             return RedirectToAction(nameof(Index));
         }
