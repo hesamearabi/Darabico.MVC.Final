@@ -47,7 +47,6 @@ builder.Services.AddHsts(options =>
 builder.Services.AddOutputCache(options =>
 {
     options.AddBasePolicy(b =>
-        // 🚀 FIX: بهینه‌سازی شرط چک کردن کاربر برای جلوگیری از خطای NullReference
         b.With(c => c.HttpContext.User?.Identity?.IsAuthenticated != true)
          .Expire(TimeSpan.FromMinutes(60)));
 });
@@ -124,7 +123,6 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.UseResponseCompression();
 
-// 🚀 FIX: اصلاح حیاتی ترتیب میدلورها. کَش خروجی حتماً باید بعد از احراز هویت اجرا شود!
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();

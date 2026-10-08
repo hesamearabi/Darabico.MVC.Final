@@ -11,31 +11,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- 🚀 SEO Meta Tags -->
-    <meta name="description" content="@(ViewData["MetaDescription"] ?? "دارابی کو، مجری تخصصی ساخت زمین پدل و تولیدکننده شیشه‌های استاندارد پدل با ۵۰ سال تجربه. مشاوره رایگان هزینه ساخت در سراسر ایران.")">
-    <meta name="keywords" content="ساخت زمین پدل, هزینه ساخت زمین پدل, شیشه زمین پدل, ابعاد زمین پدل, دارابی کو">
+    <meta name="description" content="@(ViewData["MetaDescription"] ?? "دارابی‌کو، برند تخصصی هلدینگ دارابی و پیمانکار مستقیم طراحی، زیرسازی و ساخت زمین پدل در ایران. تولید شیشه، چمن مصنوعی و تجهیزات با استانداردهای جهانی FIP.")">
+    <meta name="keywords" content="ساخت زمین پدل, احداث زمین پدل, پیمانکار زمین پدل, قیمت شیشه زمین پدل, هزینه ساخت زمین پدل, چمن مصنوعی پدل, دارابی کو, استاندارد FIP">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 
     <link rel="canonical" href="@($"https://{Context.Request.Host}{Context.Request.Path}")" />
 
     <!-- 🚀 Open Graph (Facebook, LinkedIn, WhatsApp) -->
-    <meta property="og:site_name" content="دارابی کو">
-    <meta property="og:title" content="@(ViewData["Title"] != null ? $"دارابی کو | {ViewData["Title"]}" : "دارابی کو | مرجع تخصصی ساخت زمین پدل")">
+    <meta property="og:site_name" content="دارابی کو | مجری ساخت زمین پدل">
+    <meta property="og:title" content="@(ViewData["Title"] != null ? $"دارابی کو | {ViewData["Title"]}" : "دارابی کو | مرجع تخصصی ساخت و تجهیز زمین پدل")">
     <meta property="og:type" content="website">
-    <meta property="og:description" content="@(ViewData["MetaDescription"] ?? "صفر تا صد ساخت زمین پدل با شیشه‌های نشکن استاندارد جهانی.")">
+    <meta property="og:description" content="@(ViewData["MetaDescription"] ?? "صفر تا صد ساخت زمین پدل با شیشه‌های نشکن، چمن مصنوعی و سازه استاندارد جهانی بدون واسطه.")">
     <meta property="og:image" content="@($"https://{Context.Request.Host}/siteLOGO/sitelogo.png")">
     <meta property="og:url" content="@($"https://{Context.Request.Host}{Context.Request.Path}")">
 
     <!-- 🚀 Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="@(ViewData["Title"] != null ? $"دارابی کو | {ViewData["Title"]}" : "دارابی کو | مرجع تخصصی ساخت زمین پدل")">
-    <meta name="twitter:description" content="@(ViewData["MetaDescription"] ?? "دارابی کو، مجری تخصصی ساخت زمین پدل و تولیدکننده شیشه‌های استاندارد پدل.")">
+    <meta name="twitter:description" content="@(ViewData["MetaDescription"] ?? "دارابی کو، پیمانکار تخصصی احداث زمین پدل و تولیدکننده شیشه‌های استاندارد پدل در ایران.")">
     <meta name="twitter:image" content="@($"https://{Context.Request.Host}/siteLOGO/sitelogo.png")">
 
     <title>@(ViewData["Title"] != null ? $"دارابی کو | {ViewData["Title"]}" : "دارابی کو | مرجع تخصصی ساخت و تجهیز زمین های پدل")</title>
 
-    <!-- 🚀 Favicons -->
-    <link rel="icon" type="image/png" href="/siteLOGO/favicon.png" asp-append-version="true">
-    <link rel="apple-touch-icon" href="/siteLOGO/favicon.png">
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" href="/siteLOGO/favicon.png">
+
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+
+    <!-- Apple -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+
+    <!-- Web App -->
+    <link rel="manifest" href="/site.webmanifest">
 
     <!-- 🚀 Stylesheets -->
     <link rel="stylesheet" href="/CSS-SOURCE/layouts.css" asp-append-version="true">
@@ -188,21 +197,33 @@
                 }
     </style>
 
-    <!-- 🚀 JSON-LD Schema -->
+    <!-- 🚀 JSON-LD Schema (ارتقا یافته برای سئو لوکال و خدمات پیمانکاری) -->
     <script type="application/ld+json">
         {
           "@@context": "https://schema.org",
           "@@type": "GeneralContractor",
-          "name": "دارابی کو",
+          "name": "دارابی کو - Darabico",
           "url": "@($"https://{Context.Request.Host}")",
           "logo": "@($"https://{Context.Request.Host}/siteLOGO/sitelogo.png")",
+          "description": "پیمانکار تخصصی طراحی، زیرسازی، ساخت سازه و تجهیز زمین های پدل در ایران با تولید مستقیم شیشه.",
+          "priceRange": "$$",
+          "address": {
+            "@@type": "PostalAddress",
+            "addressCountry": "IR",
+            "addressLocality": "Sari",
+            "streetAddress": "بلوار خزر، خیابان دریا ۴"
+          },
           "contactPoint": {
             "@@type": "ContactPoint",
             "telephone": "+989111515971",
             "contactType": "sales",
             "areaServed": "IR",
             "availableLanguage": "Persian"
-          }
+          },
+          "sameAs": [
+            "https://instagram.com/darabicopadel",
+            "https://t.me/DarabiHolding"
+          ]
         }
     </script>
 
@@ -225,23 +246,23 @@
     <header class="site-header" id="main-header">
         <div class="header-container">
             <div class="logo">
-                <a href="/">
+                <a href="/" title="ساخت زمین پدل دارابی کو">
                     <span class="logo-text">دارابی <span>کو</span></span>
                 </a>
             </div>
 
             <nav class="desktop-nav">
                 <ul>
-                    <li><a href="/#about1" class="nav-link">درباره ما</a></li>
-                    <li><a href="/#services-section" class="nav-link">خدمات</a></li>
-                    <li><a href="/#projects-section" class="nav-link">پروژه‌ها</a></li>
-                    <li><a asp-controller="Home" asp-action="Blog" class="nav-link">مقالات</a></li>
-                    <li><a asp-controller="Home" asp-action="PadelGuide" class="nav-link">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
+                    <li><a href="/#about1" class="nav-link" title="درباره سازنده زمین پدل">درباره ما</a></li>
+                    <li><a href="/#services-section" class="nav-link" title="خدمات ساخت کورت پدل">خدمات</a></li>
+                    <li><a href="/#projects-section" class="nav-link" title="پروژه های احداث زمین پدل">پروژه‌ها</a></li>
+                    <li><a asp-controller="Home" asp-action="Blog" class="nav-link" title="مقالات و ابعاد زمین پدل">مقالات</a></li>
+                    <li><a asp-controller="Home" asp-action="PadelGuide" class="nav-link" title="راهنمای احداث زمین پدل">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
                 </ul>
             </nav>
 
             <div class="header-actions">
-                <a asp-controller="Home" asp-action="Contact" class="header-cta-btn">مشاوره رایگان</a>
+                <a asp-controller="Home" asp-action="Contact" class="header-cta-btn" title="استعلام قیمت ساخت زمین پدل">مشاوره رایگان</a>
                 <button class="hamburger" id="hamburger-btn" aria-label="منو">
                     <span></span><span></span><span></span>
                 </button>
@@ -279,18 +300,18 @@
     else
     {
         <section class="hero">
-            <img src="/H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp" alt="پس زمینه" class="hero-bg-img" fetchpriority="high" decoding="async" width="1920" height="1080">
+            <img src="/H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp" alt="اجرای زمین پدل استاندارد" class="hero-bg-img" fetchpriority="high" decoding="async" width="1920" height="1080">
             <div class="hero-overlay"></div>
             <div class="hero-content">
                 <h1 class="hero-title">
-                    <span>ساخت تخصصی</span>
-                    <span>زمین‌های پدل</span>
-                    <span>با استانداردهای جهانی</span>
+                    <span class="d-block">طراحی و احداث</span>
+                    <span class="highlight">زمین پدل</span>
+                    <span class="d-block">با استاندارد جهانی FIP</span>
                 </h1>
-                <p class="hero-subtitle">تولیدکننده انحصاری شیشه‌های نشکن پدل و مجری صفر تا صد پروژه‌های ورزشی در ایران</p>
+                <p class="hero-subtitle">مجری بی‌واسطه و تولیدکننده شیشه سکوریت، چمن مصنوعی و تجهیزات کامل کورت پدل.</p>
 
                 <div class="hero-actions">
-                    <a asp-controller="Home" asp-action="Contact" class="hero-consult-btn">دریافت مشاوره و قیمت</a>
+                    <a asp-controller="Home" asp-action="Contact" class="hero-consult-btn" title="استعلام هزینه زمین پدل">دریافت مشاوره و قیمت</a>
                     <a asp-controller="Home" asp-action="PadelGuide" class="hero-guide-btn" title="راهنمای جامع 0 تا 100 ساخت زمین پدل">
                         راهنمای ۰ تا ۱۰۰ ساخت پدل
                     </a>
@@ -314,7 +335,7 @@
     <footer class="site-footer">
         <div class="footer-container">
             <div class="footer-top">
-                <a href="#" class="go-top-btn">
+                <a href="#" class="go-top-btn" title="بازگشت به بالای صفحه">
                     <span>بازگشت به بالا</span>
                     <img src="/footerimg/1037792-200.png" alt="بازگشت به بالا" width="24" height="24" loading="lazy">
                 </a>
@@ -324,44 +345,44 @@
                 <div class="footer-col">
                     <h3 class="footer-title">دارابی کو</h3>
                     <p class="footer-desc">
-                        با ۵۰ سال تجربه در صنعت شیشه، اکنون تخصصی‌ترین مرجع <strong>ساخت زمین پدل</strong> در ایران هستیم. هدف ما ترکیب امنیت <strong>شیشه‌های نشکن</strong> با استانداردهای جهانی برای ساخت زمینی ماندگار است.
+                        هلدینگ دارابی با نام تجاری <strong>دارابی‌کو</strong>، تخصصی‌ترین <strong>پیمانکار ساخت زمین پدل</strong> در ایران است. ما با تولید بی‌واسطه <strong>شیشه سکوریت</strong> و اجرای دقیق <strong>چمن مصنوعی</strong> و <strong>سازه استاندارد FIP</strong>، بالاترین کیفیت را با بهترین <strong>هزینه احداث</strong> تضمین می‌کنیم.
                     </p>
                 </div>
 
                 <div class="footer-col">
                     <h3 class="footer-title">دسترسی سریع</h3>
                     <ul class="quick-links">
-                        <li><a asp-controller="Home" asp-action="Index">صفحه اصلی</a></li>
-                        <li><a asp-controller="Home" asp-action="Blog">مجله آموزشی پدل</a></li>
-                        <li><a asp-controller="Home" asp-action="About">درباره ما</a></li>
-                        <li><a asp-controller="Home" asp-action="Contact">ارتباط با ما</a></li>
-                        <li><a asp-controller="Home" asp-action="PadelGuide">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
+                        <li><a asp-controller="Home" asp-action="Index" title="صفحه اصلی سایت">صفحه اصلی</a></li>
+                        <li><a asp-controller="Home" asp-action="Blog" title="مقالات و هزینه ساخت زمین پدل">مجله آموزشی پدل</a></li>
+                        <li><a asp-controller="Home" asp-action="About" title="درباره شرکت سازنده زمین پدل">درباره ما</a></li>
+                        <li><a asp-controller="Home" asp-action="Contact" title="استعلام قیمت زمین پدل">ارتباط با ما</a></li>
+                        <li><a asp-controller="Home" asp-action="PadelGuide" title="آموزش احداث زمین پدل">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
                     </ul>
                 </div>
 
                 <div class="footer-col">
                     <h3 class="footer-title">ارتباط با ما</h3>
                     <div class="contact-item">
-                        <img src="/footerimg/location-map-pin-3.svg" alt="آدرس" width="20" height="20" loading="lazy" decoding="async">
+                        <img src="/footerimg/location-map-pin-3.svg" alt="آدرس دفتر مرکزی" width="20" height="20" loading="lazy" decoding="async">
                         <span>دفتر مرکزی: ساری، بلوار خزر، خیابان دریا ۴ , فروشگاه دارابی</span>
                     </div>
                     <div class="contact-item">
-                        <img src="/footerimg/location-map-pin-3.svg" alt="کارخانه" width="20" height="20" loading="lazy" decoding="async">
+                        <img src="/footerimg/location-map-pin-3.svg" alt="آدرس کارخانه تولید شیشه پدل" width="20" height="20" loading="lazy" decoding="async">
                         <span>کارخانه: ساری , کیلومتر 20 جاده فرح آباد , شهرک صنعتی شماره ۲، قطعه D5</span>
                     </div>
                     <div class="contact-item">
-                        <img src="/footerimg/phone.png" alt="تلفن" width="20" height="20" loading="lazy" decoding="async">
+                        <img src="/footerimg/phone.png" alt="شماره تماس مشاوره ساخت پدل" width="20" height="20" loading="lazy" decoding="async">
                         <a href="tel:09111515971" dir="ltr">09111515971</a>
                     </div>
                     <div class="contact-item">
-                        <img src="/footerimg/phone.png" alt="تلفن" width="20" height="20" loading="lazy" decoding="async">
+                        <img src="/footerimg/phone.png" alt="شماره تماس مجری زمین پدل" width="20" height="20" loading="lazy" decoding="async">
                         <a href="tel:09121729882" dir="ltr">09121729882</a>
                     </div>
                     <div class="social-links">
-                        <a href="https://instagram.com/darabicopadel" title="اینستاگرام">
+                        <a href="https://instagram.com/darabicopadel" title="اینستاگرام دارابی کو">
                             <img src="/footerimg/logo-instagram.svg" alt="Instagram" width="22" height="22" loading="lazy" decoding="async">
                         </a>
-                        <a href="https://t.me/DarabiHolding" title="تلگرام">
+                        <a href="https://t.me/DarabiHolding" title="تلگرام دارابی کو">
                             <img src="/footerimg/4701496.png" alt="Telegram" width="22" height="22" loading="lazy" decoding="async">
                         </a>
                     </div>
@@ -372,7 +393,7 @@
 
     <div class="sub-footer">
         <div class="sub-footer-container">
-            <p>Powered by <a href="https://www.linkedin.com/in/hesam-arabi/" target="_blank" rel="noopener noreferrer" class="dev-linkedin-link">hesamearabi</a></p>
+            <p>Powered by <a href="https://www.linkedin.com/in/hesam-arabi/" target="_blank" rel="noopener noreferrer" class="dev-linkedin-link" title="توسعه دهنده سایت">hesamearabi</a></p>
         </div>
     </div>
 

@@ -1,478 +1,688 @@
 ﻿@model final_p_01.Domain.Entities.Post
+@using System.Linq
 @using Ganss.Xss
 @using System.Text.Json
 
 @{
-    // 🚀 Pillar SEO: عناوین و دیسکریپشن جامع در صورت خالی بودن دیتابیس
-    ViewData["Title"] = Model?.Title ?? "راهنمای جامع 0 تا 100 ساخت زمین پدل | دارابی کو";
-    ViewData["MetaDescription"] = Model?.MetaDescription ?? "جامع‌ترین راهنمای ساخت زمین پدل در ایران؛ بررسی ابعاد استاندارد، متریال، شیشه‌های سکوریت و برآورد دقیق هزینه‌های احداث کورت.";
+    ViewData["Title"] = Model?.Title ?? "راهنمای جامع 0 تا 100 ساخت زمین پدل";
+    if (Model != null && !string.IsNullOrWhiteSpace(Model.MetaDescription))
+    {
+        ViewData["MetaDescription"] = Model.MetaDescription;
+    }
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-    string coverImage = !string.IsNullOrWhiteSpace(Model?.CoverImagePath) ? Model.CoverImagePath : "/H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp";
+    string coverImage = (Model != null && !string.IsNullOrWhiteSpace(Model.CoverImagePath)) ? Model.CoverImagePath : "/H-IMG/133.webp";
+    
+    // 🚀 SEO FIX: URL اختصاصی و بدون پیشوند Blog
+    string currentUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/padel-court-construction-guide";
     string absoluteCoverImage = $"{Context.Request.Scheme}://{Context.Request.Host}{coverImage}";
-    string absoluteUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/padel-court-construction-guide";
 
     var sanitizer = new HtmlSanitizer();
-    sanitizer.AllowedTags.Add("iframe");
-    sanitizer.AllowedTags.Add("video");
-    sanitizer.AllowedTags.Add("source");
-    sanitizer.AllowedTags.Add("div");
-    sanitizer.AllowedAttributes.Add("allowfullscreen");
-    sanitizer.AllowedAttributes.Add("webkitallowfullscreen");
-    sanitizer.AllowedAttributes.Add("mozallowfullscreen");
-    sanitizer.AllowedAttributes.Add("frameborder");
-    sanitizer.AllowedAttributes.Add("controls");
-    sanitizer.AllowedAttributes.Add("style");
-    sanitizer.AllowedAttributes.Add("class");
-    sanitizer.AllowedAttributes.Add("id");
+    
+    // 🚀 Rendering FIX: تزریق تگ‌های لازم برای جلوگیری از شکسته شدن محتوای HTML ادیتور
+    var allowedTags = new[] { "p", "br", "strong", "em", "u", "b", "i", "ul", "ol", "li", "a", "span", "h1", "h2", "h3", "h4", "h5", "h6", "table", "tbody", "thead", "tr", "td", "th", "img", "figure", "figcaption", "blockquote", "iframe", "video", "source", "div" };
+    foreach(var tag in allowedTags) { sanitizer.AllowedTags.Add(tag); }
+
+    var allowedAttributes = new[] { "href", "src", "alt", "width", "height", "target", "rel", "allowfullscreen", "webkitallowfullscreen", "mozallowfullscreen", "frameborder", "controls", "style", "class", "id", "dir", "loading", "decoding", "fetchpriority" };
+    foreach(var attr in allowedAttributes) { sanitizer.AllowedAttributes.Add(attr); }
 
     sanitizer.FilterUrl += (sender, args) =>
     {
         if (args.Tag.TagName.ToLower() == "iframe" && !args.OriginalUrl.StartsWith("https://www.aparat.com/"))
+        {
             args.SanitizedUrl = null;
+        }
     };
 
-    string processedContent = sanitizer.Sanitize(Model?.Content ?? "<p>محتوای راهنما در حال بروزرسانی است...</p>");
-
-    var safeFaqs = Model?.Faqs?.Select(f => new
+    // Performance & Accessibility: تزریق Lazy Load و Alt به تصاویر محتوای دیتابیس
+    sanitizer.PostProcessNode += (sender, args) =>
     {
-        Question = f.Question,
-        Answer = sanitizer.Sanitize((f.Answer ?? "").Replace("\n", "<br/>"))
-    }).ToList();
+        if (args.Node.NodeName.Equals("IMG", System.StringComparison.OrdinalIgnoreCase))
+        {
+            var img = (AngleSharp.Dom.IElement)args.Node;
+            if (!img.HasAttribute("loading")) img.SetAttribute("loading", "lazy");
+            if (!img.HasAttribute("decoding")) img.SetAttribute("decoding", "async");
+            if (!img.HasAttribute("alt") || string.IsNullOrWhiteSpace(img.GetAttribute("alt")))
+            {
+                img.SetAttribute("alt", Model?.Title ?? "تصویر راهنمای ساخت زمین پدل");
+            }
+        }
+    };
+
+    string processedContent = Model != null ? sanitizer.Sanitize(Model.Content ?? "") : "";
+
+    // 🚀 FAQ Rendering Fix: پردازش صحیح خطوط جدید بدون تخریب تگ‌های HTML
+    string FormatFaqAnswer(string? rawAnswer)
+    {
+        if (string.IsNullOrWhiteSpace(rawAnswer)) return string.Empty;
+        bool containsHtml = rawAnswer.Contains("<p>") || rawAnswer.Contains("<br") || rawAnswer.Contains("<div>") || rawAnswer.Contains("<ul>");
+        string preparedText = containsHtml ? rawAnswer : rawAnswer.Replace("\r\n", "\n").Replace("\n", "<br/>");
+        return sanitizer.Sanitize(preparedText);
+    }
 }
 
 @section Hero { }
 
-    @section Head {
-        <link rel="preload" as="image" href="@coverImage" fetchpriority="high">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+@section Head {
+    <!-- 🚀 LCP Optimization -->
+    <link rel="preload" as="image" href="@coverImage" fetchpriority="high">
 
-        <!-- 🚀 SEO: تولید خودکار Rich Snippets اختصاصی برای صفحه Pillar -->
+    <!-- 🚀 SEO Technical: Canonical & Open Graph -->
+    <link rel="canonical" href="@currentUrl" />
+    <meta property="og:title" content="@ViewData["Title"]" />
+    <meta property="og:description" content="@(ViewData["MetaDescription"] ?? Model?.Title)" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="@currentUrl" />
+    <meta property="og:image" content="@absoluteCoverImage" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"></noscript>
+
+    <!-- 🚀 SEO: Structured Data (JSON-LD) -->
+    @if (Model != null)
+    {
         <script type="application/ld+json">
-            {
-              "@@context": "https://schema.org",
-              "@@graph": [
+        {
+            "@@context": "https://schema.org",
+            "@@graph": [
                 {
-                  "@@type": "Article",
-                  "headline": @Html.Raw(JsonSerializer.Serialize(Model?.Title ?? "راهنمای ساخت زمین پدل")),
-                  "image": "@absoluteCoverImage",
-                  "datePublished": "@(Model?.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ") ?? DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"))",
-                  "author": {
-                    "@@type": "Organization",
-                    "name": "دارابی کو",
-                    "url": "@($"{Context.Request.Scheme}://{Context.Request.Host}")"
-                  },
-                  "publisher": {
-                    "@@type": "Organization",
-                    "name": "دارابی کو",
-                    "logo": {
-                      "@@type": "ImageObject",
-                      "url": "@($"{Context.Request.Scheme}://{Context.Request.Host}/siteLOGO/sitelogo.png")"
-                    }
-                  },
-                  "mainEntityOfPage": {
                     "@@type": "WebPage",
-                    "@@id": "@absoluteUrl"
-                  }
+                    "@@id": "@currentUrl",
+                    "url": "@currentUrl",
+                    "name": @Html.Raw(JsonSerializer.Serialize(Model.Title))
                 },
                 {
-                  "@@type": "BreadcrumbList",
-                  "itemListElement": [
-                    {
-                      "@@type": "ListItem",
-                      "position": 1,
-                      "name": "خانه",
-                      "item": "@($"{Context.Request.Scheme}://{Context.Request.Host}/")"
-                    },
-                    {
-                      "@@type": "ListItem",
-                      "position": 2,
-                      "name": "راهنمای ساخت زمین پدل"
+                    "@@type": "Article",
+                    "headline": @Html.Raw(JsonSerializer.Serialize(Model.Title)),
+                    "image": "@absoluteCoverImage",
+                    "datePublished": "@Model.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ")",
+                    "author": {
+                        "@@type": "Organization",
+                        "name": "دارابی کو"
                     }
-                  ]
+                },
+                {
+                    "@@type": "BreadcrumbList",
+                    "itemListElement": [
+                        { "@@type": "ListItem", "position": 1, "name": "خانه", "item": "@($"{Context.Request.Scheme}://{Context.Request.Host}/")" },
+                        { "@@type": "ListItem", "position": 2, "name": @Html.Raw(JsonSerializer.Serialize(Model.Title)), "item": "@currentUrl" }
+                    ]
                 }
-                @if (safeFaqs != null && safeFaqs.Any())
+                @if (Model.Faqs != null && Model.Faqs.Any())
                 {
                     <text>
                     ,{
-                      "@@type": "FAQPage",
-                      "mainEntity": [
-                        @for (int i = 0; i < safeFaqs.Count; i++)
-                        {
-                              var faq = safeFaqs[i];
-                              <text>
-                              {
-                                "@@type": "Question",
-                                "name": @Html.Raw(JsonSerializer.Serialize(faq.Question)),
-                                "acceptedAnswer": {
-                                  "@@type": "Answer",
-                                  "text": @Html.Raw(JsonSerializer.Serialize(faq.Answer))
+                        "@@type": "FAQPage",
+                        "mainEntity": [
+                            @for (int i = 0; i < Model.Faqs.Count; i++)
+                            {
+                                var currentFaq = Model.Faqs.ElementAt(i);
+                                <text>
+                                {
+                                    "@@type": "Question",
+                                    "name": @Html.Raw(JsonSerializer.Serialize(currentFaq.Question)),
+                                    "acceptedAnswer": {
+                                        "@@type": "Answer",
+                                        "text": @Html.Raw(JsonSerializer.Serialize(FormatFaqAnswer(currentFaq.Answer)))
+                                    }
                                 }
-                              }
-                              @(i < safeFaqs.Count - 1 ? "," : "")
-                              </text>
-                        }
-                      ]
+                                @(i < Model.Faqs.Count - 1 ? "," : "")
+                                </text>
+                            }
+                        ]
                     }
                     </text>
                 }
-              ]
-            }
+            ]
+        }
         </script>
+    }
 
-        <style>
-            :root {
-                --pd-bg: #f8fafc;
-                --pd-card: #ffffff;
-                --pd-text-main: #0f172a;
-                --pd-text-muted: #64748b;
-                --pd-primary: #0056b3;
-                --pd-accent: #d11e32;
-                --pd-navy: #0a0c12;
-                --pd-radius-xl: 24px;
-                --pd-radius-lg: 16px;
-                --pd-radius-md: 12px;
-                --pd-shadow: 0 10px 40px rgba(0,0,0,0.04);
-                --pd-transition: all 0.3s ease;
-            }
+    <style>
+        :root {
+            --pd-bg: #f8fafc;
+            --pd-card: #ffffff;
+            --pd-text-main: #0f172a;
+            --pd-text-muted: #475569;
+            --pd-primary: #0056b3;
+            --pd-accent: #d11e32;
+            --pd-navy: #0a0c12;
+            --pd-radius-xl: 24px;
+            --pd-radius-lg: 16px;
+            --pd-radius-md: 12px;
+            --pd-shadow: 0 10px 40px rgba(0,0,0,0.04);
+            --pd-transition: all 0.3s ease;
+        }
 
-            body {
-                background-color: var(--pd-bg) !important;
-            }
+        body {
+            background-color: var(--pd-bg) !important;
+        }
 
-            * {
-                box-sizing: border-box;
-            }
+        * {
+            box-sizing: border-box;
+        }
 
-            /* Pillar Hero */
+        .pd-hero {
+            position: relative;
+            width: 100%;
+            height: 60vh;
+            min-height: 450px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 0;
+            padding-top: 80px;
+            overflow: hidden;
+            background-color: var(--pd-navy);
+        }
+
+        .pd-hero-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+        }
+
+        .pd-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(10, 12, 18, 0.95) 0%, rgba(10, 12, 18, 0.5) 50%, rgba(10, 12, 18, 0.2) 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .pd-hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            color: #fff;
+            max-width: 900px;
+            padding: 0 20px;
+            width: 100%;
+        }
+
+        /* 🚀 Semantic HTML & Accessibility */
+        .pd-breadcrumb {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 8px 24px;
+            border-radius: 50px;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin: 0 0 25px 0;
+            font-size: 0.85rem;
+            color: #f8fafc;
+            list-style: none;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .pd-breadcrumb li {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .pd-breadcrumb a {
+            color: #fff;
+            text-decoration: none;
+            transition: var(--pd-transition);
+        }
+
+        .pd-breadcrumb a:hover, .pd-breadcrumb a:focus-visible {
+            color: var(--pd-accent);
+            outline: none;
+        }
+
+        .pd-breadcrumb .sep {
+            margin: 0 10px;
+            opacity: 0.7;
+        }
+
+        .pd-title {
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            font-weight: 900;
+            line-height: 1.3;
+            margin-bottom: 25px;
+            margin-top: 0;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        .pd-meta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 25px;
+            font-size: 0.95rem;
+            color: #e2e8f0;
+            flex-wrap: wrap;
+        }
+
+        .pd-meta span, .pd-meta time {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pd-meta i {
+            color: var(--pd-accent);
+        }
+
+        .pd-container {
+            max-width: 850px;
+            margin: -60px auto 80px;
+            background: var(--pd-card);
+            border-radius: var(--pd-radius-xl);
+            padding: 60px 70px;
+            box-shadow: var(--pd-shadow);
+            position: relative;
+            z-index: 10;
+        }
+
+        .pd-body {
+            font-size: 1.15rem;
+            line-height: 2.2;
+            color: var(--pd-text-muted);
+            text-align: justify;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .pd-body h2, .pd-body h3 {
+            color: var(--pd-text-main);
+            font-weight: 800;
+            margin-top: 2.5rem;
+            margin-bottom: 1.2rem;
+            line-height: 1.4;
+        }
+
+        /* Responsive Tables */
+        .pd-body table {
+            width: 100% !important;
+            display: block;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-collapse: collapse;
+            margin: 2rem 0;
+        }
+
+        .pd-body .aparat-embed-wrapper, .pd-body .aparat-video-container {
+            position: relative !important;
+            width: 100% !important;
+            padding-bottom: 56.25% !important;
+            height: 0 !important;
+            margin: 2.5rem 0 !important;
+            border-radius: 16px !important;
+            overflow: hidden !important;
+            background-color: #000 !important;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        .pd-body .aparat-embed-wrapper iframe, .pd-body .aparat-video-container iframe {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+        }
+
+        .pd-body img {
+            max-width: 100% !important;
+            height: auto !important;
+            border-radius: var(--pd-radius-md);
+            margin: 2rem 0;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            display: block;
+        }
+
+        .pd-faq-wrapper {
+            margin-top: 4rem;
+            padding-top: 3rem;
+            border-top: 2px dashed #f1f5f9;
+        }
+
+        .pd-faq-title {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--pd-text-main);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .pd-faq-title i {
+            color: var(--pd-primary);
+        }
+
+        .pd-details {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--pd-radius-md);
+            margin-bottom: 1rem;
+            transition: var(--pd-transition);
+        }
+
+        .pd-details:hover {
+            border-color: #cbd5e1;
+        }
+
+        .pd-summary {
+            padding: 1.25rem 1.5rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--pd-text-main);
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            user-select: none;
+        }
+
+        .pd-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .pd-summary::after {
+            content: '\F282';
+            font-family: "bootstrap-icons";
+            font-size: 1.2rem;
+            color: var(--pd-primary);
+            transition: transform 0.3s ease;
+        }
+
+        .pd-details[open] .pd-summary {
+            color: var(--pd-primary);
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .pd-details[open] .pd-summary::after {
+            transform: rotate(180deg);
+        }
+
+        /* 🚀 Fixing FAQ Truncation */
+        .pd-answer {
+            padding: 1.25rem 1.5rem;
+            color: var(--pd-text-muted);
+            line-height: 1.9;
+            background: #f8fafc;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+        }
+
+        .pd-answer p { margin: 0 0 1rem 0; }
+        .pd-answer p:last-child { margin-bottom: 0; }
+
+        .pd-cta {
+            background: linear-gradient(135deg, var(--pd-navy) 0%, #1e293b 100%);
+            border-radius: var(--pd-radius-lg);
+            padding: 3rem;
+            margin-top: 4rem;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 30px;
+            box-shadow: 0 20px 40px rgba(10, 12, 18, 0.2);
+            position: relative;
+            overflow: hidden;
+            flex-wrap: wrap;
+        }
+
+        .pd-cta::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -20%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(209, 30, 50, 0.3) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .pd-cta-text {
+            position: relative;
+            z-index: 2;
+            flex: 1 1 50%;
+            min-width: 300px;
+        }
+
+        .pd-cta-text h4 {
+            color: #fff;
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-bottom: 0.8rem;
+            margin-top: 0;
+        }
+
+        .pd-cta-text p {
+            color: #cbd5e1;
+            font-size: 1.05rem;
+            margin: 0;
+            line-height: 1.8;
+            max-width: 100%;
+        }
+
+        .pd-cta-actions {
+            position: relative;
+            z-index: 2;
+            flex: 0 0 auto;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .pd-btn-social {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            width: 50px;
+            height: 50px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 1.3rem;
+            text-decoration: none;
+            transition: var(--pd-transition);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            padding: 0;
+            margin: 0;
+        }
+
+        .pd-btn-social:hover, .pd-btn-social:focus-visible {
+            background: var(--pd-primary);
+            color: #fff;
+            transform: translateY(-3px);
+            border-color: var(--pd-primary);
+            box-shadow: 0 10px 20px rgba(0, 86, 179, 0.3);
+            outline: none;
+        }
+
+        .pd-btn {
+            background: var(--pd-primary);
+            color: #fff;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: var(--pd-transition);
+            box-shadow: 0 10px 20px rgba(0, 86, 179, 0.3);
+            border: none;
+            cursor: pointer;
+            margin: 0;
+            height: 50px;
+        }
+
+        .pd-btn:hover, .pd-btn:focus-visible {
+            background: #004494;
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px rgba(0, 86, 179, 0.4);
+            color: #fff;
+            outline: none;
+        }
+
+        @@media (max-width: 768px) {
             .pd-hero {
-                position: relative;
-                width: 100%;
-                height: 70vh;
-                min-height: 500px;
-                background-image: url('@coverImage');
-                background-size: cover;
-                background-position: center;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin-top: 0;
-                padding-top: 80px;
-            }
-
-                .pd-hero::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background: linear-gradient(to top, rgba(10, 12, 18, 0.95) 0%, rgba(10, 12, 18, 0.6) 50%, rgba(10, 12, 18, 0.3) 100%);
-                }
-
-            .pd-hero-content {
-                position: relative;
-                z-index: 2;
-                text-align: center;
-                color: #fff;
-                max-width: 900px;
-                padding: 0 20px;
+                height: auto;
+                padding-top: 100px;
+                padding-bottom: 60px;
             }
 
             .pd-title {
-                font-size: clamp(2.2rem, 4.5vw, 4rem);
-                font-weight: 900;
-                line-height: 1.3;
-                margin-bottom: 25px;
-                margin-top: 0;
-                text-shadow: 0 4px 20px rgba(0,0,0,0.4);
-                color: #fff;
+                font-size: 2rem;
             }
 
-            .pd-badge {
-                display: inline-block;
-                background: var(--pd-accent);
-                color: #fff;
-                padding: 6px 16px;
-                border-radius: 50px;
-                font-size: 0.9rem;
-                font-weight: 800;
-                margin-bottom: 20px;
-                letter-spacing: 1px;
-            }
-
-            /* Pillar Container */
             .pd-container {
-                max-width: 900px;
-                margin: -60px auto 80px;
-                background: var(--pd-card);
-                border-radius: var(--pd-radius-xl);
-                padding: 60px 70px;
-                box-shadow: var(--pd-shadow);
-                position: relative;
-                z-index: 10;
-            }
-
-            .pd-body {
-                font-size: 1.15rem;
-                line-height: 2.2;
-                color: var(--pd-text-muted);
-                text-align: justify;
-            }
-
-                .pd-body h2 {
-                    color: var(--pd-primary);
-                    font-size: 1.8rem;
-                    font-weight: 900;
-                    margin-top: 3rem;
-                    margin-bottom: 1.2rem;
-                    border-bottom: 2px solid #f1f5f9;
-                    padding-bottom: 10px;
-                }
-
-                .pd-body h3 {
-                    color: var(--pd-text-main);
-                    font-weight: 800;
-                    margin-top: 2rem;
-                    margin-bottom: 1rem;
-                }
-
-                .pd-body img {
-                    max-width: 100% !important;
-                    height: auto !important;
-                    border-radius: var(--pd-radius-md);
-                    margin: 2rem 0;
-                    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-                }
-
-                .pd-body .aparat-embed-wrapper {
-                    position: relative !important;
-                    width: 100% !important;
-                    padding-bottom: 56.25% !important;
-                    height: 0 !important;
-                    margin: 2.5rem 0 !important;
-                    border-radius: 16px !important;
-                    overflow: hidden !important;
-                    background-color: #000 !important;
-                    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15) !important;
-                }
-
-                    .pd-body .aparat-embed-wrapper iframe {
-                        position: absolute !important;
-                        top: 0 !important;
-                        left: 0 !important;
-                        width: 100% !important;
-                        height: 100% !important;
-                        border: none !important;
-                    }
-
-            /* FAQ Section */
-            .pd-faq-wrapper {
-                margin-top: 4rem;
-                padding-top: 3rem;
-                border-top: 2px dashed #f1f5f9;
-            }
-
-            .pd-faq-title {
-                font-size: 1.8rem;
-                font-weight: 900;
-                color: var(--pd-text-main);
-                margin-bottom: 2rem;
-                display: flex;
-                align-items: center;
-                gap: 12px;
-            }
-
-                .pd-faq-title i {
-                    color: var(--pd-primary);
-                }
-
-            .pd-details {
-                background: #fff;
-                border: 1px solid #e2e8f0;
-                border-radius: var(--pd-radius-md);
-                margin-bottom: 1rem;
-                overflow: hidden;
-                transition: var(--pd-transition);
-            }
-
-            .pd-summary {
-                padding: 1.25rem 1.5rem;
-                font-weight: 700;
-                font-size: 1.1rem;
-                color: var(--pd-text-main);
-                cursor: pointer;
-                list-style: none;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-                .pd-summary::-webkit-details-marker {
-                    display: none;
-                }
-
-                .pd-summary::after {
-                    content: '\F282';
-                    font-family: "bootstrap-icons";
-                    font-size: 1.2rem;
-                    color: var(--pd-primary);
-                    transition: transform 0.3s ease;
-                }
-
-            .pd-details[open] .pd-summary {
-                color: var(--pd-primary);
-                background: #f8fafc;
-            }
-
-                .pd-details[open] .pd-summary::after {
-                    transform: rotate(180deg);
-                }
-
-            .pd-answer {
-                padding: 0 1.5rem 1.5rem;
-                color: var(--pd-text-secondary);
-                line-height: 1.9;
-                background: #f8fafc;
-            }
-
-            /* CTA */
-            .pd-cta {
-                background: linear-gradient(135deg, var(--pd-navy) 0%, #1e293b 100%);
+                margin: -40px 15px 50px;
+                padding: 30px 20px;
                 border-radius: var(--pd-radius-lg);
-                padding: 3rem;
-                margin-top: 4rem;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 30px;
-                box-shadow: 0 20px 40px rgba(10, 12, 18, 0.2);
-                flex-wrap: wrap;
             }
 
-            .pd-cta-text h4 {
-                color: #fff;
-                font-size: 1.8rem;
-                font-weight: 900;
-                margin-bottom: 0.8rem;
-                margin-top: 0;
+            .pd-cta {
+                flex-direction: column;
+                text-align: center;
+                gap: 25px;
+                padding: 30px 20px;
             }
 
-            .pd-cta-text p {
-                color: #cbd5e1;
-                font-size: 1.05rem;
-                margin: 0;
-                line-height: 1.8;
+            .pd-cta-text {
+                min-width: 100%;
             }
 
             .pd-cta-actions {
-                display: flex;
-                gap: 12px;
-                align-items: center;
+                width: 100%;
+                justify-content: center;
                 flex-wrap: wrap;
             }
 
-            .pd-btn {
-                background: var(--pd-primary);
-                color: #fff;
-                padding: 14px 28px;
-                border-radius: 50px;
-                font-weight: 700;
-                text-decoration: none;
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                transition: var(--pd-transition);
-                height: 50px;
-                border: none;
+            .pd-body {
+                font-size: 1.05rem;
             }
 
-                .pd-btn:hover {
-                    background: #004494;
-                    transform: translateY(-3px);
-                    color: #fff;
-                }
-
-            @@media (max-width: 768px) {
-                .pd-hero {
-                    height: auto;
-                    padding-top: 120px;
-                    padding-bottom: 80px;
-                }
-
-                .pd-title {
-                    font-size: 2.2rem;
-                }
-
-                .pd-container {
-                    margin: -40px 15px 50px;
-                    padding: 30px 20px;
-                }
-
-                .pd-cta {
-                    flex-direction: column;
-                    text-align: center;
-                }
-
-                .pd-cta-actions {
-                    justify-content: center;
-                }
-
-                .pd-body {
-                    font-size: 1.05rem;
-                }
+            .pd-summary {
+                font-size: 1rem;
+                padding: 1rem;
             }
-        </style>
-    }
 
-    <div class="pd-hero">
+            .pd-answer {
+                padding: 1rem;
+            }
+        }
+    </style>
+}
+
+@if (Model != null)
+{
+    <header class="pd-hero">
+        <img src="@coverImage" alt="@(Model.Title ?? "مقاله ساخت زمین پدل")" class="pd-hero-img" fetchpriority="high" decoding="sync" loading="eager">
+
         <div class="pd-hero-content">
-            <span class="pd-badge">Pillar Content</span>
-            <h1 class="pd-title">@(Model?.Title ?? "راهنمای جامع صفر تا صد ساخت زمین پدل")</h1>
-        </div>
-    </div>
+            <!-- 🚀 Breadcrumb مستقل شده از معماری Blog -->
+            <nav aria-label="مسیریابی صفحه">
+                <ol class="pd-breadcrumb">
+                    <li><a href="/">خانه</a></li>
+                    <li class="sep" aria-hidden="true">/</li>
+                    <li aria-current="page" style="color: #fff; font-weight: 700;">@Model.Title</li>
+                </ol>
+            </nav>
 
-    <main class="pd-container">
+            <h1 class="pd-title">@Model.Title</h1>
+
+            <div class="pd-meta">
+                <span><i class="bi bi-person-circle" aria-hidden="true"></i> تحریریه دارابی کو</span>
+                <time datetime="@Model.CreatedAt.ToString("yyyy-MM-dd")">
+                    <i class="bi bi-calendar3" aria-hidden="true"></i> @Model.CreatedAt.ToString("yyyy/MM/dd")
+                </time>
+            </div>
+        </div>
+    </header>
+
+    <main role="main" class="pd-container">
         <article class="pd-body">
             @Html.Raw(processedContent)
         </article>
 
-        @if (safeFaqs != null && safeFaqs.Any())
+        @if (Model.Faqs != null && Model.Faqs.Any())
         {
-            <div class="pd-faq-wrapper">
-                <h3 class="pd-faq-title"><i class="bi bi-patch-question-fill"></i> سوالات متداول</h3>
+            <section class="pd-faq-wrapper" aria-labelledby="faq-heading">
+                <h3 id="faq-heading" class="pd-faq-title">
+                    <i class="bi bi-patch-question-fill" aria-hidden="true"></i>
+                    سوالات متداول
+                </h3>
+
                 <div class="pd-faq-list">
-                    @foreach (var faq in safeFaqs)
+                    @foreach (var faq in Model.Faqs)
                     {
                         <details class="pd-details">
                             <summary class="pd-summary">@faq.Question</summary>
-                            <div class="pd-answer">@Html.Raw(faq.Answer)</div>
+                            <div class="pd-answer">
+                                <!-- 🚀 رندر کامل بدون قطعی متن -->
+                                @Html.Raw(FormatFaqAnswer(faq.Answer))
+                            </div>
                         </details>
                     }
                 </div>
-            </div>
+            </section>
         }
 
-        <div class="pd-cta">
+        <section class="pd-cta" aria-labelledby="cta-heading">
             <div class="pd-cta-text">
-                <h4>پروژه خود را با مطمئن‌ترین تیم ایران آغاز کنید</h4>
-                <p>مشاوره رایگان، تامین شیشه‌های استاندارد و اجرای تضمینی.</p>
+                <h4 id="cta-heading">پروژه خود را با مطمئن‌ترین تیم ایران آغاز کنید</h4>
+                <p>مشاوره رایگان، تامین شیشه‌های استاندارد و اجرای تضمینی. با تیم مهندسین دارابی کو در ارتباط باشید.</p>
             </div>
             <div class="pd-cta-actions">
+                <a href="https://wa.me/989111515971" target="_blank" class="pd-btn-social" aria-label="ارتباط در واتس‌اپ" title="واتس‌اپ">
+                    <i class="bi bi-whatsapp" aria-hidden="true"></i>
+                </a>
+                <a href="https://t.me/DarabiHolding" target="_blank" class="pd-btn-social" aria-label="ارتباط در تلگرام" title="تلگرام">
+                    <i class="bi bi-telegram" aria-hidden="true"></i>
+                </a>
+                <a href="https://instagram.com/darabicopadel" target="_blank" class="pd-btn-social" aria-label="صفحه اینستاگرام" title="اینستاگرام">
+                    <i class="bi bi-instagram" aria-hidden="true"></i>
+                </a>
                 <a asp-controller="Home" asp-action="Contact" class="pd-btn">
-                    <i class="bi bi-telephone-fill"></i> ارتباط با مهندسین دارابی کو
+                    <i class="bi bi-telephone-fill" aria-hidden="true"></i> ارتباط با مهندسین
                 </a>
             </div>
-        </div>
+        </section>
     </main>
+}
+else
+{
+    <div style="text-align: center; padding: 100px 20px;">
+        <h2>مقاله‌ای یافت نشد.</h2>
+        <a href="/" class="pd-btn" style="margin-top: 20px;">بازگشت به صفحه اصلی</a>
+    </div>
+}
 
-    @section Scripts {
-        <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                document.body.classList.remove('loading-state');
-                const header = document.getElementById("main-header");
-                if (header && !header.classList.contains("scrolled")) {
-                    header.style.background = "rgba(10, 12, 18, 0.95)";
-                    header.style.backdropFilter = "blur(10px)";
-                    header.classList.add("scrolled");
-                }
-            });
-        </script>
-    }
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.body.classList.remove('loading-state');
+            const header = document.getElementById("main-header");
+            if (header && !header.classList.contains("scrolled")) {
+                header.style.background = "rgba(10, 12, 18, 0.95)";
+                header.style.backdropFilter = "blur(10px)";
+                header.classList.add("scrolled");
+            }
+        });
+    </script>
+}

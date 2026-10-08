@@ -34,6 +34,7 @@ namespace final_p_01.Controllers
             var latestPosts = await _context.Posts
                 .AsNoTracking()
                 .Include(p => p.Category)
+                // مقاله پدل از لیست بلاگ‌های صفحه اصلی مستثنی شده است
                 .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide")
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(homePagePostsCount)
@@ -47,7 +48,13 @@ namespace final_p_01.Controllers
         public async Task<IActionResult> Post([FromRoute] string? slug, [FromQuery(Name = "slug")] string? querySlug)
         {
             var actualSlug = slug ?? querySlug;
-            if (string.IsNullOrEmpty(actualSlug)) return NotFound();
+            if (string.IsNullOrEmpty(actualSlug)) return base.NotFound();
+
+            // 🚀 SEO FIX: Redirect 301 Permanent از مسیر قدیمی وبلاگ به مسیر Pillar مستقل
+            if (actualSlug.Equals("padel-court-construction-guide", StringComparison.OrdinalIgnoreCase))
+            {
+                return RedirectPermanent("/padel-court-construction-guide");
+            }
 
             if (string.IsNullOrEmpty(slug) && !string.IsNullOrEmpty(querySlug))
             {
@@ -60,7 +67,7 @@ namespace final_p_01.Controllers
                 .Include(p => p.Faqs)
                 .FirstOrDefaultAsync(p => p.Slug == actualSlug && p.IsPublished);
 
-            if (post == null) return NotFound();
+            if (post == null) return base.NotFound();
 
             var relatedPosts = await _context.Posts
                 .AsNoTracking()
@@ -90,7 +97,8 @@ namespace final_p_01.Controllers
         {
             if (Request.Path.Value != null && Request.Path.Value.Contains("Home/Blog", StringComparison.OrdinalIgnoreCase))
             {
-                return RedirectPermanent(page > 1 ? $"/blog?page={page}" : "/blog");
+                string targetUrl = page > 1 ? $"/blog?page={page}" : "/blog";
+                return RedirectPermanent(targetUrl);
             }
 
             int pageSize = _configuration.GetValue<int>("SiteSettings:BlogPageSize", 9);
@@ -122,6 +130,7 @@ namespace final_p_01.Controllers
             return View(viewModel);
         }
 
+        // 🚀 URL جدید، تمیز و مستقل
         [Route("padel-court-construction-guide")]
         public async Task<IActionResult> PadelGuide()
         {
@@ -132,7 +141,7 @@ namespace final_p_01.Controllers
 
             if (guidePost == null)
             {
-                return NotFound();
+                return base.NotFound();
             }
 
             return View(guidePost);
@@ -150,16 +159,16 @@ namespace final_p_01.Controllers
 
         [Route("about-us")]
         [Route("Home/about")]
-        public IActionResult About()
+        public IActionResult about()
         {
             if (Request.Path.Value != null && Request.Path.Value.Contains("Home/about", StringComparison.OrdinalIgnoreCase))
                 return RedirectPermanent("/about-us");
 
-            return View("about");
+            return View();
         }
 
-        public IActionResult PadelGrass() { return View("padelgrass"); }
-        public IActionResult Structure() { return View("structure"); }
+        public IActionResult padelgrass() { return View(); }
+        public IActionResult structure() { return View(); }
         public IActionResult Resume() { return View(); }
         public IActionResult CostArticle() { return View(); }
         public IActionResult GlassArticle() { return View(); }
@@ -172,48 +181,58 @@ namespace final_p_01.Controllers
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
         public async Task<IActionResult> Sitemap()
         {
-            // فقط فیلدهای مورد نیاز واکشی می‌شوند
             var posts = await _context.Posts
                 .AsNoTracking()
+                // آدرس قدیمی بلاگ از سایت‌مپ حذف شده است تا به جای آن آدرس ریشه اضافه شود
                 .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide")
                 .OrderByDescending(p => p.CreatedAt)
-                .Select(p => new { p.Slug, p.CreatedAt })
                 .ToListAsync();
 
             var xml = new StringBuilder();
             xml.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
             xml.AppendLine("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">");
 
-            // تنظیم خودکار Base URL بر بستر HTTPS
-            var baseUrl = $"https://{Request.Host}";
-
-            var staticPages = new List<(string Url, string ChangeFreq, string Priority)>
+            var staticPages = new List<(string? Url, string ChangeFreq, string Priority)>
             {
-                ($"{baseUrl}/", "daily", "1.0"),
-                ($"{baseUrl}/about-us", "monthly", "0.8"),
-                ($"{baseUrl}/contact-us", "monthly", "0.8"),
-                ($"{baseUrl}/blog", "daily", "0.9"),
-                ($"{baseUrl}/padel-court-construction-guide", "weekly", "0.9")
+                (Url.Action("Index", "Home", null, Request.Scheme), "daily", "1.0"),
+                (Url.Action("about", "Home", null, Request.Scheme), "monthly", "0.8"),
+                (Url.Action("Contact", "Home", null, Request.Scheme), "monthly", "0.8"),
+                (Url.Action("Blog", "Home", null, Request.Scheme), "daily", "0.9"),
+                (Url.Action("PadelGuide", "Home", null, Request.Scheme), "weekly", "0.9") // اضافه شدن آدرس کانونیکال جدید
             };
 
             foreach (var page in staticPages)
             {
-                xml.AppendLine("  <url>");
-                xml.AppendLine($"    <loc>{page.Url}</loc>");
-                xml.AppendLine($"    <changefreq>{page.ChangeFreq}</changefreq>");
-                xml.AppendLine($"    <priority>{page.Priority}</priority>");
-                xml.AppendLine("  </url>");
+                if (!string.IsNullOrEmpty(page.Url))
+                {
+                    string cleanUrl = page.Url
+                        .Replace("/Home/Contact", "/contact-us", StringComparison.OrdinalIgnoreCase)
+                        .Replace("/Home/about", "/about-us", StringComparison.OrdinalIgnoreCase)
+                        .Replace("/Home/Blog", "/blog", StringComparison.OrdinalIgnoreCase);
+
+                    if (cleanUrl.StartsWith("http://")) cleanUrl = cleanUrl.Replace("http://", "https://");
+
+                    xml.AppendLine("  <url>");
+                    xml.AppendLine($"    <loc>{cleanUrl}</loc>");
+                    xml.AppendLine($"    <changefreq>{page.ChangeFreq}</changefreq>");
+                    xml.AppendLine($"    <priority>{page.Priority}</priority>");
+                    xml.AppendLine("  </url>");
+                }
             }
 
             foreach (var post in posts)
             {
-                var postUrl = $"{baseUrl}/blog/{post.Slug}";
-                xml.AppendLine("  <url>");
-                xml.AppendLine($"    <loc>{postUrl}</loc>");
-                xml.AppendLine($"    <lastmod>{post.CreatedAt:yyyy-MM-dd}</lastmod>");
-                xml.AppendLine("    <changefreq>weekly</changefreq>");
-                xml.AppendLine("    <priority>0.7</priority>");
-                xml.AppendLine("  </url>");
+                var postUrl = $"https://{Request.Host}/blog/{post.Slug}";
+
+                if (!string.IsNullOrEmpty(postUrl))
+                {
+                    xml.AppendLine("  <url>");
+                    xml.AppendLine($"    <loc>{postUrl}</loc>");
+                    xml.AppendLine($"    <lastmod>{post.CreatedAt:yyyy-MM-dd}</lastmod>");
+                    xml.AppendLine("    <changefreq>weekly</changefreq>");
+                    xml.AppendLine("    <priority>0.7</priority>");
+                    xml.AppendLine("  </url>");
+                }
             }
 
             xml.AppendLine("</urlset>");

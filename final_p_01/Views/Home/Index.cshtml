@@ -3,7 +3,7 @@
 
 @{
     ViewData["Title"] = "مرجع تخصصی ساخت و تجهیز زمین های پدل";
-    ViewData["MetaDescription"] = "دارابی کو؛ تولیدکننده انحصاری شیشه پدل و مجری تخصصی صفر تا صد ساخت زمین پدل در ایران. مشاوره رایگان و استعلام هزینه احداث زمین پدل استاندارد.";
+    ViewData["MetaDescription"] = "دارابی‌کو، مجری تخصصی و بی‌واسطه صفر تا صد ساخت زمین پدل در ایران. تولید مستقیم شیشه، اجرای چمن مصنوعی، سازه و ارائه طرح توجیهی با استاندارد FIP.";
 }
 
 @section Head {
@@ -18,7 +18,7 @@
           "alternateName": "Darabico",
           "url": "@($"https://{Context.Request.Host}/")",
           "inLanguage": "fa-IR",
-          "description": "مرجع تخصصی ساخت و تجهیز زمین های پدل در ایران"
+          "description": "دارابی‌کو، پیمانکار تخصصی طراحی، ساخت و تجهیز زمین های پدل در ایران"
         }
     </script>
 
@@ -518,7 +518,6 @@
             overflow: hidden;
         }
 
-        /* اصلاح استایل اعداد آمار برای جلوگیری از استفاده هدر */
         .about__stat-number-ui {
             font-size: 2.5rem;
             font-weight: 900;
@@ -611,24 +610,24 @@
 
 @section Hero {
     <div class="hero">
-        <img src="@Url.Content("~/H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp")" alt="طراحی و ساخت زمین پدل استاندارد" class="hero-bg-img" fetchpriority="high" decoding="async" width="1920" height="1080">
+        <img src="@Url.Content("~/H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp")" alt="طراحی و ساخت زمین پدل استاندارد در ایران" class="hero-bg-img" fetchpriority="high" decoding="async" width="1920" height="1080">
         <div class="hero-overlay"></div>
         <div class="hero-content">
             <h1 class="hero-title">
-                <span class="d-block">طراحی و ساخت</span>
-                <span class="highlight">زمین پدل استاندارد</span>
-                <span class="d-block">در ایران</span>
+                <span class="d-block">ساخت زمین پدل</span>
+                <span class="highlight">استاندارد FIP</span>
+                <span class="d-block">با کیفیت صادراتی بدون واسطه</span>
             </h1>
-            <p class="hero-subtitle">از تولید شیشه تا اجرای کامل با ضمانت کیفیت و استاندارد جهانی</p>
+            <p class="hero-subtitle">دارابی‌کو؛ از تولید انحصاری شیشه تا اجرای کامل سازه، چمن و تجهیزات پدل.</p>
 
             <div class="hero-actions" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                <a asp-controller="home" asp-action="contact" class="hero-consult-btn">مشاوره رایگان ساخت</a>
+                <a asp-controller="home" asp-action="contact" class="hero-consult-btn">استعلام هزینه ساخت زمین پدل</a>
 
                 <a asp-controller="Home" asp-action="Post" asp-route-slug="padel-court-construction-guide"
                    style="padding: 12px 30px; background: rgba(255,255,255,0.1); color:#fff; border: 2px solid #fff; border-radius:50px; text-decoration:none; font-weight:bold; backdrop-filter: blur(5px); transition: 0.3s;"
                    onmouseover="this.style.background='#fff'; this.style.color='var(--primary-blue)';"
                    onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#fff';">
-                    راهنمای صفر تا صد پدل
+                    راهنمای ۰ تا ۱۰۰ ساخت زمین پدل
                 </a>
             </div>
         </div>
@@ -639,26 +638,26 @@
     <div class="about__container">
         <div class="about__media">
             <figure class="about__image-box">
-                <img src="@Url.Content("~/H-IMG/222.webp")" alt="بازیکن پدل" class="about__image" width="800" height="600" loading="lazy" decoding="async" />
+                <img src="@Url.Content("~/H-IMG/darabico.webp")" alt="پیمانکار تخصصی ساخت زمین پدل" class="about__image" width="800" height="600" loading="lazy" decoding="async" />
                 <figcaption class="about__caption">
-                    <p class="about__caption-text">کیفیت و امنیت در زمین‌های پدل دارابی</p>
+                    <p class="about__caption-text">کیفیت، امنیت و توجیه اقتصادی در زمین‌های پدل دارابی‌کو</p>
                     <a asp-controller="Home" asp-action="About" class="about__caption-link">مشاهده داستان ما →</a>
                 </figcaption>
             </figure>
         </div>
         <div class="about__content">
             <div class="about__tag"><span class="about__tag-dot"></span> درباره ما</div>
-            <h2 class="about__title">گروه تولیدی هلدینگ دارابی؛<br>تلفیق ۵۰ سال تجربه شیشه با هیجان پدل</h2>
+            <h2 class="about__title">دارابی‌کو؛ برند تخصصی هلدینگ دارابی<br>پیمانکار بی‌واسطه احداث زمین پدل</h2>
 
             <p class="about__desc">
-                گروه تولیدی هلدینگ دارابی با پشتوانه نیم‌قرن تجربه در صنعت شیشه، اکنون به عنوان <strong>مجری تخصصی ساخت زمین پدل</strong> در سراسر ایران شناخته می‌شود. ما تنها مجموعه‌ای هستیم که <strong>شیشه زمین پدل</strong> را با ضخامت ۱۰ و ۱۲ میل سکوریت و مطابق با استانداردهای فدراسیون جهانی (FIP) در کارخانه اختصاصی خود تولید می‌کنیم.
+                <strong>دارابی‌کو</strong> به عنوان برند تخصصی <strong>هلدینگ دارابی</strong>، مجری و <strong>پیمانکار ساخت زمین پدل</strong> در سراسر ایران است. پشتوانه نیم‌قرن تجربه هلدینگ دارابی در صنعت شیشه باعث شده تا ما <strong>دیواره‌های شیشه‌ای زمین پدل</strong> را با بالاترین کیفیت و دقیقاً منطبق بر استانداردهای فدراسیون جهانی (FIP) تولید کنیم.
             </p>
             <p class="about__desc">
-                تیم مهندسی ما با ارائه <strong>مشاوره رایگان ساخت زمین پدل</strong>، از مرحله برآورد هزینه‌ها و انتخاب زمین مناسب تا اجرای دقیق <strong>ابعاد استاندارد زمین پدل</strong>   همراه شماست. اگر قصد <strong>سرمایه‌گذاری در پدل</strong> را دارید، ما با حذف واسطه‌ها و تولید مستقیم سازه و شیشه، <strong>هزینه ساخت زمین پدل</strong> را برای شما بهینه کرده و پروژه‌ای با گارانتی معتبر و کیفیت صادراتی تحویل می‌دهیم.
+                تیم مهندسی ما با رعایت دقیق <strong>ابعاد استاندارد زمین پدل</strong>، نصب <strong>چمن مصنوعی</strong> تخصصی و ارائه <strong>طرح توجیهی باشگاه پدل</strong>، صفر تا صد پروژه شما را مدیریت می‌کند. با انتخاب دارابی‌کو، <strong>هزینه احداث زمین پدل</strong> بهینه‌شده و پروژه‌ای با دوام بالا و سودآوری مطمئن تحویل خواهید گرفت.
             </p>
 
             <div class="about__stats">
-                <div class="about__stat"><span class="about__stat-number-ui about__stat-number" data-value="1350">1340</span><span class="about__stat-label">سال آغاز</span></div>
+                <div class="about__stat"><span class="about__stat-number-ui about__stat-number" data-value="1350">1340</span><span class="about__stat-label">سال آغاز هلدینگ</span></div>
                 <div class="about__stat"><span class="about__stat-number-ui about__stat-number" data-value="500" data-prefix="+">+500</span><span class="about__stat-label">پروژه موفق</span></div>
                 <div class="about__stat"><span class="about__stat-number-ui about__stat-number" data-value="5" data-prefix="+">+5</span><span class="about__stat-label">در حال اجرا</span></div>
             </div>
@@ -676,49 +675,49 @@
     <div class="services-container">
         <div class="services-header">
             <div class="header-left">
-                <h2 class="title">خدمات هلدینگ دارابی</h2>
+                <h2 class="title">خدمات صفر تا صد دارابی‌کو</h2>
             </div>
-            <a asp-controller="home" asp-action="contact" class="view-all">مشاوره فنی <span>➜</span></a>
+            <a asp-controller="home" asp-action="contact" class="view-all">استعلام قیمت و مشاوره <span>➜</span></a>
         </div>
         <div class="services-grid">
 
             <a asp-controller="home" asp-action="blog" class="service-card">
                 <span class="service-number">01</span>
-                <img src="@Url.Content("~/H-IMG/02-compressed (2).webp")" alt="ساخت زمین پدل" class="service-img" loading="lazy" decoding="async" width="400" height="300" />
+                <img src="@Url.Content("~/H-IMG/abzr.webp")" alt="طراحی و احداث زمین پدل" class="service-img" loading="lazy" decoding="async" width="400" height="300" />
                 <div class="service-overlay"></div>
                 <div class="service-info">
-                    <h3>ساخت و احداث زمین</h3>
-                    <div class="service-description">مشاوره، زیرسازی استاندارد و نصب تخصصی کورت‌های پدل با متریال درجه یک کارخانه.</div>
+                    <h3>طراحی و احداث زمین پدل</h3>
+                    <div class="service-description">زیرسازی اصولی، بتن‌ریزی و ساخت سازه زمین پدل (ثابت و پورتابل) منطبق بر استانداردهای جهانی FIP.</div>
                 </div>
             </a>
 
             <a asp-controller="home" asp-action="blog" class="service-card">
                 <span class="service-number">02</span>
-                <img src="@Url.Content("~/H-IMG/05-compressed.webp")" alt="خدمات پس از فروش" class="service-img" loading="lazy" decoding="async" width="400" height="300" />
+                <img src="@Url.Content("~/H-IMG/abzar2.webp")" alt="دیواره شیشه‌ای و تجهیزات کورت پدل" class="service-img" loading="lazy" decoding="async" width="400" height="300" />
                 <div class="service-overlay"></div>
                 <div class="service-info">
-                    <h3>نگهداری و آموزش</h3>
-                    <div class="service-description">تامین قطعات یدکی، ترمیم چمن و شیشه‌ها به همراه آموزش‌های تخصصی راه‌اندازی آکادمی.</div>
+                    <h3>دیواره شیشه‌ای و تجهیزات</h3>
+                    <div class="service-description">تولید مستقیم شیشه سکوریت توسط هلدینگ دارابی، اجرای فنس و نورپردازی تخصصی کورت پدل بدون خیرگی.</div>
                 </div>
             </a>
 
             <a asp-controller="home" asp-action="blog" class="service-card">
                 <span class="service-number">03</span>
-                <img src="@Url.Content("~/H-IMG/003-compressed.webp")" alt="تجهیزات پدل" class="service-img" loading="lazy" decoding="async" width="400" height="300" />
+                <img src="@Url.Content("~/H-IMG/shishe.webp")" alt="چمن مصنوعی زمین پدل" class="service-img" loading="lazy" decoding="async" width="400" height="300" />
                 <div class="service-overlay"></div>
                 <div class="service-info">
-                    <h3>تجهیزات تخصصی کورت</h3>
-                    <div class="service-description">تولید انحصاری شیشه‌های ۱۰ و ۱۲ میل سکوریت و تامین سیستم‌های روشنایی استاندارد.</div>
+                    <h3>کف‌پوش و چمن مصنوعی پدل</h3>
+                    <div class="service-description">تامین و نصب چمن مصنوعی مخصوص زمین پدل (الیاف موندو) با شن‌پاشی دقیق برای بالاترین کیفیت و دوام بازی.</div>
                 </div>
             </a>
 
             <a asp-controller="home" asp-action="blog" class="service-card">
                 <span class="service-number">04</span>
-                <img src="@Url.Content("~/H-IMG/04-compressed.webp")" alt="رزرو و سرمایه گذاری" class="service-img" loading="lazy" decoding="async" width="400" height="300" />
+                <img src="@Url.Content("~/H-IMG/04-compressed.webp")" alt="برآورد هزینه و طرح توجیهی ساخت پدل" class="service-img" loading="lazy" decoding="async" width="400" height="300" />
                 <div class="service-overlay"></div>
                 <div class="service-info">
-                    <h3>طرح‌های سرمایه‌گذاری</h3>
-                    <div class="service-description">ارائه بیزنس پلن دقیق جهت احداث مجموعه‌های ورزشی و برآورد هزینه ساخت زمین پدل.</div>
+                    <h3>برآورد هزینه و طرح توجیهی</h3>
+                    <div class="service-description">مشاوره سرمایه‌گذاری، برآورد شفاف قیمت ساخت زمین پدل و ارائه طرح توجیهی دقیق برای احداث باشگاه.</div>
                 </div>
             </a>
 
@@ -730,16 +729,16 @@
     <div class="community-grid">
         <div class="community-media">
             <div class="community-img-box">
-                <img src="@Url.Content("~/H-IMG/11-compressed.webp")" alt="راکت پدل" class="community-img" loading="lazy" decoding="async" width="600" height="450" />
+                <img src="@Url.Content("~/H-IMG/tajhiz3.webp")" alt="درآمد زمین پدل و سرمایه گذاری" class="community-img" loading="lazy" decoding="async" width="600" height="450" />
             </div>
-            <div class="community-promo-card"><h3>سرمایه‌گذاری مطمئن<br>در صنعت ورزش پدل</h3><a asp-controller="home" asp-action="contact" class="promo-link">دریافت مشاوره تخصصی ➜</a></div>
+            <div class="community-promo-card"><h3>سرمایه‌گذاری پرسود<br>در راه‌اندازی کورت پدل</h3><a asp-controller="home" asp-action="contact" class="promo-link">دریافت مشاوره تخصصی ➜</a></div>
         </div>
         <div class="community-content">
-            <div class="community-label"><span class="dot"></span> هلدینگ دارابی؛ فراتر از یک پیمانکار</div>
-            <h2 class="community-title">از خط تولید شیشه تا<br>هیجان بازی در زمین پدل</h2>
+            <div class="community-label"><span class="dot"></span> پشتوانه هلدینگ دارابی؛ تخصص دارابی‌کو</div>
+            <h2 class="community-title">چرا دارابی‌کو تخصصی‌ترین<br>سازنده زمین پدل است؟</h2>
             <div class="features-list">
-                <div class="feature-item"><div class="feature-icon-box">📱</div><div class="feature-content"><h4>شفافیت در اجرا</h4><p>مشاهده آنلاین فیلم‌های <strong>تست مقاومت شیشه‌ها</strong> و گزارش مراحل ساخت.</p></div></div>
-                <div class="feature-item"><div class="feature-icon-box">🤝</div><div class="feature-content"><h4>کیفیت بدون واسطه</h4><p>با خرید مستقیم از کارخانه، <strong>هزینه ساخت زمین پدل</strong> را بهینه کنید.</p></div></div>
+                <div class="feature-item"><div class="feature-icon-box">🤝</div><div class="feature-content"><h4>پیمانکار مستقیم و بی‌واسطه</h4><p>پشتوانه <strong>هلدینگ دارابی</strong> به ما اجازه می‌دهد تولید شیشه و تجهیزات را مستقیماً انجام دهیم. این یعنی کاهش چشمگیر <strong>هزینه ساخت زمین پدل</strong> برای کارفرما.</p></div></div>
+                <div class="feature-item"><div class="feature-icon-box">🛡️</div><div class="feature-content"><h4>اجرای تضمینی استاندارد FIP</h4><p>از رعایت دقیق <strong>ابعاد زمین پدل</strong> تا نصب سیستم ارتعاش‌گیر (Shock Lock) و چمن مصنوعی، همه چیز برای یک بازی حرفه‌ای بهینه‌سازی شده است.</p></div></div>
             </div>
         </div>
     </div>
@@ -789,50 +788,50 @@
 
 <section class="projects-gallery-section" id="projects-section">
     <div class="gallery-header">
-        <h2>پروژه‌های اجرا شده ما</h2>
+        <h2>پروژه‌های اجرا شده دارابی‌کو</h2>
     </div>
 
     <div class="gallery-grid">
         <div class="gallery-item large">
-            <img src="@Url.Content("~/H-IMG/166.webp")" alt="اجرای زمین پدل استاندارد" loading="lazy" decoding="async" width="600" height="600">
+            <img src="@Url.Content("~/H-IMG/arateh.webp")" alt="اجرای زمین پدل استاندارد با تجهیزات کامل" loading="lazy" decoding="async" width="600" height="600">
             <div class="gallery-overlay">
                 <div class="gallery-content">
-                    <p>اجرای  کورت استاندارد با شیشه ۱۲ میل سکوریت</p>
+                    <p>احداث کورت پدل استاندارد با دیواره‌های ضدضربه ۱۲ میل </p>
                 </div>
             </div>
         </div>
 
         <div class="gallery-item">
-            <img src="@Url.Content("~/H-IMG/227.webp")" alt="نصب سازه پدل" loading="lazy" decoding="async" width="300" height="300">
+            <img src="@Url.Content("~/H-IMG/tajhiz2.webp")" alt="نصب سازه فلزی و چمن مصنوعی پدل" loading="lazy" decoding="async" width="300" height="300">
             <div class="gallery-overlay">
                 <div class="gallery-content">
-                    <p>نصب سازه فلزی و چمن موندو</p>
+                    <p>نصب سازه فلزی مقاوم و چمن مصنوعی مخصوص پدل</p>
                 </div>
             </div>
         </div>
 
         <div class="gallery-item">
-            <img src="@Url.Content("~/H-IMG/225.webp")" alt="طراحی و اجرای زمین پدل با برند دارابیکو" loading="lazy" decoding="async" width="300" height="300">
+            <img src="@Url.Content("~/H-IMG/225.webp")" alt="طراحی و اجرای زمین پدل پورتابل" loading="lazy" decoding="async" width="300" height="300">
             <div class="gallery-overlay">
                 <div class="gallery-content">
-                    <p>طراحی و اجرای زمین پدل با برند دارابیکو</p>
+                    <p>طراحی و اجرای زمین پدل پورتابل با برند اختصاصی دارابی‌کو</p>
                 </div>
             </div>
         </div>
 
         <div class="gallery-item">
-            <img src="@Url.Content("~/H-IMG/666.webp")" alt="تجهیز کامل زمین پدل" loading="lazy" decoding="async" width="300" height="300">
+            <img src="@Url.Content("~/H-IMG/tajhiz.webp")" alt="نورپردازی زمین پدل" loading="lazy" decoding="async" width="300" height="300">
             <div class="gallery-overlay">
                 <div class="gallery-content">
-                    <p>تجهیز کامل زمین پدل </p>
+                    <p>تجهیز کامل روشنایی و اجرای سیستم نورپردازی استاندارد</p>
                 </div>
             </div>
         </div>
         <div class="gallery-item">
-            <img src="@Url.Content("~/H-IMG/16.webp")" alt="نصب چمن کورت" loading="lazy" decoding="async" width="300" height="300">
+            <img src="@Url.Content("~/H-IMG/16.webp")" alt="اجرای کف‌پوش و زیرسازی زمین پدل" loading="lazy" decoding="async" width="300" height="300">
             <div class="gallery-overlay">
                 <div class="gallery-content">
-                    <p>نصب چمن کورت </p>
+                    <p>زیرسازی مهندسی و اجرای دقیق کف‌پوش کورت پدل</p>
                 </div>
             </div>
         </div>
