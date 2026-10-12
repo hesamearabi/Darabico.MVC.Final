@@ -1,6 +1,6 @@
 ﻿@font-face {
     font-family: 'Dana';
-    src: url('/fonts/Dana-Medium.woff2?v=1000') format('woff2');
+    src: url('../fonts/DanaFaNum-Medium.woff2?v=1000') format('woff2');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -28,7 +28,6 @@
 html {
     scrollbar-width: thin;
     scrollbar-color: var(--brand-navy) #f1f1f1;
-    /* قبلاً روی همه‌ی المان‌ها (*) بود؛ فقط روی html کافی است */
     scroll-behavior: smooth;
 }
 
@@ -78,10 +77,11 @@ body {
     padding: 20px 0;
     transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     background: transparent;
+    /* بهینه سازی اسکرول هدر */
+    will-change: background-color, box-shadow, padding;
+    transform: translateZ(0);
 }
 
-    /* backdrop-filter حذف شد: روی هدر ثابت، در هر فریم اسکرول بلور دوباره محاسبه می‌شد.
-       چون پس‌زمینه ۹۶٪ مات است، تفاوت ظاهری قابل‌تشخیص نیست. */
     .site-header.scrolled {
         background: rgba(18, 29, 53, 0.96);
         padding: 10px 0;
@@ -300,7 +300,6 @@ body {
     transition: opacity 0.3s, visibility 0.3s;
 }
 
-    /* بلور فقط وقتی منو باز است فعال می‌شود */
     .mobile-overlay.active {
         opacity: 1;
         visibility: visible;
@@ -740,6 +739,7 @@ body {
         border-radius: var(--radius-lg);
     }
 
+/* بهینه سازی اسکرول برای کارت های Flip */
 .flip-card-inner {
     position: relative;
     width: 100%;
@@ -750,6 +750,9 @@ body {
     transform-style: preserve-3d;
     border-radius: var(--radius-lg);
     box-shadow: var(--card-shadow);
+    will-change: transform, box-shadow;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 .flip-card.flipped .flip-card-inner {
@@ -899,6 +902,7 @@ body {
     gap: 20px;
 }
 
+/* بهینه سازی کارت سرویس ها برای اسکرول نرم */
 .service-card {
     background: #fff;
     border-radius: 20px;
@@ -908,6 +912,9 @@ body {
     transition: transform 0.4s, box-shadow 0.4s;
     flex: 1 1 250px;
     box-shadow: var(--card-shadow);
+    will-change: transform, box-shadow;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
     .service-card:hover {
@@ -915,11 +922,16 @@ body {
         box-shadow: var(--card-shadow-hover);
     }
 
-.service-img {
+/* بهینه سازی تصاویر برای هاور نرم */
+.service-img,
+.community-img,
+.gallery-item img {
     width: 100%;
     aspect-ratio: 4/3;
     object-fit: cover;
     transition: transform 0.4s;
+    will-change: transform;
+    transform: translateZ(0);
 }
 
 .service-card:hover .service-img {
@@ -981,11 +993,6 @@ body {
 .community__img-wrap {
     border-radius: var(--radius-lg);
     overflow: hidden;
-}
-
-.community__img {
-    width: 100%;
-    display: block;
 }
 
 .community__promo {

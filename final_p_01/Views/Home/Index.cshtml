@@ -7,9 +7,7 @@
 }
 
 @section Head {
-    <!-- 🚀 Preload برای سریع‌ترین لود ممکن عکس بک‌گراند Hero -->
     <link rel="preload" as="image" href="@Url.Content("~/H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp")" fetchpriority="high">
-    <link rel="stylesheet" href="~/CSS-SOURCE/index.css" asp-append-version="true" />
 
     <script type="application/ld+json">
         {
@@ -36,7 +34,6 @@
             box-sizing: border-box;
         }
 
-        /* ---------- 1. Hero Section ---------- */
         .hero {
             position: relative;
             height: 100vh;
@@ -56,10 +53,6 @@
             object-fit: cover;
             object-position: center 35%;
             z-index: 0;
-            /* 🚀 بهینه‌سازی رندر و جلوگیری از فریز */
-            transform: translateZ(0);
-            -webkit-transform: translateZ(0);
-            backface-visibility: hidden;
         }
 
         .hero-overlay {
@@ -93,7 +86,6 @@
                 color: var(--primary-blue);
             }
 
-        /* ---------- 2. Services Section (کاملاً اصلاح و ضد-باگ شد) ---------- */
         .services-section {
             padding: 50px 0;
             background-color: var(--bg-gray-light);
@@ -143,21 +135,16 @@
             gap: 20px;
         }
 
-        /* 🚀 ساختار جدید Flexbox برای جلوگیری از بهم ریختگی متن */
         .service-card {
             position: relative;
             height: 360px;
             border-radius: 16px;
             overflow: hidden;
             display: flex;
-            align-items: flex-end; /* هول دادن متن‌ها به پایین */
+            align-items: flex-end;
             text-decoration: none;
             box-shadow: 0 4px 12px rgba(0,0,0,0.06);
             background: #000;
-            isolation: isolate;
-            transform: translateZ(0);
-            backface-visibility: hidden;
-            perspective: 1000px;
         }
 
         .service-img {
@@ -167,8 +154,7 @@
             height: 100%;
             object-fit: cover;
             opacity: 0.85;
-            transition: transform 0.5s var(--ease), opacity 0.5s var(--ease);
-            will-change: transform, opacity;
+            transition: transform 0.5s ease, opacity 0.5s ease;
             z-index: 0;
         }
 
@@ -193,18 +179,18 @@
                 font-weight: 800;
                 margin-bottom: 5px;
                 color: #fff;
-                transition: margin-bottom 0.4s var(--ease);
+                transition: margin-bottom 0.4s ease;
             }
 
         .service-description {
             font-size: 0.85rem;
             line-height: 1.6;
             color: #ddd;
-            max-height: 0; /* مخفی کردن هوشمند متن */
+            max-height: 0;
             opacity: 0;
             overflow: hidden;
             text-align: justify;
-            transition: max-height 0.4s var(--ease), opacity 0.4s var(--ease), margin-top 0.4s var(--ease);
+            transition: max-height 0.4s ease, opacity 0.4s ease;
         }
 
         .service-number {
@@ -218,10 +204,9 @@
             font-family: sans-serif;
         }
 
-        /* 🚀 انیمیشن‌های هاور بسیار نرم و بدون لگ */
         @@media (hover: hover) {
             .service-card:hover .service-img {
-                transform: scale(1.1) translateZ(0);
+                transform: scale(1.1);
                 opacity: 0.5;
             }
 
@@ -234,12 +219,11 @@
             }
 
             .service-card:hover .service-description {
-                max-height: 120px; /* فضای کافی برای متن باز می‌شود */
+                max-height: 120px;
                 opacity: 1;
             }
         }
 
-        /* در حالت موبایل متن را همیشه نمایش می‌دهیم */
         @@media (hover: none) {
             .service-info h3 {
                 margin-bottom: 10px;
@@ -255,7 +239,6 @@
             }
         }
 
-        /* ---------- بقیه بخش‌ها ---------- */
         .community-section-wrap {
             padding: 50px 0;
             background-color: #fff;
@@ -283,8 +266,6 @@
             box-shadow: 0 6px 16px rgba(0,0,0,0.08);
             aspect-ratio: 4/3;
             z-index: 1;
-            transform: translateZ(0);
-            backface-visibility: hidden;
         }
 
         .community-img {
@@ -292,14 +273,12 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            will-change: transform;
-            transform: translateZ(0) scale(1);
+            transition: transform 0.8s ease;
         }
 
         @@media (hover: hover) {
             .community-media:hover .community-img {
-                transform: scale(1.04) translateZ(0);
+                transform: scale(1.04);
             }
         }
 
@@ -459,10 +438,6 @@
             overflow: hidden;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            isolation: isolate;
-            transform: translateZ(0);
-            backface-visibility: hidden;
-            perspective: 1000px;
         }
 
             .gallery-item.large {
@@ -475,10 +450,7 @@
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
-                transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-                will-change: transform;
-                transform: translateZ(0) scale(1);
-                backface-visibility: hidden;
+                transition: transform 0.6s ease;
             }
 
         .gallery-overlay {
@@ -514,7 +486,7 @@
 
         @@media (hover: hover) {
             .gallery-item:hover img {
-                transform: scale(1.1) translateZ(0);
+                transform: scale(1.1);
             }
 
             .gallery-item:hover .gallery-overlay {
@@ -545,18 +517,15 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
             transition: transform 0.3s ease;
             height: 100%;
-            transform: translateZ(0);
-            backface-visibility: hidden;
-            perspective: 1000px;
         }
 
         @@media (hover: hover) {
             .blog-card:hover {
-                transform: translateY(-8px) translateZ(0);
+                transform: translateY(-8px);
             }
 
                 .blog-card:hover .blog-img img {
-                    transform: scale(1.05) translateZ(0);
+                    transform: scale(1.05);
                 }
         }
 
@@ -573,9 +542,6 @@
                 height: 100%;
                 object-fit: cover;
                 transition: transform 0.5s ease;
-                will-change: transform;
-                transform: translateZ(0) scale(1);
-                backface-visibility: hidden;
             }
 
         .blog-info {
@@ -698,7 +664,7 @@
 
 @section Hero {
     <div class="hero">
-        <img src="@Url.Content("~/H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp")" alt="طراحی و ساخت زمین پدل استاندارد در ایران" class="hero-bg-img" fetchpriority="high" decoding="async" width="1920" height="1080">
+        <img src="@Url.Content("~/H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp")" alt="طراحی و ساخت زمین پدل استاندارد در ایران" class="hero-bg-img" fetchpriority="high" width="1920" height="1080">
         <div class="hero-overlay"></div>
         <div class="hero-content">
             <h1 class="hero-title">
@@ -722,7 +688,7 @@
     <div class="about__container">
         <div class="about__media">
             <figure class="about__image-box">
-                <img src="@Url.Content("~/H-IMG/darabico.webp")" alt="پیمانکار تخصصی ساخت زمین پدل" class="about__image" width="800" height="600" loading="lazy" decoding="async" />
+                <img src="@Url.Content("~/H-IMG/darabico.webp")" alt="پیمانکار تخصصی ساخت زمین پدل" class="about__image" width="800" height="600" loading="lazy" />
                 <figcaption class="about__caption">
                     <p class="about__caption-text">کیفیت، امنیت و توجیه اقتصادی در زمین‌های پدل دارابی‌کو</p>
                     <a asp-controller="Home" asp-action="About" class="about__caption-link">مشاهده داستان ما →</a>
@@ -767,7 +733,7 @@
         <div class="services-grid">
             <a asp-controller="home" asp-action="blog" class="service-card">
                 <span class="service-number">01</span>
-                <img src="@Url.Content("~/H-IMG/abzar1.webp")" alt="طراحی و احداث زمین پدل" class="service-img" loading="lazy" decoding="async" width="400" height="360" />
+                <img src="@Url.Content("~/H-IMG/naderi.webp")" alt="طراحی و احداث زمین پدل" class="service-img" loading="lazy" width="400" height="360" />
                 <div class="service-overlay"></div>
                 <div class="service-info">
                     <h3>طراحی و احداث زمین پدل</h3>
@@ -777,7 +743,7 @@
 
             <a asp-controller="home" asp-action="blog" class="service-card">
                 <span class="service-number">02</span>
-                <img src="@Url.Content("~/H-IMG/abzar2.webp")" alt="دیواره شیشه‌ای و تجهیزات کورت پدل" class="service-img" loading="lazy" decoding="async" width="400" height="360" />
+                <img src="@Url.Content("~/H-IMG/shisheh.webp" )" alt="دیواره شیشه‌ای و تجهیزات کورت پدل" class="service-img" loading="lazy" width="400" height="360" />
                 <div class="service-overlay"></div>
                 <div class="service-info">
                     <h3>دیواره شیشه‌ای و تجهیزات</h3>
@@ -787,7 +753,7 @@
 
             <a asp-controller="home" asp-action="blog" class="service-card">
                 <span class="service-number">03</span>
-                <img src="@Url.Content("~/H-IMG/shishe.webp")" alt="چمن مصنوعی زمین پدل" class="service-img" loading="lazy" decoding="async" width="400" height="360" />
+                <img src="@Url.Content("~/H-IMG/chaman.webp")" alt="چمن مصنوعی زمین پدل" class="service-img" loading="lazy" width="400" height="360" />
                 <div class="service-overlay"></div>
                 <div class="service-info">
                     <h3>کف‌پوش و چمن مصنوعی پدل</h3>
@@ -797,7 +763,7 @@
 
             <a asp-controller="home" asp-action="blog" class="service-card">
                 <span class="service-number">04</span>
-                <img src="@Url.Content("~/H-IMG/04-compressed.webp")" alt="برآورد هزینه و طرح توجیهی ساخت پدل" class="service-img" loading="lazy" decoding="async" width="400" height="360" />
+                <img src="@Url.Content("~/H-IMG/04-compressed.webp")" alt="برآورد هزینه و طرح توجیهی ساخت پدل" class="service-img" loading="lazy" width="400" height="360" />
                 <div class="service-overlay"></div>
                 <div class="service-info">
                     <h3>برآورد هزینه و طرح توجیهی</h3>
@@ -812,7 +778,7 @@
     <div class="community-grid">
         <div class="community-media">
             <div class="community-img-box">
-                <img src="@Url.Content("~/H-IMG/tajhiz3.webp")" alt="درآمد زمین پدل و سرمایه گذاری" class="community-img" loading="lazy" decoding="async" width="600" height="450" />
+                <img src="@Url.Content("~/H-IMG/tajhizzz.webp")" alt="درآمد زمین پدل و سرمایه گذاری" class="community-img" loading="lazy" width="600" height="450" />
             </div>
             <div class="community-promo-card">
                 <h3>سرمایه‌گذاری پرسود<br>در راه‌اندازی کورت پدل</h3>
@@ -857,11 +823,11 @@
                     <div class="blog-img">
                         @if (!string.IsNullOrEmpty(post.CoverImagePath))
                         {
-                            <img src="@post.CoverImagePath" alt="@post.Title" loading="lazy" decoding="async" width="400" height="250">
+                            <img src="@Url.Content(post.CoverImagePath)" alt="@post.Title" loading="lazy" width="400" height="250">
                         }
                         else
                         {
-                            <img src="@Url.Content("~/H-IMG/133.webp")" alt="@post.Title" loading="lazy" decoding="async" width="400" height="250">
+                            <img src="@Url.Content("~/H-IMG/133.webp")" alt="@post.Title" loading="lazy" width="400" height="250">
                         }
                     </div>
                     <div class="blog-info">
@@ -887,7 +853,7 @@
 
     <div class="gallery-grid">
         <div class="gallery-item large">
-            <img src="@Url.Content("~/H-IMG/arateh.webp")" alt="اجرای زمین پدل استاندارد با تجهیزات کامل" loading="lazy" decoding="async" width="600" height="600">
+            <img src="@Url.Content("~/H-IMG/aratehcourt.webp")" alt="اجرای زمین پدل استاندارد با تجهیزات کامل" loading="lazy" width="600" height="600">
             <div class="gallery-overlay">
                 <div class="gallery-content">
                     <p>احداث کورت پدل استاندارد با دیواره‌های ضدضربه ۱۲ میل</p>
@@ -896,7 +862,7 @@
         </div>
 
         <div class="gallery-item">
-            <img src="@Url.Content("~/H-IMG/tajhiz2.webp")" alt="نصب سازه فلزی و چمن مصنوعی پدل" loading="lazy" decoding="async" width="300" height="300">
+            <img src="@Url.Content("~/H-IMG/tajhiz2.webp")" alt="نصب سازه فلزی و چمن مصنوعی پدل" loading="lazy" width="300" height="300">
             <div class="gallery-overlay">
                 <div class="gallery-content">
                     <p>نصب سازه فلزی مقاوم و چمن مصنوعی مخصوص پدل</p>
@@ -905,7 +871,7 @@
         </div>
 
         <div class="gallery-item">
-            <img src="@Url.Content("~/H-IMG/225.webp")" alt="طراحی و اجرای زمین پدل پورتابل" loading="lazy" decoding="async" width="300" height="300">
+            <img src="@Url.Content("~/H-IMG/225.webp")" alt="طراحی و اجرای زمین پدل پورتابل" loading="lazy" width="300" height="300">
             <div class="gallery-overlay">
                 <div class="gallery-content">
                     <p>طراحی و اجرای زمین پدل پورتابل با برند اختصاصی دارابی‌کو</p>
@@ -914,7 +880,7 @@
         </div>
 
         <div class="gallery-item">
-            <img src="@Url.Content("~/H-IMG/tajhiz.webp")" alt="نورپردازی زمین پدل" loading="lazy" decoding="async" width="300" height="300">
+            <img src="@Url.Content("~/H-IMG/roshanaei.webp")" alt="نورپردازی زمین پدل" loading="lazy" width="300" height="300">
             <div class="gallery-overlay">
                 <div class="gallery-content">
                     <p>تجهیز کامل روشنایی و اجرای سیستم نورپردازی استاندارد</p>
@@ -923,7 +889,7 @@
         </div>
 
         <div class="gallery-item">
-            <img src="@Url.Content("~/H-IMG/16.webp")" alt="اجرای کف‌پوش و زیرسازی زمین پدل" loading="lazy" decoding="async" width="300" height="300">
+            <img src="@Url.Content("~/H-IMG/16.webp")" alt="اجرای کف‌پوش و زیرسازی زمین پدل" loading="lazy" width="300" height="300">
             <div class="gallery-overlay">
                 <div class="gallery-content">
                     <p>زیرسازی مهندسی و اجرای دقیق کف‌پوش کورت پدل</p>
@@ -939,17 +905,29 @@
         const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
         function animateCounter(el) {
+            if(el.dataset.animated) return;
+            el.dataset.animated = "true";
+
             const target = parseInt(el.getAttribute("data-value"), 10);
             const prefix = el.getAttribute("data-prefix") || "";
-            if (reduceMotion) { el.textContent = prefix + target; return; }
 
-            const duration = 1200;
+            if (reduceMotion) {
+                el.textContent = prefix + target;
+                return;
+            }
+
+            const duration = 1500; 
             const start = performance.now();
 
             function tick(now) {
                 const progress = Math.min((now - start) / duration, 1);
-                el.textContent = prefix + Math.round(target * progress);
-                if (progress < 1) requestAnimationFrame(tick);
+                const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+
+                el.textContent = prefix + Math.round(target * easeOutQuart);
+
+                if (progress < 1) {
+                    requestAnimationFrame(tick);
+                }
             }
             requestAnimationFrame(tick);
         }
@@ -957,13 +935,18 @@
         if (counters.length && "IntersectionObserver" in window) {
             const counterObserver = new IntersectionObserver((entries, obs) => {
                 entries.forEach(entry => {
-                    if (!entry.isIntersecting) return;
-                    const el = entry.target;
-                    obs.unobserve(el);
-                    el.classList.add("animating");
-                    animateCounter(el);
+                    if (entry.isIntersecting) {
+                        const el = entry.target;
+                        obs.unobserve(el);
+                        el.classList.add("animating");
+
+                        requestAnimationFrame(() => {
+                            animateCounter(el);
+                        });
+                    }
                 });
-            }, { threshold: 0.5 });
+            }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+
             counters.forEach(c => counterObserver.observe(c));
         }
 
