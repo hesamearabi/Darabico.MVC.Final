@@ -33,6 +33,11 @@ builder.Services.AddResponseCompression(options =>
     options.EnableForHttps = true;
     options.Providers.Add<BrotliCompressionProvider>();
     options.Providers.Add<GzipCompressionProvider>();
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[]
+    {
+        "application/manifest+json",
+        "image/svg+xml"
+    });
 });
 builder.Services.Configure<BrotliCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
 builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
@@ -110,18 +115,41 @@ else
     app.UseDeveloperExceptionPage();
 }
 
+// هدرهای امنیتی (قبلاً داخل _Layout.cshtml نوشته شده بود)
+app.Use(async (context, next) =>
+{
+    var headers = context.Response.Headers;
+    headers["X-Content-Type-Options"] = "nosniff";
+    headers["X-Frame-Options"] = "SAMEORIGIN";
+    headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    await next();
+});
+
 app.UseStatusCodePagesWithReExecute("/Home/PageNotFound", "?statusCode={0}");
 app.UseHttpsRedirection();
+
+// مهم: فشرده‌سازی باید «قبل» از StaticFiles باشد، وگرنه CSS/JS/SVG فشرده نمی‌شوند.
+app.UseResponseCompression();
 
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
     {
-        ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=2592000");
+        var headers = ctx.Context.Response.Headers;
+
+        if (app.Environment.IsDevelopment())
+        {
+            headers["Cache-Control"] = "no-cache";
+            return;
+        }
+
+        // فایل‌هایی که با asp-append-version نسخه‌بندی شده‌اند (?v=...) کش یک‌ساله
+        var isVersioned = ctx.Context.Request.Query.ContainsKey("v");
+        headers["Cache-Control"] = isVersioned
+            ? "public,max-age=31536000,immutable"
+            : "public,max-age=2592000";
     }
 });
-
-app.UseResponseCompression();
 
 app.UseRouting();
 app.UseAuthentication();

@@ -1,4 +1,4 @@
-@font-face {
+﻿@font-face {
     font-family: 'Dana';
     src: url('/fonts/Dana-Medium.woff2?v=1000') format('woff2');
     font-weight: normal;
@@ -28,6 +28,8 @@
 html {
     scrollbar-width: thin;
     scrollbar-color: var(--brand-navy) #f1f1f1;
+    /* قبلاً روی همه‌ی المان‌ها (*) بود؛ فقط روی html کافی است */
+    scroll-behavior: smooth;
 }
 
 ::-webkit-scrollbar {
@@ -53,7 +55,6 @@ html {
     padding: 0;
     box-sizing: border-box;
     font-family: 'Dana', 'Vazirmatn', Tahoma, sans-serif;
-    scroll-behavior: smooth;
 }
 
 body {
@@ -65,6 +66,9 @@ body {
     overflow-x: hidden;
 }
 
+/* =========================================
+   Header
+   ========================================= */
 .site-header {
     position: fixed;
     top: 0;
@@ -72,14 +76,14 @@ body {
     width: 100%;
     z-index: 1000;
     padding: 20px 0;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     background: transparent;
 }
 
+    /* backdrop-filter حذف شد: روی هدر ثابت، در هر فریم اسکرول بلور دوباره محاسبه می‌شد.
+       چون پس‌زمینه ۹۶٪ مات است، تفاوت ظاهری قابل‌تشخیص نیست. */
     .site-header.scrolled {
-        background: rgba(18, 29, 53, 0.95);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+        background: rgba(18, 29, 53, 0.96);
         padding: 10px 0;
         box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
         border-bottom: 1px solid rgba(197, 166, 107, 0.15);
@@ -162,7 +166,7 @@ body {
     font-weight: 800;
     font-size: 14px;
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
     box-shadow: 0 4px 15px rgba(197, 166, 107, 0.3);
 }
 
@@ -193,7 +197,7 @@ body {
         height: 3px;
         background: #fff;
         border-radius: 3px;
-        transition: all 0.3s ease;
+        transition: transform 0.3s ease, opacity 0.3s ease;
     }
 
 .mobile-menu {
@@ -258,7 +262,7 @@ body {
     display: block;
     padding: 10px;
     border-radius: 10px;
-    transition: 0.3s;
+    transition: background-color 0.3s, color 0.3s, padding-right 0.3s;
 }
 
     .mobile-link:hover {
@@ -290,18 +294,23 @@ body {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(3px);
     z-index: 1001;
     opacity: 0;
     visibility: hidden;
-    transition: 0.3s;
+    transition: opacity 0.3s, visibility 0.3s;
 }
 
+    /* بلور فقط وقتی منو باز است فعال می‌شود */
     .mobile-overlay.active {
         opacity: 1;
         visibility: visible;
+        backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
     }
 
+/* =========================================
+   Hero
+   ========================================= */
 .hero {
     position: relative;
     width: 100%;
@@ -392,7 +401,7 @@ body {
     font-weight: bold;
     text-decoration: none;
     border-radius: 50px;
-    transition: all 0.3s;
+    transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s;
     box-shadow: 0 4px 15px rgba(197, 166, 107, 0.4);
     opacity: 0;
     animation: fadeInUp 0.8s ease-out 1s forwards;
@@ -440,6 +449,9 @@ body {
     animation: scrollWheel 1.5s infinite;
 }
 
+/* =========================================
+   About
+   ========================================= */
 .about {
     position: relative;
     padding: 100px 0;
@@ -611,7 +623,6 @@ body {
     padding-bottom: 5px;
     margin-bottom: 8px;
     font-variant-numeric: tabular-nums;
-    will-change: transform, opacity;
     display: inline-block;
 }
 
@@ -621,6 +632,9 @@ body {
     margin-top: 5px;
 }
 
+/* =========================================
+   Flip cards
+   ========================================= */
 .section-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -779,7 +793,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: 0.3s;
+    transition: transform 0.3s;
 }
 
 .card.black .flip-card-front {
@@ -834,6 +848,9 @@ body {
     transform: translateY(-5px);
 }
 
+/* =========================================
+   Services
+   ========================================= */
 .services-section {
     width: 100%;
     padding: 50px 0;
@@ -869,7 +886,7 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
-    transition: 0.3s;
+    transition: transform 0.3s;
 }
 
     .view-all:hover {
@@ -888,7 +905,7 @@ body {
     overflow: hidden;
     position: relative;
     cursor: pointer;
-    transition: 0.4s;
+    transition: transform 0.4s, box-shadow 0.4s;
     flex: 1 1 250px;
     box-shadow: var(--card-shadow);
 }
@@ -902,7 +919,7 @@ body {
     width: 100%;
     aspect-ratio: 4/3;
     object-fit: cover;
-    transition: 0.4s;
+    transition: transform 0.4s;
 }
 
 .service-card:hover .service-img {
@@ -941,6 +958,9 @@ body {
     font-size: 12px;
 }
 
+/* =========================================
+   Community
+   ========================================= */
 .wrap {
     width: min(90%, 1200px);
     margin: 60px auto;
@@ -1047,6 +1067,9 @@ body {
     margin-bottom: 5px;
 }
 
+/* =========================================
+   Blog
+   ========================================= */
 .blog-tips-section {
     width: min(90%, 1200px);
     margin: 80px auto;
@@ -1086,7 +1109,7 @@ body {
     overflow: hidden;
     text-decoration: none;
     box-shadow: var(--card-shadow);
-    transition: 0.3s;
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 
     .blog-card:hover {
@@ -1120,6 +1143,9 @@ body {
     line-height: 1.4;
 }
 
+/* =========================================
+   Slider
+   ========================================= */
 #OUR-OTHER-PROJECTS {
     text-align: center;
     margin-top: 80px;
@@ -1180,6 +1206,9 @@ body {
     left: 20px;
 }
 
+/* =========================================
+   Footer
+   ========================================= */
 .site-footer {
     font-family: 'Dana', 'Vazir', sans-serif;
     direction: rtl;
@@ -1227,7 +1256,7 @@ body {
     text-decoration: none;
     font-weight: bold;
     font-size: 1.1rem;
-    transition: 0.3s;
+    transition: color 0.3s;
 }
 
     .go-top-btn:hover {
@@ -1278,7 +1307,7 @@ body {
         display: block;
         color: rgba(255,255,255,0.8);
         text-decoration: none;
-        transition: 0.3s;
+        transition: color 0.3s, transform 0.3s;
         padding: 5px 0;
     }
 
@@ -1303,7 +1332,7 @@ body {
     .contact-item a {
         color: rgba(255,255,255,0.8);
         text-decoration: none;
-        transition: 0.3s;
+        transition: color 0.3s;
     }
 
         .contact-item a:hover {
@@ -1323,7 +1352,7 @@ body {
         gap: 8px;
         color: rgba(255,255,255,0.8);
         text-decoration: none;
-        transition: 0.3s;
+        transition: color 0.3s, background-color 0.3s;
         padding: 6px 12px;
         border-radius: 20px;
         background: rgba(197, 166, 107, 0.1);
@@ -1343,6 +1372,9 @@ body {
         filter: brightness(0) invert(0);
     }
 
+/* =========================================
+   Keyframes
+   ========================================= */
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -1389,6 +1421,9 @@ body {
     }
 }
 
+/* =========================================
+   Responsive
+   ========================================= */
 @media (max-width: 992px) {
     .desktop-nav, .header-cta-btn {
         display: none;
@@ -1428,7 +1463,6 @@ body {
         height: auto;
         min-height: 100vh;
         padding: 80px 0;
-        background-attachment: scroll;
     }
 
     .hero-content {

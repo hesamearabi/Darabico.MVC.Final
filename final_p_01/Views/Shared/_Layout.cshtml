@@ -1,10 +1,4 @@
-﻿@{
-    // هدرهای امنیتی برای محافظت از بازدیدکنندگان
-    Context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
-    Context.Response.Headers.Append("X-Frame-Options", "SAMEORIGIN");
-    Context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
-}
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fa-IR" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -152,16 +146,14 @@
         .hero-guide-btn {
             display: inline-block;
             padding: 12px 30px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
             color: #ffffff;
             border: 2px solid #ffffff;
             border-radius: 50px;
             font-size: 1rem;
             font-weight: 700;
             text-decoration: none;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
         }
 
             .hero-guide-btn:hover {
@@ -187,7 +179,7 @@
                 text-decoration: none;
                 font-weight: 700;
                 margin-right: 4px;
-                transition: all 0.3s ease;
+                transition: color 0.3s ease, text-shadow 0.3s ease;
             }
 
                 .sub-footer a.dev-linkedin-link:hover {
@@ -195,6 +187,23 @@
                     text-decoration: none;
                     text-shadow: 0 0 8px rgba(10, 102, 194, 0.4);
                 }
+
+        @@media (prefers-reduced-motion: reduce) {
+            .loader-logo, .loading-bar {
+                animation: none;
+            }
+        }
+
+        /* 🚀 بهینه‌سازی رندر و جلوگیری از فریز اسکرول */
+        .hero-bg-img {
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+
+        .hero-overlay {
+            pointer-events: none;
+        }
     </style>
 
     <!-- 🚀 JSON-LD Schema (ارتقا یافته برای سئو لوکال و خدمات پیمانکاری) -->
@@ -406,9 +415,26 @@
         document.addEventListener("DOMContentLoaded", () => {
             const header = document.getElementById("main-header");
             if (header) {
+                let scrolled = false;
+                let ticking = false;
+
+                const update = () => {
+                    const next = window.scrollY > 50;
+                    if (next !== scrolled) {
+                        scrolled = next;
+                        header.classList.toggle("scrolled", next);
+                    }
+                    ticking = false;
+                };
+
                 window.addEventListener("scroll", () => {
-                    header.classList.toggle("scrolled", window.scrollY > 50);
-                });
+                    if (!ticking) {
+                        ticking = true;
+                        requestAnimationFrame(update);
+                    }
+                }, { passive: true });
+
+                update();
             }
 
             const mobileMenu = document.getElementById("mobile-menu");
@@ -448,18 +474,28 @@
         });
 
         window.addEventListener("load", function () {
+            const LOADER_DELAY_MS = 800;
             const loader = document.getElementById("brand-loader");
             const body = document.body;
 
             setTimeout(() => {
-                if (loader) {
-                    loader.classList.add("loader-hidden");
-                    loader.addEventListener("transitionend", () => {
-                        body.classList.remove("loading-state");
-                        loader.remove();
-                    });
+                if (!loader) {
+                    body.classList.remove("loading-state");
+                    return;
                 }
-            }, 800);
+
+                let finished = false;
+                const finish = () => {
+                    if (finished) return;
+                    finished = true;
+                    body.classList.remove("loading-state");
+                    loader.remove();
+                };
+
+                loader.classList.add("loader-hidden");
+                loader.addEventListener("transitionend", finish, { once: true });
+                setTimeout(finish, 900);
+            }, LOADER_DELAY_MS);
         });
     </script>
 </body>
