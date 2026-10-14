@@ -4,11 +4,7 @@
 }
 
 <style>
-    :root {
-        --brand-navy: #121D35;
-        --brand-gold: #C5A66B;
-    }
-
+    /* 🚀 نشت رنگ به بقیه سایت با حذف root متوقف شد */
     .darabico-card {
         background: #fff;
         border-radius: 20px;
@@ -19,7 +15,7 @@
 
     .darabico-table th {
         background-color: #f8fafc;
-        color: var(--brand-navy);
+        color: #121D35; /* Navy */
         font-weight: 800;
         border-bottom: 2px solid #e2e8f0;
         padding: 18px 15px;
@@ -31,8 +27,16 @@
         color: #475569;
     }
 
+    .darabico-table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+        .darabico-table tbody tr:hover {
+            background-color: #f1f5f9;
+        }
+
     .btn-darabico-primary {
-        background: var(--brand-navy);
+        background: #121D35; /* Navy */
         color: #fff;
         border-radius: 12px;
         padding: 12px 24px;
@@ -42,8 +46,8 @@
     }
 
         .btn-darabico-primary:hover {
-            background: var(--brand-gold);
-            color: var(--brand-navy);
+            background: #C5A66B; /* Gold */
+            color: #121D35; /* Navy */
             box-shadow: 0 8px 20px rgba(197, 166, 107, 0.3);
         }
 
@@ -55,7 +59,7 @@
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 fw-bold" style="color: var(--brand-navy);">مدیریت دسته‌بندی‌ها</h1>
+    <h1 class="h3 fw-bold" style="color: #121D35;">مدیریت دسته‌بندی‌ها</h1>
     <a asp-action="Create" class="btn-darabico-primary text-decoration-none">
         <i class="bi bi-plus-lg me-1"></i> دسته‌بندی جدید
     </a>
@@ -95,10 +99,10 @@
                 {
                     <tr>
                         <td class="fw-bold text-muted">@item.Id</td>
-                        <td class="fw-bold" style="color: var(--brand-navy); font-size: 1.1rem;">@item.Name</td>
+                        <td class="fw-bold" style="color: #121D35; font-size: 1.1rem;">@item.Name</td>
                         <td dir="ltr" class="text-end text-muted font-monospace small">@item.Slug</td>
                         <td class="text-center">
-                            <span class="badge" style="background-color: #f1f5f9; color: var(--brand-navy); font-size: 0.9rem; padding: 8px 15px; border-radius: 50px;">
+                            <span class="badge" style="background-color: #f1f5f9; color: #121D35; font-size: 0.9rem; padding: 8px 15px; border-radius: 50px;">
                                 @(item.Posts?.Count ?? 0) مقاله
                             </span>
                         </td>

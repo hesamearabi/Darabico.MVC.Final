@@ -2,43 +2,49 @@
 @using System.Linq
 @using Ganss.Xss
 @using System.Text.Json
+@using System.Text.RegularExpressions
 
 @{
     ViewData["Title"] = Model.Post.Title;
     Layout = "~/Views/Shared/_Layout.cshtml";
 
     string coverImage = !string.IsNullOrWhiteSpace(Model.Post.CoverImagePath) ? Model.Post.CoverImagePath : "/H-IMG/133.webp";
+    string coverAlt = !string.IsNullOrWhiteSpace(Model.Post.CoverImageAlt) ? Model.Post.CoverImageAlt : Model.Post.Title;
     string absoluteCoverImage = $"{Context.Request.Scheme}://{Context.Request.Host}{coverImage}";
     string absoluteUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}";
 
-    // 🚀 Sanitization & Optimization
+    string processedContent = Model.Post.Content ?? "";
+
+    // 🚀 1. حذف تمام استایل‌ها و ابعاد مزاحم که ادیتور به صورت مخفیانه روی عکس‌ها و ویدیوها می‌گذارد
+    processedContent = Regex.Replace(processedContent, @"(width|height)=[""'][^""']*[""']", "", RegexOptions.IgnoreCase);
+    processedContent = Regex.Replace(processedContent, @"style=[""'][^""']*[""']", "", RegexOptions.IgnoreCase);
+
+    // 🚀 2. سیستم هوشمند تشخیص YouTube Shorts (تبدیل خودکار به پلیر عمودی موبایلی)
+    processedContent = Regex.Replace(processedContent,
+        @"(?:<p>)?(?:<a[^>]*>)?\s*https?://(?:www\.)?youtube\.com/shorts/([a-zA-Z0-9_-]+)\s*(?:</a>)?\s*(?:</p>)?",
+        "<div class=\"video-shorts-wrapper\"><iframe src=\"https://www.youtube.com/embed/$1\" allowfullscreen></iframe></div>",
+        RegexOptions.IgnoreCase);
+
+    // 🚀 3. سیستم هوشمند تشخیص آپارات شورتز (تبدیل خودکار به پلیر عمودی موبایلی)
+    processedContent = Regex.Replace(processedContent,
+        @"(?:<p>)?(?:<a[^>]*>)?\s*https?://(?:www\.)?aparat\.com/shorts/([a-zA-Z0-9]+)\s*(?:</a>)?\s*(?:</p>)?",
+        "<div class=\"video-shorts-wrapper\"><iframe src=\"https://www.aparat.com/video/video/embed/videohash/$1/vt/frame\" allowfullscreen></iframe></div>",
+        RegexOptions.IgnoreCase);
+
+    // 🚀 4. سیستم هوشمند تشخیص YouTube معمولی (تبدیل خودکار به پلیر افقی عریض)
+    processedContent = Regex.Replace(processedContent,
+        @"(?:<p>)?(?:<a[^>]*>)?\s*https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([a-zA-Z0-9_-]+)(?:[&?][^\s<]*)?\s*(?:</a>)?\s*(?:</p>)?",
+        "<div class=\"video-normal-wrapper\"><iframe src=\"https://www.youtube.com/embed/$1\" allowfullscreen></iframe></div>",
+        RegexOptions.IgnoreCase);
+
+    // 🚀 5. سیستم هوشمند تشخیص آپارات معمولی (تبدیل خودکار به پلیر افقی عریض بدون سیاهی)
+    processedContent = Regex.Replace(processedContent,
+        @"(?:<p>)?(?:<a[^>]*>)?\s*https?://(?:www\.)?aparat\.com/v/([a-zA-Z0-9]+)\s*(?:</a>)?\s*(?:</p>)?",
+        "<div class=\"video-normal-wrapper\"><iframe src=\"https://www.aparat.com/video/video/embed/videohash/$1/vt/frame\" allowfullscreen></iframe></div>",
+        RegexOptions.IgnoreCase);
+
+    // ایمن‌سازی فقط برای بخش FAQ اعمال می‌شود تا کدهای ادمین خراب نشوند
     var sanitizer = new HtmlSanitizer();
-    sanitizer.AllowedTags.Add("iframe");
-    sanitizer.AllowedTags.Add("video");
-    sanitizer.AllowedTags.Add("source");
-    sanitizer.AllowedTags.Add("div");
-    sanitizer.AllowedAttributes.Add("allowfullscreen");
-    sanitizer.AllowedAttributes.Add("webkitallowfullscreen");
-    sanitizer.AllowedAttributes.Add("mozallowfullscreen");
-    sanitizer.AllowedAttributes.Add("frameborder");
-    sanitizer.AllowedAttributes.Add("controls");
-    sanitizer.AllowedAttributes.Add("style");
-    sanitizer.AllowedAttributes.Add("class");
-    sanitizer.AllowedAttributes.Add("id");
-
-    sanitizer.FilterUrl += (sender, args) =>
-    {
-        if (args.Tag.TagName.ToLower() == "iframe")
-        {
-            if (!args.OriginalUrl.StartsWith("https://www.aparat.com/"))
-            {
-                args.SanitizedUrl = null;
-            }
-        }
-    };
-
-    string processedContent = sanitizer.Sanitize(Model.Post.Content ?? "");
-
     var safeFaqs = Model.Post.Faqs?.Select(f => new
     {
         Question = f.Question,
@@ -46,592 +52,655 @@
     }).ToList();
 }
 
+<!-- 🚀 مخفی کردن بنر صفحه اصلی -->
 @section Hero { }
 
-    @section Head {
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="preload" as="image" href="@coverImage" fetchpriority="high">
 
-        <!-- 🚀 LCP: پره‌لود تصویر اصلی مقاله -->
-        <link rel="preload" as="image" href="@coverImage" fetchpriority="high">
-
-        <!-- 🚀 SEO: تولید خودکار Rich Snippets برای درک عمیق گوگل -->
-        <script type="application/ld+json">
+    <!-- 🚀 SEO: Schema Markup -->
+    <script type="application/ld+json">
+        {
+            "@@context": "https://schema.org",
+            "@@graph": [
             {
-              "@@context": "https://schema.org",
-              "@@graph": [
-                {
-                  "@@type": "Article",
-                  "headline": @Html.Raw(JsonSerializer.Serialize(Model.Post.Title)),
-                  "image": "@absoluteCoverImage",
-                  "datePublished": "@Model.Post.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ")",
-                  "author": {
-                    "@@type": "Organization",
-                    "name": "دارابی کو",
-                    "url": "@($"{Context.Request.Scheme}://{Context.Request.Host}")"
-                  },
-                  "publisher": {
-                    "@@type": "Organization",
-                    "name": "دارابی کو",
-                    "logo": {
-                      "@@type": "ImageObject",
-                      "url": "@($"{Context.Request.Scheme}://{Context.Request.Host}/siteLOGO/sitelogo.png")"
-                    }
-                  },
-                  "mainEntityOfPage": {
-                    "@@type": "WebPage",
-                    "@@id": "@absoluteUrl"
-                  }
+                "@@type": "Article",
+                "headline": @Html.Raw(JsonSerializer.Serialize(Model.Post.Title)),
+                "image": "@absoluteCoverImage",
+                "datePublished": "@Model.Post.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ")",
+                "author": { "@@type": "Organization", "name": "دارابی کو", "url": "@($"{Context.Request.Scheme}://{Context.Request.Host}")" },
+                "publisher": { "@@type": "Organization", "name": "دارابی کو", "logo": { "@@type": "ImageObject", "url": "@($"{Context.Request.Scheme}://{Context.Request.Host}/siteLOGO/sitelogo.png")" } },
+                "aggregateRating": {
+                "@@type": "AggregateRating",
+                "ratingValue": "@Model.Post.AverageRating",
+                "bestRating": "5",
+                "ratingCount": "@Model.Post.TotalVotes"
                 },
-                {
-                  "@@type": "BreadcrumbList",
-                  "itemListElement": [
-                    {
-                      "@@type": "ListItem",
-                      "position": 1,
-                      "name": "خانه",
-                      "item": "@($"{Context.Request.Scheme}://{Context.Request.Host}/")"
-                    },
-                    {
-                      "@@type": "ListItem",
-                      "position": 2,
-                      "name": "مجله پدل",
-                      "item": "@($"{Context.Request.Scheme}://{Context.Request.Host}/blog")"
-                    },
-                    {
-                      "@@type": "ListItem",
-                      "position": 3,
-                      "name": @Html.Raw(JsonSerializer.Serialize(Model.Post.Title))
-                    }
-                  ]
-                }
-                @if (safeFaqs != null && safeFaqs.Any())
-                {
-                    <text>
-                    ,{
-                      "@@type": "FAQPage",
-                      "mainEntity": [
-                        @for (int i = 0; i < safeFaqs.Count; i++)
-                        {
-                              var faq = safeFaqs[i];
-                              <text>
-                              {
-                                "@@type": "Question",
-                                "name": @Html.Raw(JsonSerializer.Serialize(faq.Question)),
-                                "acceptedAnswer": {
-                                  "@@type": "Answer",
-                                  "text": @Html.Raw(JsonSerializer.Serialize(faq.Answer))
-                                }
-                              }
-                              @(i < safeFaqs.Count - 1 ? "," : "")
-                              </text>
+                "mainEntityOfPage": { "@@type": "WebPage", "@@id": "@absoluteUrl" }
+            }
+            @if (safeFaqs != null && safeFaqs.Any())
+            {
+                        <text>
+                        ,{
+                            "@@type": "FAQPage",
+                            "mainEntity": [
+                            @for (int i = 0; i < safeFaqs.Count; i++)
+                            {
+                                        var faq = safeFaqs[i];
+                                        <text>
+                                        {
+                                        "@@type": "Question",
+                                        "name": @Html.Raw(JsonSerializer.Serialize(faq.Question)),
+                                        "acceptedAnswer": { "@@type": "Answer", "text": @Html.Raw(JsonSerializer.Serialize(faq.Answer)) }
+                                        }
+                                        @(i < safeFaqs.Count - 1 ? "," : "")
+                                        </text>
+                            }
+                            ]
                         }
-                      ]
-                    }
-                    </text>
-                }
-              ]
+                        </text>
             }
-        </script>
+            ]
+        }
+    </script>
 
-        <style>
-            /* [تمامی استایل‌های CSS قبلی دقیقاً در اینجا قرار بگیرند. برای جلوگیری از طولانی شدن پاسخ حذفشان نکردم، فقط فرض کنید همان بلاک CSS شما در اینجاست] */
-            :root {
-                --pd-bg: #f8fafc;
-                --pd-card: #ffffff;
-                --pd-text-main: #0f172a;
-                --pd-text-muted: #64748b;
-                --pd-primary: #0056b3;
-                --pd-accent: #d11e32;
-                --pd-navy: #0a0c12;
-                --pd-radius-xl: 24px;
-                --pd-radius-lg: 16px;
-                --pd-radius-md: 12px;
-                --pd-shadow: 0 10px 40px rgba(0,0,0,0.04);
-                --pd-shadow-hover: 0 20px 40px rgba(0,0,0,0.08);
-                --pd-transition: all 0.3s ease;
+    <style>
+        :root {
+            --pd-bg: #f8fafc;
+            --pd-card: #ffffff;
+            --pd-text-main: #0f172a;
+            --pd-text-muted: #64748b;
+            --pd-primary: #0056b3;
+            --pd-accent: #d11e32;
+            --pd-navy: #0a0c12;
+            --pd-radius-xl: 24px;
+            --pd-radius-lg: 16px;
+            --pd-radius-md: 12px;
+            --pd-shadow: 0 10px 40px rgba(0,0,0,0.04);
+            --pd-shadow-hover: 0 20px 40px rgba(0,0,0,0.08);
+            --pd-transition: all 0.3s ease;
+        }
+
+        body {
+            background-color: var(--pd-bg) !important;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        .pd-hero {
+            position: relative;
+            width: 100%;
+            height: 60vh;
+            min-height: 450px;
+            background-image: url('@coverImage');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-top: 80px;
+        }
+
+            .pd-hero::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(to top, rgba(10, 12, 18, 0.95) 0%, rgba(10, 12, 18, 0.5) 50%, rgba(10, 12, 18, 0.2) 100%);
             }
 
-            body {
-                background-color: var(--pd-bg) !important;
-            }
+        .pd-hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            color: #fff;
+            max-width: 900px;
+            padding: 0 20px;
+        }
 
-            * {
-                box-sizing: border-box;
-            }
+        .pd-breadcrumb {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 8px 24px;
+            border-radius: 50px;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 25px;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+        }
 
-            .pd-hero {
-                position: relative;
-                width: 100%;
-                height: 60vh;
-                min-height: 450px;
-                background-image: url('@coverImage');
-                background-size: cover;
-                background-position: center;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin-top: 0;
-                padding-top: 80px;
-            }
-
-                .pd-hero::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background: linear-gradient(to top, rgba(10, 12, 18, 0.95) 0%, rgba(10, 12, 18, 0.5) 50%, rgba(10, 12, 18, 0.2) 100%);
-                }
-
-            .pd-hero-content {
-                position: relative;
-                z-index: 2;
-                text-align: center;
+            .pd-breadcrumb a {
                 color: #fff;
-                max-width: 900px;
-                padding: 0 20px;
+                text-decoration: none;
+                transition: var(--pd-transition);
             }
 
-            .pd-breadcrumb {
-                display: inline-flex;
-                align-items: center;
-                background: rgba(255, 255, 255, 0.1);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                padding: 8px 24px;
-                border-radius: 50px;
-                border: 1px solid rgba(255,255,255,0.1);
-                margin-bottom: 25px;
-                font-size: 0.85rem;
-                color: #cbd5e1;
-            }
-
-                .pd-breadcrumb a {
-                    color: #fff;
-                    text-decoration: none;
-                    transition: var(--pd-transition);
-                }
-
-                    .pd-breadcrumb a:hover {
-                        color: var(--pd-accent);
-                    }
-
-                .pd-breadcrumb .sep {
-                    margin: 0 10px;
-                    opacity: 0.5;
-                }
-
-            .pd-title {
-                font-size: clamp(2rem, 4vw, 3.5rem);
-                font-weight: 900;
-                line-height: 1.3;
-                margin-bottom: 25px;
-                margin-top: 0;
-                text-shadow: 0 4px 20px rgba(0,0,0,0.4);
-            }
-
-            .pd-meta {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 25px;
-                font-size: 0.95rem;
-                color: #e2e8f0;
-                flex-wrap: wrap;
-            }
-
-                .pd-meta span, .pd-meta time {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-
-                .pd-meta i {
+                .pd-breadcrumb a:hover {
                     color: var(--pd-accent);
                 }
 
-            .pd-container {
-                max-width: 850px;
-                margin: -60px auto 80px;
-                background: var(--pd-card);
-                border-radius: var(--pd-radius-xl);
-                padding: 60px 70px;
-                box-shadow: var(--pd-shadow);
-                position: relative;
-                z-index: 10;
+            .pd-breadcrumb .sep {
+                margin: 0 10px;
+                opacity: 0.5;
             }
 
-            .pd-body {
-                font-size: 1.15rem;
-                line-height: 2.2;
-                color: var(--pd-text-muted);
-                text-align: justify;
+        .pd-title {
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            font-weight: 900;
+            line-height: 1.3;
+            margin-bottom: 25px;
+            margin-top: 0;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        .pd-meta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 25px;
+            font-size: 0.95rem;
+            color: #e2e8f0;
+            flex-wrap: wrap;
+        }
+
+            .pd-meta span, .pd-meta time {
+                display: flex;
+                align-items: center;
+                gap: 8px;
             }
 
-                .pd-body h2, .pd-body h3 {
-                    color: var(--pd-text-main);
-                    font-weight: 800;
-                    margin-top: 2.5rem;
-                    margin-bottom: 1.2rem;
-                    line-height: 1.4;
-                }
-
-                .pd-body .aparat-embed-wrapper, .pd-body .aparat-video-container {
-                    position: relative !important;
-                    width: 100% !important;
-                    padding-bottom: 56.25% !important;
-                    height: 0 !important;
-                    margin: 2.5rem 0 !important;
-                    border-radius: 16px !important;
-                    overflow: hidden !important;
-                    background-color: #000 !important;
-                    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15) !important;
-                }
-
-                    .pd-body .aparat-embed-wrapper iframe, .pd-body .aparat-video-container iframe {
-                        position: absolute !important;
-                        top: 0 !important;
-                        left: 0 !important;
-                        width: 100% !important;
-                        height: 100% !important;
-                        border: none !important;
-                    }
-
-                .pd-body img {
-                    max-width: 100% !important;
-                    height: auto !important;
-                    border-radius: var(--pd-radius-md);
-                    margin: 2rem 0;
-                    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-                }
-
-            .pd-faq-wrapper {
-                margin-top: 4rem;
-                padding-top: 3rem;
-                border-top: 2px dashed #f1f5f9;
+            .pd-meta i {
+                color: var(--pd-accent);
             }
 
-            .pd-faq-title {
+        .pd-container {
+            max-width: 850px;
+            margin: -60px auto 80px;
+            background: var(--pd-card);
+            border-radius: var(--pd-radius-xl);
+            padding: 60px 70px;
+            box-shadow: var(--pd-shadow);
+            position: relative;
+            z-index: 10;
+        }
+
+        .pd-body {
+            font-size: 1.15rem;
+            line-height: 2.2;
+            color: var(--pd-text-muted);
+            text-align: justify;
+        }
+
+            .pd-body h2, .pd-body h3 {
+                color: var(--pd-text-main);
+                font-weight: 800;
+                margin-top: 2.5rem;
+                margin-bottom: 1.2rem;
+                line-height: 1.4;
+            }
+
+            /* 🚀 استایل دکمه‌های دانلودی که با ادیتور وسط متن قرار داده می‌شوند */
+            .pd-body .pdf-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                background: var(--pd-primary);
+                color: #fff !important;
+                padding: 12px 28px;
+                border-radius: 50px;
+                font-weight: bold;
+                text-decoration: none;
+                box-shadow: 0 8px 20px rgba(0,86,179,0.2);
+                transition: 0.3s;
+                margin: 15px 0;
+            }
+
+                .pd-body .pdf-btn:hover {
+                    background: #004494;
+                    transform: translateY(-3px);
+                    box-shadow: 0 12px 25px rgba(0,86,179,0.4);
+                }
+
+            .pd-body img {
+                max-width: 100% !important;
+                height: auto !important;
+                object-fit: contain !important;
+                border-radius: var(--pd-radius-md);
+                margin: 2rem auto !important;
+                display: block !important;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            }
+
+            /* ---------------------------------------------------- */
+            /* 🚀 UI/UX حرفه‌ای ویدیوها (Shorts و معمولی)          */
+            /* ---------------------------------------------------- */
+
+            .pd-body iframe {
+                border-radius: 16px !important;
+                border: none !important;
+                box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+                display: block;
+                background: #000;
+            }
+
+        /* ویدیوهای معمولی افقی (آپارات و یوتیوب عادی) */
+        .video-normal-wrapper {
+            width: 100%;
+            margin: 3rem 0;
+        }
+
+            .video-normal-wrapper iframe {
+                width: 100% !important;
+                aspect-ratio: 16 / 9 !important;
+            }
+
+        /* ویدیوهای عمودی (YouTube Shorts و آپارات شورتز) */
+        .video-shorts-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin: 3rem 0;
+        }
+
+            .video-shorts-wrapper iframe {
+                width: 100% !important;
+                max-width: 360px !important; /* اندازه استاندارد صفحه موبایل */
+                aspect-ratio: 9 / 16 !important;
+            }
+
+        /* ---------------------------------------------------- */
+        /* 🚀 کارت پریمیوم دانلود PDF (انتهای مقاله)           */
+        /* ---------------------------------------------------- */
+        .pdf-premium-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 24px;
+            padding: 25px;
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            margin: 3rem 0;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+        }
+
+            .pdf-premium-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+                border-color: #cbd5e1;
+            }
+
+        .pdf-premium-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: #2563eb;
+            flex-shrink: 0;
+        }
+
+        .pdf-premium-content {
+            flex-grow: 1;
+            text-align: right;
+        }
+
+        .pdf-premium-title {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--pd-navy);
+            margin: 0 0 8px 0;
+        }
+
+        .pdf-premium-desc {
+            font-size: 1rem;
+            color: var(--pd-text-muted);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .pdf-premium-btn {
+            background: var(--pd-navy);
+            color: #fff !important;
+            padding: 14px 30px;
+            border-radius: 50px;
+            font-weight: 800;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.3s;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+            .pdf-premium-btn:hover {
+                background: #C5A66B;
+                color: var(--pd-navy) !important;
+                box-shadow: 0 10px 20px rgba(197,166,107,0.3);
+            }
+
+        /* 🚀 ستاره‌ها */
+        .pd-rating-box {
+            border: 1px solid var(--border-color);
+            background: #fff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+        }
+
+        .pd-star-icon {
+            font-size: 2.5rem;
+            color: #e2e8f0;
+            cursor: pointer;
+            transition: 0.2s;
+            padding: 0 5px;
+        }
+
+        .pd-stars {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: center;
+            gap: 5px;
+        }
+
+            .pd-stars:hover .pd-star-icon {
+                color: #e2e8f0;
+            }
+
+        .pd-star-icon:hover, .pd-star-icon:hover ~ .pd-star-icon, .pd-star-icon.active {
+            color: #f59e0b !important;
+        }
+
+        .pd-faq-wrapper {
+            margin-top: 4rem;
+            padding-top: 3rem;
+            border-top: 2px dashed #f1f5f9;
+        }
+
+        .pd-faq-title {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--pd-text-main);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+            .pd-faq-title i {
+                color: var(--pd-primary);
+            }
+
+        .pd-details {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--pd-radius-md);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: var(--pd-transition);
+        }
+
+            .pd-details:hover {
+                border-color: #cbd5e1;
+            }
+
+        .pd-summary {
+            padding: 1.25rem 1.5rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--pd-text-main);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            list-style: none;
+        }
+
+            .pd-summary::-webkit-details-marker {
+                display: none;
+            }
+
+            .pd-summary::after {
+                content: '\F282';
+                font-family: "bootstrap-icons";
+                font-size: 1.2rem;
+                color: var(--pd-primary);
+                transition: transform 0.3s ease;
+            }
+
+        .pd-details[open] .pd-summary {
+            color: var(--pd-primary);
+            background: #f8fafc;
+        }
+
+            .pd-details[open] .pd-summary::after {
+                transform: rotate(180deg);
+            }
+
+        .pd-answer {
+            padding: 0 1.5rem 1.5rem;
+            color: var(--pd-text-secondary);
+            line-height: 1.9;
+            background: #f8fafc;
+            border-top: 1px solid transparent;
+        }
+
+        .pd-cta {
+            background: linear-gradient(135deg, var(--pd-navy) 0%, #1e293b 100%);
+            border-radius: var(--pd-radius-lg);
+            padding: 3rem;
+            margin-top: 4rem;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 30px;
+            box-shadow: 0 20px 40px rgba(10, 12, 18, 0.2);
+            position: relative;
+            overflow: hidden;
+            flex-wrap: wrap;
+        }
+
+        .pd-cta-text {
+            position: relative;
+            z-index: 2;
+            flex: 1 1 50%;
+            min-width: 300px;
+        }
+
+            .pd-cta-text h4 {
+                color: #fff;
                 font-size: 1.8rem;
                 font-weight: 900;
-                color: var(--pd-text-main);
-                margin-bottom: 2rem;
-                display: flex;
-                align-items: center;
-                gap: 12px;
+                margin-bottom: 0.8rem;
             }
 
-                .pd-faq-title i {
-                    color: var(--pd-primary);
-                }
-
-            .pd-details {
-                background: #fff;
-                border: 1px solid #e2e8f0;
-                border-radius: var(--pd-radius-md);
-                margin-bottom: 1rem;
-                overflow: hidden;
-                transition: var(--pd-transition);
+            .pd-cta-text p {
+                color: #cbd5e1;
+                font-size: 1.05rem;
+                margin: 0;
+                line-height: 1.8;
             }
 
-                .pd-details:hover {
-                    border-color: #cbd5e1;
-                }
+        .pd-cta-actions {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
 
-            .pd-summary {
-                padding: 1.25rem 1.5rem;
-                font-weight: 700;
-                font-size: 1.1rem;
-                color: var(--pd-text-main);
-                cursor: pointer;
-                list-style: none;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                background: #fff;
+        .pd-btn-social {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            width: 50px;
+            height: 50px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 1.3rem;
+            text-decoration: none;
+            transition: var(--pd-transition);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+
+            .pd-btn-social:hover {
+                background: var(--pd-primary);
+                color: #fff;
+                transform: translateY(-3px);
+                border-color: var(--pd-primary);
+                box-shadow: 0 10px 20px rgba(0, 86, 179, 0.3);
             }
 
-                .pd-summary::-webkit-details-marker {
-                    display: none;
-                }
+        .pd-btn {
+            background: var(--pd-primary);
+            color: #fff;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--pd-transition);
+            box-shadow: 0 10px 20px rgba(0, 86, 179, 0.3);
+            border: none;
+            height: 50px;
+        }
 
-                .pd-summary::after {
-                    content: '\F282';
-                    font-family: "bootstrap-icons";
-                    font-size: 1.2rem;
-                    color: var(--pd-primary);
-                    transition: transform 0.3s ease;
-                }
-
-            .pd-details[open] .pd-summary {
-                color: var(--pd-primary);
-                background: #f8fafc;
+            .pd-btn:hover {
+                background: #004494;
+                transform: translateY(-3px);
+                box-shadow: 0 15px 25px rgba(0, 86, 179, 0.4);
+                color: #fff;
             }
 
-                .pd-details[open] .pd-summary::after {
-                    transform: rotate(180deg);
-                }
+        .pd-related-section {
+            max-width: 1200px;
+            margin: 0 auto 80px;
+            padding: 0 20px;
+        }
 
-            .pd-answer {
-                padding: 0 1.5rem 1.5rem;
-                color: var(--pd-text-secondary);
-                line-height: 1.9;
-                background: #f8fafc;
-                border-top: 1px solid transparent;
+        .pd-related-title {
+            text-align: center;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--pd-text-main);
+            margin-bottom: 2.5rem;
+        }
+
+        .pd-related-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+        }
+
+        .pd-card {
+            background: var(--pd-card);
+            border-radius: var(--pd-radius-lg);
+            overflow: hidden;
+            box-shadow: var(--pd-shadow);
+            transition: var(--pd-transition);
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #f1f5f9;
+        }
+
+            .pd-card:hover {
+                transform: translateY(-10px);
+                box-shadow: var(--pd-shadow-hover);
+                border-color: #C5A66B;
+            }
+
+        .pd-card-img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            transition: 0.5s;
+        }
+
+        .pd-card:hover .pd-card-img {
+            transform: scale(1.05);
+        }
+
+        .pd-card-body {
+            padding: 25px;
+            background: #fff;
+            z-index: 2;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pd-card-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: var(--pd-text-muted);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+            .pd-card-meta i {
+                color: #C5A66B;
+            }
+
+        .pd-card-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--pd-text-main);
+            line-height: 1.6;
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        @@media (max-width: 768px) {
+            .pd-container {
+                margin: -40px 15px 50px;
+                padding: 30px 20px;
+            }
+
+            .pdf-premium-card {
+                flex-direction: column;
+                text-align: center;
+                padding: 30px 20px;
+            }
+
+            .pdf-premium-action {
+                width: 100%;
+            }
+
+            .pdf-premium-btn {
+                width: 100%;
+                justify-content: center;
             }
 
             .pd-cta {
-                background: linear-gradient(135deg, var(--pd-navy) 0%, #1e293b 100%);
-                border-radius: var(--pd-radius-lg);
-                padding: 3rem;
-                margin-top: 4rem;
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                justify-content: space-between;
-                gap: 30px;
-                box-shadow: 0 20px 40px rgba(10, 12, 18, 0.2);
-                position: relative;
-                overflow: hidden;
-                flex-wrap: wrap;
+                flex-direction: column;
+                text-align: center;
+                gap: 25px;
             }
-
-                .pd-cta::after {
-                    content: '';
-                    position: absolute;
-                    top: -50%;
-                    left: -20%;
-                    width: 300px;
-                    height: 300px;
-                    background: radial-gradient(circle, rgba(209, 30, 50, 0.3) 0%, transparent 70%);
-                    pointer-events: none;
-                }
-
-            .pd-cta-text {
-                position: relative;
-                z-index: 2;
-                flex: 1 1 50%;
-                min-width: 300px;
-            }
-
-                .pd-cta-text h4 {
-                    color: #fff;
-                    font-size: 1.8rem;
-                    font-weight: 900;
-                    margin-bottom: 0.8rem;
-                    margin-top: 0;
-                }
-
-                .pd-cta-text p {
-                    color: #cbd5e1;
-                    font-size: 1.05rem;
-                    margin: 0;
-                    line-height: 1.8;
-                    max-width: 100%;
-                }
 
             .pd-cta-actions {
-                position: relative;
-                z-index: 2;
-                flex: 0 0 auto;
-                display: flex;
-                gap: 12px;
-                align-items: center;
-                flex-wrap: wrap;
-            }
-
-            .pd-btn-social {
-                background: rgba(255, 255, 255, 0.05);
-                color: #fff;
-                width: 50px;
-                height: 50px;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                border-radius: 50%;
-                font-size: 1.3rem;
-                text-decoration: none;
-                transition: var(--pd-transition);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                backdrop-filter: blur(5px);
-                padding: 0;
-                margin: 0;
-            }
-
-                .pd-btn-social i {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    line-height: 1;
-                }
-
-                .pd-btn-social:hover {
-                    background: var(--pd-primary);
-                    color: #fff;
-                    transform: translateY(-3px);
-                    border-color: var(--pd-primary);
-                    box-shadow: 0 10px 20px rgba(0, 86, 179, 0.3);
-                }
-
-            .pd-btn {
-                background: var(--pd-primary);
-                color: #fff;
-                padding: 14px 28px;
-                border-radius: 50px;
-                font-weight: 700;
-                text-decoration: none;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-                transition: var(--pd-transition);
-                box-shadow: 0 10px 20px rgba(0, 86, 179, 0.3);
-                border: none;
-                cursor: pointer;
-                margin: 0;
-                height: 50px;
-            }
-
-                .pd-btn:hover {
-                    background: #004494;
-                    transform: translateY(-3px);
-                    box-shadow: 0 15px 25px rgba(0, 86, 179, 0.4);
-                    color: #fff;
-                }
-
-            .pd-related-section {
-                max-width: 1200px;
-                margin: 0 auto 80px;
-                padding: 0 20px;
-            }
-
-            .pd-related-title {
-                text-align: center;
-                font-size: 2.2rem;
-                font-weight: 900;
-                color: var(--pd-text-main);
-                margin-bottom: 2.5rem;
-            }
-
-            .pd-related-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-                gap: 30px;
-            }
-
-            .pd-card {
-                background: var(--pd-card);
-                border-radius: var(--pd-radius-lg);
-                overflow: hidden;
-                box-shadow: var(--pd-shadow);
-                transition: var(--pd-transition);
-                text-decoration: none;
-                color: inherit;
-                display: flex;
-                flex-direction: column;
-                border: 1px solid #f1f5f9;
-            }
-
-                .pd-card:hover {
-                    transform: translateY(-10px);
-                    box-shadow: var(--pd-shadow-hover);
-                    border-color: var(--pd-primary);
-                }
-
-            .pd-card-img {
                 width: 100%;
-                height: 220px;
-                object-fit: cover;
-                transition: 0.5s;
+                justify-content: center;
             }
-
-            .pd-card:hover .pd-card-img {
-                transform: scale(1.05);
-            }
-
-            .pd-card-body {
-                padding: 25px;
-                background: #fff;
-                z-index: 2;
-                flex-grow: 1;
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-start;
-            }
-
-            .pd-card-meta {
-                display: flex;
-                align-items: center;
-                gap: 15px;
-                font-size: 0.85rem;
-                color: var(--pd-text-muted);
-                margin-bottom: 12px;
-                font-weight: 600;
-            }
-
-                .pd-card-meta i {
-                    color: var(--pd-primary);
-                }
-
-            .pd-card-title {
-                font-size: 1.2rem;
-                font-weight: 800;
-                color: var(--pd-text-main);
-                line-height: 1.6;
-                margin: 0;
-                display: -webkit-box;
-                -webkit-line-clamp: 2;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-            }
-
-            @@media (max-width: 768px) {
-                .pd-hero {
-                    height: auto;
-                    padding-top: 100px;
-                    padding-bottom: 60px;
-                }
-
-                .pd-title {
-                    font-size: 2rem;
-                }
-
-                .pd-container {
-                    margin: -40px 15px 50px;
-                    padding: 30px 20px;
-                    border-radius: var(--pd-radius-lg);
-                }
-
-                .pd-cta {
-                    flex-direction: column;
-                    text-align: center;
-                    gap: 25px;
-                    padding: 30px 20px;
-                }
-
-                .pd-cta-text {
-                    min-width: 100%;
-                }
-
-                .pd-cta-actions {
-                    width: 100%;
-                    justify-content: center;
-                    flex-wrap: wrap;
-                }
-
-                .pd-body {
-                    font-size: 1.05rem;
-                }
-
-                .pd-summary {
-                    font-size: 1rem;
-                    padding: 1rem;
-                }
-
-                .pd-answer {
-                    padding: 0 1rem 1rem;
-                }
-            }
-        </style>
-    }
+        }
+    </style>
 
     <div class="pd-hero">
         <div class="pd-hero-content">
@@ -664,6 +733,55 @@
             @Html.Raw(processedContent)
         </article>
 
+        <!-- 🚀 نمایش پادکست -->
+        @if (!string.IsNullOrEmpty(Model.Post.AudioFilePath))
+        {
+            <div class="mt-5 p-4 rounded-4" style="background: #f8fafc; border: 1px solid var(--border-color);">
+                <h5 class="fw-bold mb-3" style="color: var(--brand-navy);"><i class="bi bi-mic-fill" style="color: #C5A66B;"></i> پادکست صوتی مقاله</h5>
+                <audio controls class="w-100 rounded-pill">
+                    <source src="@Model.Post.AudioFilePath" type="audio/mpeg">
+                    مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
+                </audio>
+            </div>
+        }
+
+        <!-- 🚀 UI/UX جدید و فوق‌حرفه‌ای برای دانلود فایل PDF (انتهای مقاله) -->
+        @if (!string.IsNullOrEmpty(Model.Post.AttachmentFilePath))
+        {
+            string title = string.IsNullOrWhiteSpace(Model.Post.AttachmentTitle) ? "دانلود فایل ضمیمه مقاله" : Model.Post.AttachmentTitle;
+            string desc = string.IsNullOrWhiteSpace(Model.Post.AttachmentDescription) ? "برای دریافت اطلاعات بیشتر، فایل مربوطه را دانلود کنید." : Model.Post.AttachmentDescription;
+
+            <div class="pdf-premium-card">
+                <div class="pdf-premium-icon">
+                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                </div>
+                <div class="pdf-premium-content">
+                    <h4 class="pdf-premium-title">@title</h4>
+                    <p class="pdf-premium-desc">@desc</p>
+                </div>
+                <div class="pdf-premium-action">
+                    <a href="@Model.Post.AttachmentFilePath" download class="pdf-premium-btn">
+                        <i class="bi bi-cloud-arrow-down-fill fs-5"></i> دریافت فایل
+                    </a>
+                </div>
+            </div>
+        }
+
+        <!-- 🚀 رابط کاربری ستاره‌های امتیازدهی -->
+        <div class="pd-rating-box mt-5 p-4 rounded-4 text-center">
+            <h4 class="fw-bold mb-3" style="color: var(--brand-navy);">به این مقاله چه امتیازی می‌دهید؟</h4>
+            <div class="pd-stars" style="direction: ltr;">
+                <i class="bi bi-star-fill pd-star-icon" data-value="5"></i>
+                <i class="bi bi-star-fill pd-star-icon" data-value="4"></i>
+                <i class="bi bi-star-fill pd-star-icon" data-value="3"></i>
+                <i class="bi bi-star-fill pd-star-icon" data-value="2"></i>
+                <i class="bi bi-star-fill pd-star-icon" data-value="1"></i>
+            </div>
+            <p class="text-muted mt-2 mb-0" id="rating-text">
+                میانگین امتیاز: <strong class="text-dark">@Model.Post.AverageRating</strong> از 5 (<strong class="text-dark">@Model.Post.TotalVotes</strong> رای)
+            </p>
+        </div>
+
         @if (safeFaqs != null && safeFaqs.Any())
         {
             <div class="pd-faq-wrapper">
@@ -692,18 +810,10 @@
                 <p>طراحی فراتر از استاندارد. اجرای تخصصی زمین‌های پدل با شیشه‌های ۱۲ میل نشکن. تجربه‌ای امن و بی‌نظیر برای بازیکنان.</p>
             </div>
             <div class="pd-cta-actions">
-                <a href="https://wa.me/989111515971" target="_blank" class="pd-btn-social" title="واتس‌اپ">
-                    <i class="bi bi-whatsapp"></i>
-                </a>
-                <a href="https://t.me/DarabiHolding" target="_blank" class="pd-btn-social" title="تلگرام">
-                    <i class="bi bi-telegram"></i>
-                </a>
-                <a href="https://instagram.com/darabicopadel" target="_blank" class="pd-btn-social" title="اینستاگرام">
-                    <i class="bi bi-instagram"></i>
-                </a>
-                <a asp-controller="Home" asp-action="Contact" class="pd-btn">
-                    <i class="bi bi-telephone-fill"></i> دریافت مشاوره رایگان
-                </a>
+                <a href="https://wa.me/989111515971" target="_blank" class="pd-btn-social" title="واتس‌اپ"><i class="bi bi-whatsapp"></i></a>
+                <a href="https://t.me/DarabiHolding" target="_blank" class="pd-btn-social" title="تلگرام"><i class="bi bi-telegram"></i></a>
+                <a href="https://instagram.com/darabicopadel" target="_blank" class="pd-btn-social" title="اینستاگرام"><i class="bi bi-instagram"></i></a>
+                <a asp-controller="Home" asp-action="Contact" class="pd-btn"><i class="bi bi-telephone-fill"></i> دریافت مشاوره رایگان</a>
             </div>
         </div>
 
@@ -742,6 +852,44 @@
                     header.style.backdropFilter = "blur(10px)";
                     header.classList.add("scrolled");
                 }
+
+                // لاجیک ستاره‌ها
+                const postId = '@Model.Post.Id';
+                const stars = document.querySelectorAll('.pd-star-icon');
+                const ratingText = document.getElementById('rating-text');
+
+                const hasRated = localStorage.getItem('rated_post_' + postId);
+                if (hasRated) {
+                    const savedRating = parseInt(localStorage.getItem('rating_val_' + postId) || "5");
+                    stars.forEach(s => {
+                        if (parseInt(s.getAttribute('data-value')) <= savedRating) {
+                            s.classList.add('active');
+                        }
+                    });
+                    ratingText.innerHTML = '<span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> شما قبلاً به این مقاله رای داده‌اید!</span>';
+                }
+
+                stars.forEach(star => {
+                    star.addEventListener('click', function () {
+                        if (localStorage.getItem('rated_post_' + postId)) {
+                            return;
+                        }
+
+                        let value = parseInt(this.getAttribute('data-value'));
+
+                        stars.forEach(s => s.classList.remove('active'));
+                        stars.forEach(s => {
+                            if (parseInt(s.getAttribute('data-value')) <= value) {
+                                s.classList.add('active');
+                            }
+                        });
+
+                        localStorage.setItem('rated_post_' + postId, 'true');
+                        localStorage.setItem('rating_val_' + postId, value);
+
+                        ratingText.innerHTML = '<span class="text-success fw-bold"><i class="bi bi-check-circle-fill"></i> رای شما با موفقیت ثبت شد. با تشکر!</span>';
+                    });
+                });
             });
         </script>
     }

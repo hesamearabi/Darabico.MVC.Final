@@ -4,12 +4,10 @@
     ViewData["Title"] = "ویرایش مقاله";
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
 
-    // Fallback Image for Edit View
     string coverImage = !string.IsNullOrWhiteSpace(Model.CoverImagePath) ? Model.CoverImagePath : "";
 }
 
 <style>
-    /* تمام استایل‌های صفحه Create در اینجا مشترک هستند */
     :root {
         --brand-navy: #121D35;
         --brand-gold: #C5A66B;
@@ -83,7 +81,6 @@
             height: 100%;
             object-fit: cover;
             border-radius: 12px;
-            /* در صفحه ویرایش اگر عکس داشته باشد نمایش می‌دهیم */
             display: @(string.IsNullOrEmpty(coverImage) ? "none" : "block");
         }
 
@@ -174,6 +171,10 @@
         <input type="hidden" asp-for="Id" />
         <input type="hidden" asp-for="CreatedAt" />
         <input type="hidden" asp-for="CoverImagePath" />
+        <input type="hidden" asp-for="AudioFilePath" />
+        <input type="hidden" asp-for="AttachmentFilePath" />
+        <input type="hidden" asp-for="AverageRating" />
+        <input type="hidden" asp-for="TotalVotes" />
 
         <div class="row g-5">
             <div class="col-lg-8">
@@ -184,13 +185,11 @@
 
                 <div class="mb-4">
                     <label asp-for="Slug" class="form-label">اسلاگ (URL) <span class="form-hint">انگلیسی یا فینگلیش با خط تیره</span></label>
-                    <!-- 🚀 FIX: حذف required از اسلاگ -->
                     <input asp-for="Slug" class="form-control" style="direction: ltr; text-align: left;" />
                 </div>
 
                 <div class="mb-5">
                     <label asp-for="Content" class="form-label">متن اصلی مقاله</label>
-                    <!-- 🚀 FIX: حذف required از تکست‌اریایی که توسط TinyMCE مخفی می‌شود -->
                     <textarea asp-for="Content" id="Content" class="form-control" rows="15"></textarea>
                 </div>
 
@@ -245,6 +244,53 @@
                         </div>
                         <input type="file" name="coverImage" id="coverImage" class="d-none" accept="image/*" onchange="previewFile(this);" />
                     </div>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="CoverImageAlt" class="form-label">توضیح عکس (Alt) <span class="form-hint">برای سئو بسیار مهم</span></label>
+                    <input asp-for="CoverImageAlt" class="form-control" placeholder="توضیح کوتاه درباره عکس کاور..." />
+                </div>
+
+                <!-- 🚀 ویژگی جدید: آپلود فایل ضمیمه با UI اختصاصی -->
+                <div class="mb-4 p-3 rounded-4" style="border: 1px solid var(--border-color); background: #f8fafc;">
+                    <label class="form-label text-success mb-3 border-bottom pb-2">
+                        <i class="bi bi-file-earmark-pdf-fill me-2"></i> باکس دانلود فایل (PDF/Zip)
+                    </label>
+
+                    @if (!string.IsNullOrEmpty(Model.AttachmentFilePath))
+                    {
+                        <div class="alert alert-success py-2 px-3 mb-3 small d-flex align-items-center rounded-3">
+                            <i class="bi bi-check-circle-fill me-2"></i> فایل ضمیمه قبلاً آپلود شده است.
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">عنوان دانلود (مثال: کاتالوگ شیشه‌های پدل)</label>
+                        <input asp-for="AttachmentTitle" class="form-control" placeholder="دانلود فایل ضمیمه مقاله" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">توضیح کوتاه (اختیاری)</label>
+                        <textarea asp-for="AttachmentDescription" class="form-control" rows="2" placeholder="برای دریافت اطلاعات کامل فنی فایل زیر را دریافت کنید..."></textarea>
+                    </div>
+
+                    <label class="form-label small text-muted mt-2">انتخاب فایل جدید (جایگزین فایل قبلی):</label>
+                    <input type="file" name="attachmentFile" class="form-control mb-1" accept=".pdf,.zip,.rar,.doc,.docx" />
+                    <span class="form-hint d-block text-muted" style="font-size:0.75rem;">فرمت‌های مجاز: PDF, ZIP (حداکثر ۵۰ مگابایت)</span>
+                </div>
+
+                <div class="mb-4 p-3 rounded-3" style="border: 1px solid var(--border-color); background: #f8fafc;">
+                    <label class="form-label text-primary">
+                        <i class="bi bi-mic-fill me-2"></i> فایل صوتی پادکست
+                    </label>
+                    @if (!string.IsNullOrEmpty(Model.AudioFilePath))
+                    {
+                        <div class="alert alert-info py-2 px-3 mb-2 small d-flex align-items-center rounded-3">
+                            <i class="bi bi-check-circle-fill me-2 text-success"></i> فایل صوتی قبلاً آپلود شده است.
+                        </div>
+                    }
+                    <input type="file" name="audioFile" class="form-control mb-2" accept="audio/*" />
+                    <span class="form-hint d-block text-muted" style="font-size:0.75rem;">انتخاب فایل جدید، جایگزین فایل قبلی می‌شود. (حداکثر ۲۰ مگابایت)</span>
                 </div>
 
                 <div class="mb-4">
@@ -316,13 +362,16 @@
             directionality: 'rtl',
             height: 600,
             plugins: 'preview importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media table charmap pagebreak nonbreaking anchor insertdatetime advlist lists wordcount help charmap quickbars emoticons',
-            toolbar: 'undo redo | aparat | bold italic underline strikethrough | fontfamily fontsize blocks | alignleft aligncenter alignright alignjustify | outdent indent | numlist bullist | forecolor backcolor removeformat | image media link | code preview fullscreen',
+            // 🚀 دکمه custompdf به نوار ابزار اضافه شد
+            toolbar: 'undo redo | aparat custompdf | bold italic underline strikethrough | fontfamily fontsize blocks | alignleft aligncenter alignright alignjustify | outdent indent | numlist bullist | forecolor backcolor removeformat | image media link | code preview fullscreen',
             toolbar_mode: 'sliding',
             image_title: true,
             media_live_embeds: false,
             extended_valid_elements: 'iframe[*],video[*],source[*],div[*],p[*]',
             content_style: 'body { font-family: Tahoma, Arial, sans-serif; font-size: 16px; line-height: 1.8; }',
             setup: function (editor) {
+
+                // دکمه آپارات
                 editor.ui.registry.addButton('aparat', {
                     icon: 'embed',
                     tooltip: 'افزودن ویدیوی آپارات',
@@ -347,6 +396,39 @@
                         });
                     }
                 });
+
+                // 🚀 دکمه اختصاصی برای درج لینک دانلود فایل (PDF/Zip) در وسط متن
+                editor.ui.registry.addButton('custompdf', {
+                    icon: 'document-properties',
+                    tooltip: 'افزودن لینک دانلود فایل به متن مقاله',
+                    onAction: function (_) {
+                        editor.windowManager.open({
+                            title: 'درج لینک دانلود فایل در متن',
+                            body: {
+                                type: 'panel',
+                                items: [
+                                    { type: 'input', name: 'btnText', label: 'متن دکمه (مثال: دانلود کاتالوگ)' },
+                                    { type: 'input', name: 'btnUrl', label: 'لینک دانلود فایل' }
+                                ]
+                            },
+                            buttons: [
+                                { type: 'cancel', text: 'انصراف' },
+                                { type: 'submit', text: 'درج در مقاله', primary: true }
+                            ],
+                            onSubmit: function (api) {
+                                var data = api.getData();
+                                if (!data.btnText || !data.btnUrl) {
+                                    alert('لطفا متن دکمه و لینک دانلود را وارد کنید.');
+                                    return;
+                                }
+                                var html = `<div style="text-align: center; margin: 2rem 0;"><a href="${data.btnUrl}" download class="pdf-btn" style="display: inline-block; background: #0056b3; color: #fff; padding: 12px 28px; border-radius: 50px; font-weight: bold; text-decoration: none;">📥 ${data.btnText}</a></div><p><br></p>`;
+                                editor.insertContent(html);
+                                api.close();
+                            }
+                        });
+                    }
+                });
+
                 editor.on('change', function () { tinymce.triggerSave(); });
             },
             images_upload_handler: function (blobInfo, progress) {
@@ -369,7 +451,7 @@
             }
         });
 
-        // FAQ UI Management - Initialize based on existing count
+        // FAQ UI Management
         let faqCounter = document.querySelectorAll('.faq-card').length;
 
         document.getElementById('btn-add-faq')?.addEventListener('click', function () {
@@ -394,7 +476,6 @@
             const row = document.getElementById(`faq-row-${id}`);
             if (row) row.remove();
 
-            // Re-index remaining FAQs to prevent Model Binding breaks
             const rows = document.querySelectorAll('.faq-card');
             rows.forEach((r, idx) => {
                 r.querySelector('input[type="text"]').setAttribute('name', `Faqs[${idx}].Question`);

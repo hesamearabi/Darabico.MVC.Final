@@ -85,6 +85,75 @@ namespace final_p_01.Areas.Admin.Controllers
             return $"/uploads/{subFolder}/{uniqueFileName}";
         }
 
+        // 🚀 فیچر ذخیره فایل صوتی (پادکست)
+        private async Task<string> ProcessAndSaveAudioAsync(IFormFile file)
+        {
+            if (file == null || file.Length == 0) return null;
+
+            int maxMb = _configuration.GetValue<int>("SiteSettings:MaxAudioUploadSizeMB", 20);
+            long maxFileSize = maxMb * 1024 * 1024;
+
+            if (file.Length > maxFileSize)
+                throw new InvalidOperationException($"حجم فایل صوتی نباید بیشتر از {maxMb} مگابایت باشد.");
+
+            if (!file.ContentType.StartsWith("audio/"))
+                throw new InvalidOperationException("نوع محتوای فایل معتبر نیست. لطفاً فقط فایل صوتی آپلود کنید.");
+
+            string extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var allowedExtensions = new[] { ".mp3", ".ogg", ".wav" };
+
+            if (!allowedExtensions.Contains(extension))
+                throw new InvalidOperationException("فرمت صوتی مجاز نیست (فقط MP3, OGG, WAV).");
+
+            string uniqueFileName = $"{Guid.NewGuid()}{extension}";
+            string webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            string uploadsFolder = Path.Combine(webRootPath, "uploads", "audios");
+
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            return $"/uploads/audios/{uniqueFileName}";
+        }
+
+        // 🚀 فیچر ذخیره فایل ضمیمه (PDF, ZIP, RAR)
+        private async Task<string> ProcessAndSaveAttachmentAsync(IFormFile file)
+        {
+            if (file == null || file.Length == 0) return null;
+
+            int maxMb = _configuration.GetValue<int>("SiteSettings:MaxAttachmentUploadSizeMB", 50);
+            long maxFileSize = maxMb * 1024 * 1024;
+
+            if (file.Length > maxFileSize)
+                throw new InvalidOperationException($"حجم فایل ضمیمه نباید بیشتر از {maxMb} مگابایت باشد.");
+
+            string extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var allowedExtensions = new[] { ".pdf", ".zip", ".rar", ".doc", ".docx" };
+
+            if (!allowedExtensions.Contains(extension))
+                throw new InvalidOperationException("فرمت فایل ضمیمه مجاز نیست (فقط PDF, ZIP, RAR, DOCX).");
+
+            string uniqueFileName = $"{Guid.NewGuid()}{extension}";
+            string webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            string uploadsFolder = Path.Combine(webRootPath, "uploads", "attachments");
+
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            return $"/uploads/attachments/{uniqueFileName}";
+        }
+
         private void DeleteSecurely(string relativePath)
         {
             if (string.IsNullOrEmpty(relativePath)) return;
@@ -113,7 +182,6 @@ namespace final_p_01.Areas.Admin.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            // 🚀 FIX: تزریق دستی و سختگیرانه هدرهای ضد-کش برای دور زدن فایروال‌ها و CDNها
             Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
             Response.Headers.Append("Pragma", "no-cache");
             Response.Headers.Append("Expires", "0");
@@ -136,10 +204,12 @@ namespace final_p_01.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Post post, IFormFile? coverImage)
+        public async Task<IActionResult> Create(Post post, IFormFile? coverImage, IFormFile? audioFile, IFormFile? attachmentFile)
         {
             ModelState.Remove("Category");
             ModelState.Remove("CoverImagePath");
+            ModelState.Remove("AudioFilePath");
+            ModelState.Remove("AttachmentFilePath");
             ModelState.Remove("Faqs");
             ModelState.Remove("Slug");
 
@@ -156,32 +226,59 @@ namespace final_p_01.Areas.Admin.Controllers
                 }
 
                 string? uploadedImagePath = null;
+                string? uploadedAudioPath = null;
+                string? uploadedAttachmentPath = null;
 
                 try
                 {
+                    // آپلود تصویر شاخص
                     if (coverImage != null && coverImage.Length > 0)
                     {
                         uploadedImagePath = await ProcessAndSaveImageAsync(coverImage, "posts");
                         post.CoverImagePath = uploadedImagePath;
                     }
 
+                    // آپلود فایل صوتی
+                    if (audioFile != null && audioFile.Length > 0)
+                    {
+                        uploadedAudioPath = await ProcessAndSaveAudioAsync(audioFile);
+                        post.AudioFilePath = uploadedAudioPath;
+                    }
+
+                    // آپلود فایل ضمیمه
+                    if (attachmentFile != null && attachmentFile.Length > 0)
+                    {
+                        uploadedAttachmentPath = await ProcessAndSaveAttachmentAsync(attachmentFile);
+                        post.AttachmentFilePath = uploadedAttachmentPath;
+                    }
+
+                    // 🚀 ذخیره مقادیر جدید UI/UX برای دانلود
+                    post.AttachmentTitle = post.AttachmentTitle;
+                    post.AttachmentDescription = post.AttachmentDescription;
+
+                    // تنظیم مقادیر پیش‌فرض برای سیستم امتیازدهی سئو
+                    post.AverageRating = 5.0;
+                    post.TotalVotes = 1;
+
                     post.CreatedAt = DateTime.UtcNow;
                     _context.Posts.Add(post);
                     await _context.SaveChangesAsync();
 
                     TempData["SuccessMessage"] = "مقاله با موفقیت ذخیره و منتشر شد.";
-                    // 🚀 FIX: استفاده از Cache-Buster برای مجبور کردن مرورگر به لود اطلاعات جدید
                     return RedirectToAction("Index", new { t = DateTime.UtcNow.Ticks });
                 }
                 catch (InvalidOperationException ex)
                 {
-                    ModelState.AddModelError("CoverImagePath", ex.Message);
+                    ModelState.AddModelError("", ex.Message);
                     ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
                     return View(post);
                 }
                 catch (Exception ex)
                 {
+                    // در صورت خطای دیتابیس، فایل‌هایی که آپلود شده‌اند را پاک می‌کنیم
                     if (!string.IsNullOrEmpty(uploadedImagePath)) DeleteSecurely(uploadedImagePath);
+                    if (!string.IsNullOrEmpty(uploadedAudioPath)) DeleteSecurely(uploadedAudioPath);
+                    if (!string.IsNullOrEmpty(uploadedAttachmentPath)) DeleteSecurely(uploadedAttachmentPath);
 
                     _logger.LogError(ex, "System Error during Post Create.");
                     ModelState.AddModelError("", "خطای داخلی رخ داد. مجدداً تلاش کنید.");
@@ -206,12 +303,14 @@ namespace final_p_01.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Post post, IFormFile? coverImage)
+        public async Task<IActionResult> Edit(int id, Post post, IFormFile? coverImage, IFormFile? audioFile, IFormFile? attachmentFile)
         {
             if (id != post.Id) return NotFound();
 
             ModelState.Remove("Category");
             ModelState.Remove("CoverImagePath");
+            ModelState.Remove("AudioFilePath");
+            ModelState.Remove("AttachmentFilePath");
             ModelState.Remove("Faqs");
             ModelState.Remove("Slug");
 
@@ -230,18 +329,31 @@ namespace final_p_01.Areas.Admin.Controllers
                 var existingPost = await _context.Posts.Include(p => p.Faqs).FirstOrDefaultAsync(p => p.Id == id);
                 if (existingPost == null) return NotFound();
 
+                // آپدیت فیلدهای متنی
                 existingPost.Title = post.Title;
                 existingPost.Slug = post.Slug;
                 existingPost.Content = post.Content;
                 existingPost.CategoryId = post.CategoryId;
                 existingPost.MetaDescription = post.MetaDescription;
                 existingPost.IsPublished = post.IsPublished;
+                existingPost.CoverImageAlt = post.CoverImageAlt;
+
+                // 🚀 آپدیت ویژگی‌های جدید فایل ضمیمه
+                existingPost.AttachmentTitle = post.AttachmentTitle;
+                existingPost.AttachmentDescription = post.AttachmentDescription;
 
                 string? oldImagePathToDelete = null;
                 string? newlyUploadedImagePath = null;
 
+                string? oldAudioPathToDelete = null;
+                string? newlyUploadedAudioPath = null;
+
+                string? oldAttachmentPathToDelete = null;
+                string? newlyUploadedAttachmentPath = null;
+
                 try
                 {
+                    // آپلود تصویر شاخص جدید
                     if (coverImage != null && coverImage.Length > 0)
                     {
                         oldImagePathToDelete = existingPost.CoverImagePath;
@@ -249,6 +361,23 @@ namespace final_p_01.Areas.Admin.Controllers
                         existingPost.CoverImagePath = newlyUploadedImagePath;
                     }
 
+                    // آپلود فایل صوتی جدید
+                    if (audioFile != null && audioFile.Length > 0)
+                    {
+                        oldAudioPathToDelete = existingPost.AudioFilePath;
+                        newlyUploadedAudioPath = await ProcessAndSaveAudioAsync(audioFile);
+                        existingPost.AudioFilePath = newlyUploadedAudioPath;
+                    }
+
+                    // آپلود فایل ضمیمه جدید
+                    if (attachmentFile != null && attachmentFile.Length > 0)
+                    {
+                        oldAttachmentPathToDelete = existingPost.AttachmentFilePath;
+                        newlyUploadedAttachmentPath = await ProcessAndSaveAttachmentAsync(attachmentFile);
+                        existingPost.AttachmentFilePath = newlyUploadedAttachmentPath;
+                    }
+
+                    // آپدیت سوالات متداول
                     _context.Faqs.RemoveRange(existingPost.Faqs);
                     if (post.Faqs != null && post.Faqs.Any())
                     {
@@ -263,21 +392,25 @@ namespace final_p_01.Areas.Admin.Controllers
 
                     await _context.SaveChangesAsync();
 
+                    // حذف امن فایل‌های قدیمی
                     if (!string.IsNullOrEmpty(oldImagePathToDelete)) DeleteSecurely(oldImagePathToDelete);
+                    if (!string.IsNullOrEmpty(oldAudioPathToDelete)) DeleteSecurely(oldAudioPathToDelete);
+                    if (!string.IsNullOrEmpty(oldAttachmentPathToDelete)) DeleteSecurely(oldAttachmentPathToDelete);
 
                     TempData["SuccessMessage"] = "تغییرات مقاله با موفقیت ذخیره شد.";
-                    // 🚀 FIX: استفاده از Cache-Buster
                     return RedirectToAction("Index", new { t = DateTime.UtcNow.Ticks });
                 }
                 catch (InvalidOperationException ex)
                 {
-                    ModelState.AddModelError("CoverImagePath", ex.Message);
+                    ModelState.AddModelError("", ex.Message);
                     ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
                     return View(post);
                 }
                 catch (Exception ex)
                 {
                     if (!string.IsNullOrEmpty(newlyUploadedImagePath)) DeleteSecurely(newlyUploadedImagePath);
+                    if (!string.IsNullOrEmpty(newlyUploadedAudioPath)) DeleteSecurely(newlyUploadedAudioPath);
+                    if (!string.IsNullOrEmpty(newlyUploadedAttachmentPath)) DeleteSecurely(newlyUploadedAttachmentPath);
 
                     _logger.LogError(ex, "Error updating Post ID: {PostId}", existingPost.Id);
                     ModelState.AddModelError("", "خطایی در ذخیره اطلاعات رخ داد.");
@@ -298,15 +431,19 @@ namespace final_p_01.Areas.Admin.Controllers
             if (post != null)
             {
                 string? imagePathToDelete = post.CoverImagePath;
+                string? audioPathToDelete = post.AudioFilePath;
+                string? attachmentPathToDelete = post.AttachmentFilePath;
 
                 _context.Posts.Remove(post);
                 await _context.SaveChangesAsync();
 
+                // پاک کردن تمام فایل‌های وابسته هنگام حذف مقاله
                 DeleteSecurely(imagePathToDelete);
+                DeleteSecurely(audioPathToDelete);
+                DeleteSecurely(attachmentPathToDelete);
 
-                TempData["SuccessMessage"] = "مقاله به طور کامل حذف شد.";
+                TempData["SuccessMessage"] = "مقاله و فایل‌های مرتبط به طور کامل حذف شد.";
             }
-            // 🚀 FIX: استفاده از Cache-Buster
             return RedirectToAction("Index", new { t = DateTime.UtcNow.Ticks });
         }
 
