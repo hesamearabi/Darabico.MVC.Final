@@ -7,8 +7,19 @@ using System.IO.Compression;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http.Features;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 🚀 رفع ارور حجم آپلود در IIS (تا 100 مگابایت)
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 104857600; // 100 MB
+});
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 104857600; // 100 MB
+});
 
 builder.Services.AddWebEncoders(options =>
 {
@@ -22,12 +33,14 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
+// 🚀 SEO: تنظیم مسیرها
 builder.Services.AddRouting(options =>
 {
     options.LowercaseUrls = true;
-    options.AppendTrailingSlash = false;
+    options.AppendTrailingSlash = false; // برای جلوگیری از داپلیکیت کانتنت سئو
 });
 
+// 🚀 Performance: فشرده‌سازی محتوا
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true;
@@ -36,7 +49,9 @@ builder.Services.AddResponseCompression(options =>
     options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[]
     {
         "application/manifest+json",
-        "image/svg+xml"
+        "image/svg+xml",
+        "text/css",
+        "application/javascript"
     });
 });
 builder.Services.Configure<BrotliCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
@@ -115,7 +130,6 @@ else
     app.UseDeveloperExceptionPage();
 }
 
-// هدرهای امنیتی (قبلاً داخل _Layout.cshtml نوشته شده بود)
 app.Use(async (context, next) =>
 {
     var headers = context.Response.Headers;
@@ -128,9 +142,9 @@ app.Use(async (context, next) =>
 app.UseStatusCodePagesWithReExecute("/Home/PageNotFound", "?statusCode={0}");
 app.UseHttpsRedirection();
 
-// مهم: فشرده‌سازی باید «قبل» از StaticFiles باشد، وگرنه CSS/JS/SVG فشرده نمی‌شوند.
 app.UseResponseCompression();
 
+// 🚀 Performance: کش کردن قدرتمند فایل‌های استاتیک در مرورگر کاربر
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
@@ -143,7 +157,6 @@ app.UseStaticFiles(new StaticFileOptions
             return;
         }
 
-        // فایل‌هایی که با asp-append-version نسخه‌بندی شده‌اند (?v=...) کش یک‌ساله
         var isVersioned = ctx.Context.Request.Query.ContainsKey("v");
         headers["Cache-Control"] = isVersioned
             ? "public,max-age=31536000,immutable"

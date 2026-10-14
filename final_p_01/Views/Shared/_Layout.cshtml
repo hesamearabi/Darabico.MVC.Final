@@ -10,18 +10,20 @@
 
     <link rel="canonical" href="@($"https://{Context.Request.Host}{Context.Request.Path}")" />
 
+    <!-- 🚀 SEO: تگ‌های شبکه‌های اجتماعی (اصلاح شده با فرمت: دارابی کو | ...) -->
     <meta property="og:site_name" content="دارابی کو | مجری ساخت زمین پدل">
     <meta property="og:title" content="دارابی کو | @(ViewData["Title"] ?? "مرجع تخصصی ساخت و تجهیز زمین پدل")">
     <meta property="og:type" content="website">
     <meta property="og:description" content="@(ViewData["MetaDescription"] ?? "صفر تا صد ساخت زمین پدل با شیشه‌های نشکن، چمن مصنوعی و سازه استاندارد جهانی بدون واسطه.")">
-    <meta property="og:image" content="@($"https://{Context.Request.Host}/siteLOGO/sitelogo.png")">
+    <meta property="og:image" content="@(ViewData["OgImage"] ?? $"https://{Context.Request.Host}/siteLOGO/sitelogo.png")">
     <meta property="og:url" content="@($"https://{Context.Request.Host}{Context.Request.Path}")">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="دارابی کو | @(ViewData["Title"] ?? "مرجع تخصصی ساخت زمین پدل")">
     <meta name="twitter:description" content="@(ViewData["MetaDescription"] ?? "دارابی کو، پیمانکار تخصصی احداث زمین پدل و تولیدکننده شیشه‌های استاندارد پدل در ایران.")">
-    <meta name="twitter:image" content="@($"https://{Context.Request.Host}/siteLOGO/sitelogo.png")">
+    <meta name="twitter:image" content="@(ViewData["OgImage"] ?? $"https://{Context.Request.Host}/siteLOGO/sitelogo.png")">
 
+    <!-- 🚀 تغییر تایتل اصلی مرورگر و گوگل به فرمت درخواستی شما -->
     <title>دارابی کو | @(ViewData["Title"] ?? "مرجع تخصصی ساخت و تجهیز زمین های پدل")</title>
 
     <link rel="icon" type="image/png" href="@Url.Content("~/siteLOGO/favicon.png")">
@@ -30,7 +32,6 @@
     <link rel="icon" type="image/png" sizes="32x32" href="@Url.Content("~/favicon-32x32.png")">
     <link rel="apple-touch-icon" sizes="180x180" href="@Url.Content("~/apple-touch-icon.png")">
 
-    <!-- فقط استایل اختصاصی لود می‌شود -->
     <link rel="stylesheet" href="@Url.Content("~/CSS-SOURCE/layouts.css")" asp-append-version="true">
 
     <style>

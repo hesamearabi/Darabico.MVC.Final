@@ -34,7 +34,7 @@ namespace final_p_01.Controllers
             var latestPosts = await _context.Posts
                 .AsNoTracking()
                 .Include(p => p.Category)
-                // مقاله پدل از لیست بلاگ‌های صفحه اصلی مستثنی شده است
+                // مقاله راهنمای جامع پدل از لیست بلاگ‌های صفحه اصلی مستثنی شده است
                 .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide")
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(homePagePostsCount)
@@ -88,6 +88,12 @@ namespace final_p_01.Controllers
                 ViewData["MetaDescription"] = post.MetaDescription;
             }
 
+            // 🚀 SEO FIX: ارسال عکس مقاله به سمت View برای پر کردن متاتگ‌های og:image در _Layout
+            if (!string.IsNullOrWhiteSpace(post.CoverImagePath))
+            {
+                ViewData["OgImage"] = $"https://{Request.Host}{post.CoverImagePath}";
+            }
+
             return View(viewModel);
         }
 
@@ -130,7 +136,7 @@ namespace final_p_01.Controllers
             return View(viewModel);
         }
 
-        // 🚀 URL جدید، تمیز و مستقل
+        // 🚀 URL جدید، تمیز و مستقل برای مقاله اصلی
         [Route("padel-court-construction-guide")]
         public async Task<IActionResult> PadelGuide()
         {
@@ -177,20 +183,21 @@ namespace final_p_01.Controllers
         public IActionResult CoverArticle() { return View(); }
         public IActionResult ClubManagementArticle() { return View(); }
 
+        // 🚀 SEO FIX: تولید سایت‌مپ کاملاً داینامیک همراه با تگ‌های عکس (Image Sitemap)
         [Route("sitemap.xml")]
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
         public async Task<IActionResult> Sitemap()
         {
             var posts = await _context.Posts
                 .AsNoTracking()
-                // آدرس قدیمی بلاگ از سایت‌مپ حذف شده است تا به جای آن آدرس ریشه اضافه شود
                 .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide")
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
             var xml = new StringBuilder();
             xml.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-            xml.AppendLine("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">");
+            // اضافه کردن namespace برای عکس‌ها تا گوگل تصاویر مقالات را نیز ایندکس کند
+            xml.AppendLine("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\" xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\">");
 
             var staticPages = new List<(string? Url, string ChangeFreq, string Priority)>
             {
@@ -198,7 +205,7 @@ namespace final_p_01.Controllers
                 (Url.Action("about", "Home", null, Request.Scheme), "monthly", "0.8"),
                 (Url.Action("Contact", "Home", null, Request.Scheme), "monthly", "0.8"),
                 (Url.Action("Blog", "Home", null, Request.Scheme), "daily", "0.9"),
-                (Url.Action("PadelGuide", "Home", null, Request.Scheme), "weekly", "0.9") // اضافه شدن آدرس کانونیکال جدید
+                (Url.Action("PadelGuide", "Home", null, Request.Scheme), "weekly", "0.9")
             };
 
             foreach (var page in staticPages)
@@ -231,6 +238,20 @@ namespace final_p_01.Controllers
                     xml.AppendLine($"    <lastmod>{post.CreatedAt:yyyy-MM-dd}</lastmod>");
                     xml.AppendLine("    <changefreq>weekly</changefreq>");
                     xml.AppendLine("    <priority>0.7</priority>");
+
+                    // اگر مقاله عکس دارد، عکس آن هم به نقشه سایت اضافه می‌شود (بسیار عالی برای سئو)
+                    if (!string.IsNullOrWhiteSpace(post.CoverImagePath))
+                    {
+                        string absoluteImageUrl = $"https://{Request.Host}{post.CoverImagePath}";
+                        xml.AppendLine("    <image:image>");
+                        xml.AppendLine($"      <image:loc>{absoluteImageUrl}</image:loc>");
+                        if (!string.IsNullOrWhiteSpace(post.CoverImageAlt))
+                        {
+                            xml.AppendLine($"      <image:title>{post.CoverImageAlt}</image:title>");
+                        }
+                        xml.AppendLine("    </image:image>");
+                    }
+
                     xml.AppendLine("  </url>");
                 }
             }
