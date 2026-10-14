@@ -232,6 +232,8 @@
             line-height: 2.2;
             color: var(--pd-text-muted);
             text-align: justify;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
         }
 
             .pd-body h2, .pd-body h3 {
@@ -274,16 +276,13 @@
                 box-shadow: 0 10px 20px rgba(0,0,0,0.05);
             }
 
-            /* ---------------------------------------------------- */
-            /* 🚀 UI/UX حرفه‌ای ویدیوها (Shorts و معمولی)          */
-            /* ---------------------------------------------------- */
-
             .pd-body iframe {
                 border-radius: 16px !important;
                 border: none !important;
                 box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
                 display: block;
                 background: #000;
+                max-width: 100%;
             }
 
         /* ویدیوهای معمولی افقی (آپارات و یوتیوب عادی) */
@@ -295,6 +294,7 @@
             .video-normal-wrapper iframe {
                 width: 100% !important;
                 aspect-ratio: 16 / 9 !important;
+                height: auto !important;
             }
 
         /* ویدیوهای عمودی (YouTube Shorts و آپارات شورتز) */
@@ -307,13 +307,12 @@
 
             .video-shorts-wrapper iframe {
                 width: 100% !important;
-                max-width: 360px !important; /* اندازه استاندارد صفحه موبایل */
+                max-width: 360px !important;
                 aspect-ratio: 9 / 16 !important;
+                height: auto !important;
             }
 
-        /* ---------------------------------------------------- */
-        /* 🚀 کارت پریمیوم دانلود PDF (انتهای مقاله)           */
-        /* ---------------------------------------------------- */
+        /* 🚀 کارت پریمیوم دانلود PDF (انتهای مقاله) */
         .pdf-premium-card {
             background: #fff;
             border: 1px solid #e2e8f0;
@@ -668,16 +667,28 @@
             overflow: hidden;
         }
 
+        /* 🚀 ریسپانسیو کامل و حرفه‌ای برای موبایل (رفع مشکل چسبیدن به لبه‌ها و کادرها) */
         @@media (max-width: 768px) {
             .pd-container {
-                margin: -40px 15px 50px;
-                padding: 30px 20px;
+                margin: -30px 10px 40px !important;
+                padding: 30px 15px !important; /* ایجاد فاصله ایمن 15 پیکسلی از دو طرف در موبایل */
+                border-radius: 16px !important;
+            }
+
+            .pd-title {
+                font-size: 1.8rem !important;
+                padding: 0 10px;
             }
 
             .pdf-premium-card {
                 flex-direction: column;
                 text-align: center;
-                padding: 30px 20px;
+                padding: 25px 15px;
+                gap: 15px;
+            }
+
+            .pdf-premium-content {
+                text-align: center;
             }
 
             .pdf-premium-action {
@@ -693,6 +704,7 @@
                 flex-direction: column;
                 text-align: center;
                 gap: 25px;
+                padding: 30px 20px;
             }
 
             .pd-cta-actions {
