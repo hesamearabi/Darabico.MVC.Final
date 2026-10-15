@@ -16,6 +16,7 @@ using Microsoft.Extensions.Configuration;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Webp;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.AspNetCore.Hosting; // اضافه شده برای IWebHostEnvironment
 
 namespace final_p_01.Areas.Admin.Controllers
 {
@@ -28,12 +29,18 @@ namespace final_p_01.Areas.Admin.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<PostsController> _logger;
         private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _env; // تزریق IWebHostEnvironment
 
-        public PostsController(ApplicationDbContext context, ILogger<PostsController> logger, IConfiguration configuration)
+        public PostsController(
+            ApplicationDbContext context,
+            ILogger<PostsController> logger,
+            IConfiguration configuration,
+            IWebHostEnvironment env)
         {
             _context = context;
             _logger = logger;
             _configuration = configuration;
+            _env = env; // مقداردهی
         }
 
         private string GenerateSeoFriendlySlug(string text)
@@ -61,8 +68,9 @@ namespace final_p_01.Areas.Admin.Controllers
                 throw new InvalidOperationException("نوع محتوای فایل معتبر نیست.");
 
             string uniqueFileName = $"{Guid.NewGuid()}.webp";
-            string webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            string uploadsFolder = Path.Combine(webRootPath, "uploads", subFolder);
+
+            // اصلاح مسیردهی به روش استاندارد سرور
+            string uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", subFolder);
 
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
@@ -85,7 +93,6 @@ namespace final_p_01.Areas.Admin.Controllers
             return $"/uploads/{subFolder}/{uniqueFileName}";
         }
 
-        // 🚀 فیچر ذخیره فایل صوتی (پادکست)
         private async Task<string> ProcessAndSaveAudioAsync(IFormFile file)
         {
             if (file == null || file.Length == 0) return null;
@@ -106,8 +113,9 @@ namespace final_p_01.Areas.Admin.Controllers
                 throw new InvalidOperationException("فرمت صوتی مجاز نیست (فقط MP3, OGG, WAV).");
 
             string uniqueFileName = $"{Guid.NewGuid()}{extension}";
-            string webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            string uploadsFolder = Path.Combine(webRootPath, "uploads", "audios");
+
+            // اصلاح مسیردهی
+            string uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "audios");
 
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
@@ -121,7 +129,6 @@ namespace final_p_01.Areas.Admin.Controllers
             return $"/uploads/audios/{uniqueFileName}";
         }
 
-        // 🚀 فیچر ذخیره فایل ضمیمه (PDF, ZIP, RAR)
         private async Task<string> ProcessAndSaveAttachmentAsync(IFormFile file)
         {
             if (file == null || file.Length == 0) return null;
@@ -139,8 +146,9 @@ namespace final_p_01.Areas.Admin.Controllers
                 throw new InvalidOperationException("فرمت فایل ضمیمه مجاز نیست (فقط PDF, ZIP, RAR, DOCX).");
 
             string uniqueFileName = $"{Guid.NewGuid()}{extension}";
-            string webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            string uploadsFolder = Path.Combine(webRootPath, "uploads", "attachments");
+
+            // اصلاح مسیردهی
+            string uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "attachments");
 
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
@@ -160,7 +168,8 @@ namespace final_p_01.Areas.Admin.Controllers
 
             try
             {
-                string webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                // اصلاح مسیردهی
+                string webRootPath = _env.WebRootPath;
                 string normalizedRelativePath = relativePath.Replace('/', Path.DirectorySeparatorChar)
                                                             .Replace('\\', Path.DirectorySeparatorChar)
                                                             .TrimStart(Path.DirectorySeparatorChar);
@@ -231,32 +240,27 @@ namespace final_p_01.Areas.Admin.Controllers
 
                 try
                 {
-                    // آپلود تصویر شاخص
                     if (coverImage != null && coverImage.Length > 0)
                     {
                         uploadedImagePath = await ProcessAndSaveImageAsync(coverImage, "posts");
                         post.CoverImagePath = uploadedImagePath;
                     }
 
-                    // آپلود فایل صوتی
                     if (audioFile != null && audioFile.Length > 0)
                     {
                         uploadedAudioPath = await ProcessAndSaveAudioAsync(audioFile);
                         post.AudioFilePath = uploadedAudioPath;
                     }
 
-                    // آپلود فایل ضمیمه
                     if (attachmentFile != null && attachmentFile.Length > 0)
                     {
                         uploadedAttachmentPath = await ProcessAndSaveAttachmentAsync(attachmentFile);
                         post.AttachmentFilePath = uploadedAttachmentPath;
                     }
 
-                    // 🚀 ذخیره مقادیر جدید UI/UX برای دانلود
                     post.AttachmentTitle = post.AttachmentTitle;
                     post.AttachmentDescription = post.AttachmentDescription;
 
-                    // تنظیم مقادیر پیش‌فرض برای سیستم امتیازدهی سئو
                     post.AverageRating = 5.0;
                     post.TotalVotes = 1;
 
@@ -275,7 +279,6 @@ namespace final_p_01.Areas.Admin.Controllers
                 }
                 catch (Exception ex)
                 {
-                    // در صورت خطای دیتابیس، فایل‌هایی که آپلود شده‌اند را پاک می‌کنیم
                     if (!string.IsNullOrEmpty(uploadedImagePath)) DeleteSecurely(uploadedImagePath);
                     if (!string.IsNullOrEmpty(uploadedAudioPath)) DeleteSecurely(uploadedAudioPath);
                     if (!string.IsNullOrEmpty(uploadedAttachmentPath)) DeleteSecurely(uploadedAttachmentPath);
@@ -329,7 +332,6 @@ namespace final_p_01.Areas.Admin.Controllers
                 var existingPost = await _context.Posts.Include(p => p.Faqs).FirstOrDefaultAsync(p => p.Id == id);
                 if (existingPost == null) return NotFound();
 
-                // آپدیت فیلدهای متنی
                 existingPost.Title = post.Title;
                 existingPost.Slug = post.Slug;
                 existingPost.Content = post.Content;
@@ -338,7 +340,6 @@ namespace final_p_01.Areas.Admin.Controllers
                 existingPost.IsPublished = post.IsPublished;
                 existingPost.CoverImageAlt = post.CoverImageAlt;
 
-                // 🚀 آپدیت ویژگی‌های جدید فایل ضمیمه
                 existingPost.AttachmentTitle = post.AttachmentTitle;
                 existingPost.AttachmentDescription = post.AttachmentDescription;
 
@@ -353,7 +354,6 @@ namespace final_p_01.Areas.Admin.Controllers
 
                 try
                 {
-                    // آپلود تصویر شاخص جدید
                     if (coverImage != null && coverImage.Length > 0)
                     {
                         oldImagePathToDelete = existingPost.CoverImagePath;
@@ -361,7 +361,6 @@ namespace final_p_01.Areas.Admin.Controllers
                         existingPost.CoverImagePath = newlyUploadedImagePath;
                     }
 
-                    // آپلود فایل صوتی جدید
                     if (audioFile != null && audioFile.Length > 0)
                     {
                         oldAudioPathToDelete = existingPost.AudioFilePath;
@@ -369,7 +368,6 @@ namespace final_p_01.Areas.Admin.Controllers
                         existingPost.AudioFilePath = newlyUploadedAudioPath;
                     }
 
-                    // آپلود فایل ضمیمه جدید
                     if (attachmentFile != null && attachmentFile.Length > 0)
                     {
                         oldAttachmentPathToDelete = existingPost.AttachmentFilePath;
@@ -377,7 +375,6 @@ namespace final_p_01.Areas.Admin.Controllers
                         existingPost.AttachmentFilePath = newlyUploadedAttachmentPath;
                     }
 
-                    // آپدیت سوالات متداول
                     _context.Faqs.RemoveRange(existingPost.Faqs);
                     if (post.Faqs != null && post.Faqs.Any())
                     {
@@ -392,7 +389,6 @@ namespace final_p_01.Areas.Admin.Controllers
 
                     await _context.SaveChangesAsync();
 
-                    // حذف امن فایل‌های قدیمی
                     if (!string.IsNullOrEmpty(oldImagePathToDelete)) DeleteSecurely(oldImagePathToDelete);
                     if (!string.IsNullOrEmpty(oldAudioPathToDelete)) DeleteSecurely(oldAudioPathToDelete);
                     if (!string.IsNullOrEmpty(oldAttachmentPathToDelete)) DeleteSecurely(oldAttachmentPathToDelete);
@@ -437,7 +433,6 @@ namespace final_p_01.Areas.Admin.Controllers
                 _context.Posts.Remove(post);
                 await _context.SaveChangesAsync();
 
-                // پاک کردن تمام فایل‌های وابسته هنگام حذف مقاله
                 DeleteSecurely(imagePathToDelete);
                 DeleteSecurely(audioPathToDelete);
                 DeleteSecurely(attachmentPathToDelete);
@@ -510,7 +505,9 @@ namespace final_p_01.Areas.Admin.Controllers
                 stream.Position = 0;
 
                 string uniqueFileName = $"{Guid.NewGuid()}{extension}";
-                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "article-videos");
+
+                // اصلاح مسیردهی
+                string uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "article-videos");
                 if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
                 string filePath = Path.Combine(uploadsFolder, uniqueFileName);
