@@ -10,7 +10,7 @@
 
     <link rel="canonical" href="@($"https://{Context.Request.Host}{Context.Request.Path}")" />
 
-    <!-- 🚀 SEO: تگ‌های شبکه‌های اجتماعی (اصلاح شده با فرمت: دارابی کو | ...) -->
+    <!-- 🚀 SEO: Open Graph & Twitter Cards -->
     <meta property="og:site_name" content="دارابی کو | مجری ساخت زمین پدل">
     <meta property="og:title" content="دارابی کو | @(ViewData["Title"] ?? "مرجع تخصصی ساخت و تجهیز زمین پدل")">
     <meta property="og:type" content="website">
@@ -23,7 +23,6 @@
     <meta name="twitter:description" content="@(ViewData["MetaDescription"] ?? "دارابی کو، پیمانکار تخصصی احداث زمین پدل و تولیدکننده شیشه‌های استاندارد پدل در ایران.")">
     <meta name="twitter:image" content="@(ViewData["OgImage"] ?? $"https://{Context.Request.Host}/siteLOGO/sitelogo.png")">
 
-    <!-- 🚀 تغییر تایتل اصلی مرورگر و گوگل به فرمت درخواستی شما -->
     <title>دارابی کو | @(ViewData["Title"] ?? "مرجع تخصصی ساخت و تجهیز زمین های پدل")</title>
 
     <link rel="icon" type="image/png" href="@Url.Content("~/siteLOGO/favicon.png")">
@@ -221,10 +220,21 @@
         }
     </script>
 
+    <!-- 🚀 SEO: Google Analytics / Tag Manager (کد خود را اینجا جایگزین کنید) -->
+    <!-- Google tag (gtag.js) -->
+    <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script> -->
     @await RenderSectionAsync("Head", required: false)
 </head>
 
 <body class="loading-state">
+    <!-- Google Tag Manager (noscript) -->
+    <!-- <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript> -->
 
     <div id="brand-loader">
         <div class="loader-content">
@@ -368,10 +378,10 @@
                         <a href="tel:09121729882" dir="ltr">09121729882</a>
                     </div>
                     <div class="social-links">
-                        <a href="https://instagram.com/darabicopadel" title="اینستاگرام دارابی کو">
+                        <a href="https://instagram.com/darabicopadel" title="اینستاگرام دارابی کو" rel="noopener noreferrer" target="_blank">
                             <img src="@Url.Content("~/footerimg/logo-instagram.svg")" alt="Instagram" width="22" height="22" loading="lazy" decoding="async">
                         </a>
-                        <a href="https://t.me/DarabiHolding" title="تلگرام دارابی کو">
+                        <a href="https://t.me/DarabiHolding" title="تلگرام دارابی کو" rel="noopener noreferrer" target="_blank">
                             <img src="@Url.Content("~/footerimg/4701496.png")" alt="Telegram" width="22" height="22" loading="lazy" decoding="async">
                         </a>
                     </div>
