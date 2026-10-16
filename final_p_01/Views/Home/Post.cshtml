@@ -14,7 +14,6 @@
     string coverAlt = !string.IsNullOrWhiteSpace(Model.Post.CoverImageAlt) ? Model.Post.CoverImageAlt : Model.Post.Title;
     string absoluteCoverImage = $"{Context.Request.Scheme}://{Context.Request.Host}{coverImage}";
 
-    // 🚀 مشکل نام‌گذاری متغیر در اینجا حل شد
     string currentUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}";
 
     var sanitizer = new HtmlSanitizer();
@@ -49,7 +48,6 @@
         }
     };
 
-    // 🚀 موتور پردازش هوشمند رسانه‌ها (شامل شورتز آپارات، یوتیوب و ویدیوهای هاست شخصی)
     string ProcessAllVideos(string rawHtml)
     {
         if (string.IsNullOrWhiteSpace(rawHtml)) return string.Empty;
@@ -86,7 +84,7 @@
                     </a>
                 </div><p><br/></p>";
             }
-            return $"\u003Cdiv class=\"video-shorts-wrapper\"\u003E\u003Ciframe src=\"https://www.aparat.com/video/video/embed/videohash/{id}/vt/frame\" allowfullscreen loading=\"lazy\"\u003E\u003C/iframe\u003E\u003C/div\u003E";
+            return $"\u003Cdiv class=\"video-shorts-wrapper\"\u003E\u003Ciframe src=\"https://www.aparat.com/video/video/embed/videohash/{id}/vt/frame\" allowfullscreen loading=\"lazy\"\u003E\u003C/iframe\u003C/div\u003E";
         }
 
         string BuildAparatNormalHtml(string id) =>
@@ -964,6 +962,7 @@
 
                 if (postId !== '0' && stars.length > 0 && ratingText) {
                     const hasRated = localStorage.getItem('rated_post_' + postId);
+
                     if (hasRated) {
                         const savedRating = parseInt(localStorage.getItem('rating_val_' + postId) || "5");
                         stars.forEach(function (s) {
@@ -971,7 +970,7 @@
                                 s.classList.add('active');
                             }
                         });
-                        ratingText.innerHTML = '\u003Cspan class="text-danger fw-bold"\u003E\u003Ci class="bi bi-exclamation-triangle"\u003E\u003C/i\u003E شما قبلاً به این مقاله رای داده‌اید!\u003C/span\u003E';
+                        ratingText.innerHTML = '<span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> شما قبلاً به این مقاله رای داده‌اید!</span>';
                     }
 
                     stars.forEach(function (star) {
@@ -989,10 +988,29 @@
                                 }
                             });
 
-                            localStorage.setItem('rated_post_' + postId, 'true');
-                            localStorage.setItem('rating_val_' + postId, value);
+                            ratingText.innerHTML = '<span class="text-warning fw-bold"><i class="bi bi-hourglass-split"></i> در حال ثبت...</span>';
 
-                            ratingText.innerHTML = '\u003Cspan class="text-success fw-bold"\u003E\u003Ci class="bi bi-check-circle-fill"\u003E\u003C/i\u003E رای شما با موفقیت ثبت شد. با تشکر!\u003C/span\u003E';
+                            fetch('/Home/SubmitRating', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                },
+                                body: `postId=${postId}&rating=${value}`
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    localStorage.setItem('rated_post_' + postId, 'true');
+                                    localStorage.setItem('rating_val_' + postId, value);
+                                    ratingText.innerHTML = `<span class="text-success fw-bold"><i class="bi bi-check-circle-fill"></i> رای شما با موفقیت ثبت شد. (میانگین جدید: ${data.newAverage} از ${data.newTotal} رای)</span>`;
+                                } else {
+                                    ratingText.innerHTML = '<span class="text-danger fw-bold"><i class="bi bi-x-circle-fill"></i> خطا: ' + data.message + '</span>';
+                                }
+                            })
+                            .catch(error => {
+                                ratingText.innerHTML = '<span class="text-danger fw-bold"><i class="bi bi-x-circle-fill"></i> خطای ارتباط با سرور.</span>';
+                                console.error('Error:', error);
+                            });
                         });
                     });
                 }

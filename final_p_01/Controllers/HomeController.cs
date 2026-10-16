@@ -261,6 +261,44 @@ namespace final_p_01.Controllers
             return Content(xml.ToString(), "application/xml");
         }
 
+        // 🚀 متد ثبت امتیاز (ستاره‌دهی) برای مقالات
+        [HttpPost]
+        public async Task<IActionResult> SubmitRating(int postId, int rating)
+        {
+            // اعتبارسنجی اولیه
+            if (postId <= 0 || rating < 1 || rating > 5)
+                return Json(new { success = false, message = "مقادیر نامعتبر است." });
+
+            // پیدا کردن مقاله در دیتابیس
+            var post = await _context.Posts.FindAsync(postId);
+            if (post == null)
+                return Json(new { success = false, message = "مقاله یافت نشد." });
+
+            try
+            {
+                // محاسبه میانگین جدید
+                double currentTotalScore = post.AverageRating * post.TotalVotes;
+                post.TotalVotes += 1;
+                post.AverageRating = Math.Round((currentTotalScore + rating) / post.TotalVotes, 1);
+
+                // آپدیت دیتابیس
+                _context.Posts.Update(post);
+                await _context.SaveChangesAsync();
+
+                return Json(new
+                {
+                    success = true,
+                    newAverage = post.AverageRating,
+                    newTotal = post.TotalVotes
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating rating for post {PostId}", postId);
+                return Json(new { success = false, message = "خطای سرور در ثبت امتیاز." });
+            }
+        }
+
         [Route("Home/PageNotFound")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult PageNotFound(int statusCode)

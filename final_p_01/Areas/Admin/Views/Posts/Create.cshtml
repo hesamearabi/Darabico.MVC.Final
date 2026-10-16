@@ -350,6 +350,12 @@
             selector: '#Content',
             directionality: 'rtl',
             height: 600,
+
+            // 🚀 تنظیمات اضافه شده برای رفع مشکل آدرس‌های نسبی عکس‌ها
+            relative_urls: false,
+            remove_script_host: true,
+            document_base_url: '/',
+
             plugins: 'preview importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media table charmap pagebreak nonbreaking anchor insertdatetime advlist lists wordcount help charmap quickbars emoticons',
             toolbar: 'undo redo | smartmedia custompdf | bold italic underline strikethrough | fontfamily fontsize blocks | alignleft aligncenter alignright alignjustify | outdent indent | numlist bullist | forecolor backcolor removeformat | image link | code preview fullscreen',
             toolbar_mode: 'sliding',
@@ -358,7 +364,6 @@
             extended_valid_elements: 'iframe[*],video[*],source[*],div[*],p[*],a[*]',
             content_style: 'body { font-family: Tahoma, Arial, sans-serif; font-size: 16px; line-height: 1.8; }',
 
-            // 🚀 تنظیمات سئو: افزودن انتخاب نوع لینک (Nofollow / Sponsored)
             rel_list: [
                 { title: 'معمولی (Dofollow)', value: '' },
                 { title: 'نوفالو (Nofollow - عدم انتقال اعتبار سئو)', value: 'nofollow' },
@@ -378,7 +383,6 @@
             },
 
             setup: function (editor) {
-
                 editor.ui.registry.addButton('smartmedia', {
                     icon: 'embed',
                     tooltip: 'افزودن ویدیوی آپارات یا یوتیوب',
