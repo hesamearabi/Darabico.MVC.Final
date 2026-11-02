@@ -10,7 +10,6 @@
 
     <link rel="canonical" href="@($"https://{Context.Request.Host}{Context.Request.Path}")" />
 
-    <!-- 🚀 SEO: Open Graph & Twitter Cards -->
     <meta property="og:site_name" content="دارابی کو | مجری ساخت زمین پدل">
     <meta property="og:title" content="دارابی کو | @(ViewData["Title"] ?? "مرجع تخصصی ساخت و تجهیز زمین پدل")">
     <meta property="og:type" content="website">
@@ -25,11 +24,9 @@
 
     <title>دارابی کو | @(ViewData["Title"] ?? "مرجع تخصصی ساخت و تجهیز زمین های پدل")</title>
 
-    <link rel="icon" type="image/png" href="@Url.Content("~/siteLOGO/favicon.png")">
-    <link rel="icon" type="image/x-icon" href="@Url.Content("~/favicon.ico")">
-    <link rel="icon" type="image/png" sizes="16x16" href="@Url.Content("~/favicon-16x16.png")">
-    <link rel="icon" type="image/png" sizes="32x32" href="@Url.Content("~/favicon-32x32.png")">
-    <link rel="apple-touch-icon" sizes="180x180" href="@Url.Content("~/apple-touch-icon.png")">
+    <link rel="icon" type="image/x-icon" href="@($"https://{Context.Request.Host}/favicon.ico")" sizes="48x48">
+    <link rel="icon" type="image/png" sizes="192x192" href="@($"https://{Context.Request.Host}/siteLOGO/favicon.png")">
+    <link rel="apple-touch-icon" sizes="180x180" href="@($"https://{Context.Request.Host}/apple-touch-icon.png")">
 
     <link rel="stylesheet" href="@Url.Content("~/CSS-SOURCE/layouts.css")" asp-append-version="true">
 
@@ -220,8 +217,7 @@
         }
     </script>
 
-    <!-- 🚀 SEO: Google Analytics / Tag Manager (کد خود را اینجا جایگزین کنید) -->
-    <!-- Google tag (gtag.js) -->
+    <!-- Google Tag Manager (gtag.js) -->
     <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
     <script>
       window.dataLayer = window.dataLayer || [];

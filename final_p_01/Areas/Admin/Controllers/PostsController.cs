@@ -29,18 +29,21 @@ namespace final_p_01.Areas.Admin.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<PostsController> _logger;
         private readonly IConfiguration _configuration;
-        private readonly IWebHostEnvironment _env; // تزریق IWebHostEnvironment
+        private readonly IWebHostEnvironment _env;
+        private readonly IOutputCacheStore _outputCacheStore; // 🚀 سرویس کش اضافه شد
 
         public PostsController(
             ApplicationDbContext context,
             ILogger<PostsController> logger,
             IConfiguration configuration,
-            IWebHostEnvironment env)
+            IWebHostEnvironment env,
+            IOutputCacheStore outputCacheStore) // 🚀 تزریق در سازنده
         {
             _context = context;
             _logger = logger;
             _configuration = configuration;
-            _env = env; // مقداردهی
+            _env = env;
+            _outputCacheStore = outputCacheStore; // 🚀 مقداردهی
         }
 
         private string GenerateSeoFriendlySlug(string text)
@@ -69,7 +72,6 @@ namespace final_p_01.Areas.Admin.Controllers
 
             string uniqueFileName = $"{Guid.NewGuid()}.webp";
 
-            // اصلاح مسیردهی به روش استاندارد سرور
             string uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", subFolder);
 
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
@@ -114,7 +116,6 @@ namespace final_p_01.Areas.Admin.Controllers
 
             string uniqueFileName = $"{Guid.NewGuid()}{extension}";
 
-            // اصلاح مسیردهی
             string uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "audios");
 
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
@@ -147,7 +148,6 @@ namespace final_p_01.Areas.Admin.Controllers
 
             string uniqueFileName = $"{Guid.NewGuid()}{extension}";
 
-            // اصلاح مسیردهی
             string uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "attachments");
 
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
@@ -168,7 +168,6 @@ namespace final_p_01.Areas.Admin.Controllers
 
             try
             {
-                // اصلاح مسیردهی
                 string webRootPath = _env.WebRootPath;
                 string normalizedRelativePath = relativePath.Replace('/', Path.DirectorySeparatorChar)
                                                             .Replace('\\', Path.DirectorySeparatorChar)
@@ -267,6 +266,9 @@ namespace final_p_01.Areas.Admin.Controllers
                     post.CreatedAt = DateTime.UtcNow;
                     _context.Posts.Add(post);
                     await _context.SaveChangesAsync();
+
+                    // 🚀 تخلیه هوشمندانه کش پس از ذخیره موفق
+                    await _outputCacheStore.EvictByTagAsync("BlogCache", default);
 
                     TempData["SuccessMessage"] = "مقاله با موفقیت ذخیره و منتشر شد.";
                     return RedirectToAction("Index", new { t = DateTime.UtcNow.Ticks });
@@ -389,6 +391,9 @@ namespace final_p_01.Areas.Admin.Controllers
 
                     await _context.SaveChangesAsync();
 
+                    // 🚀 تخلیه هوشمندانه کش پس از ویرایش موفق
+                    await _outputCacheStore.EvictByTagAsync("BlogCache", default);
+
                     if (!string.IsNullOrEmpty(oldImagePathToDelete)) DeleteSecurely(oldImagePathToDelete);
                     if (!string.IsNullOrEmpty(oldAudioPathToDelete)) DeleteSecurely(oldAudioPathToDelete);
                     if (!string.IsNullOrEmpty(oldAttachmentPathToDelete)) DeleteSecurely(oldAttachmentPathToDelete);
@@ -432,6 +437,9 @@ namespace final_p_01.Areas.Admin.Controllers
 
                 _context.Posts.Remove(post);
                 await _context.SaveChangesAsync();
+
+                // 🚀 تخلیه کش پس از حذف مقاله
+                await _outputCacheStore.EvictByTagAsync("BlogCache", default);
 
                 DeleteSecurely(imagePathToDelete);
                 DeleteSecurely(audioPathToDelete);

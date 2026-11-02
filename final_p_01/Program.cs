@@ -40,7 +40,7 @@ builder.Services.AddRouting(options =>
     options.AppendTrailingSlash = false; // برای جلوگیری از داپلیکیت کانتنت سئو
 });
 
-// 🚀 Performance: فشرده‌سازی محتوا
+// 🚀 Performance: فشرده‌سازی محتوا با اولویت Brotli
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true;
@@ -51,11 +51,14 @@ builder.Services.AddResponseCompression(options =>
         "application/manifest+json",
         "image/svg+xml",
         "text/css",
-        "application/javascript"
+        "application/javascript",
+        "application/json",
+        "text/html"
     });
 });
-builder.Services.Configure<BrotliCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
-builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
+// تنظیم سطح فشرده‌سازی روی Optimal برای تعادل بین سرعت سرور و سایز فایل
+builder.Services.Configure<BrotliCompressionProviderOptions>(options => options.Level = CompressionLevel.Optimal);
+builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Optimal);
 
 builder.Services.AddHsts(options =>
 {
@@ -64,11 +67,13 @@ builder.Services.AddHsts(options =>
     options.MaxAge = TimeSpan.FromDays(365);
 });
 
+// 🚀 ثبت سیستم کش خروجی (کاملاً سازگار با تگ‌گذاری)
 builder.Services.AddOutputCache(options =>
 {
-    options.AddBasePolicy(b =>
-        b.With(c => c.HttpContext.User?.Identity?.IsAuthenticated != true)
-         .Expire(TimeSpan.FromMinutes(60)));
+    // این پالیسی باعث می‌شود کش فقط برای کاربران لاگین‌نکرده (پابلیک) اعمال شود
+    // و مدیر سایت همیشه تغییرات زنده را ببیند
+    options.AddBasePolicy(builder =>
+        builder.With(c => c.HttpContext.User?.Identity?.IsAuthenticated != true));
 });
 
 builder.Services.AddControllersWithViews();
@@ -130,6 +135,7 @@ else
     app.UseDeveloperExceptionPage();
 }
 
+// 🚀 Security Headers
 app.Use(async (context, next) =>
 {
     var headers = context.Response.Headers;
@@ -142,9 +148,10 @@ app.Use(async (context, next) =>
 app.UseStatusCodePagesWithReExecute("/Home/PageNotFound", "?statusCode={0}");
 app.UseHttpsRedirection();
 
+// میدلور فشرده‌سازی باید قبل از StaticFiles و Routing باشد
 app.UseResponseCompression();
 
-// 🚀 Performance: کش کردن قدرتمند فایل‌های استاتیک در مرورگر کاربر
+// 🚀 کش کردن قدرتمند فایل‌های استاتیک در مرورگر کاربر (CSS, JS, Fonts, Images)
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
@@ -165,8 +172,12 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.UseRouting();
+
+// 🚀 ترتیب Authentication و Authorization کاملاً درست است
 app.UseAuthentication();
 app.UseAuthorization();
+
+// 🚀 میدلور OutputCache باید دقیقاً اینجا (بعد از احراز هویت و قبل از مپ شدن کنترلرها) باشد
 app.UseOutputCache();
 
 app.MapControllerRoute(

@@ -27,6 +27,8 @@ namespace final_p_01.Controllers
             _configuration = configuration;
         }
 
+        // 🚀 کش ۶۰ دقیقه‌ای به همراه تگ برای قابلیت تخلیه لحظه‌ای از طریق پنل ادمین
+        [OutputCache(Duration = 3600, Tags = new[] { "BlogCache" })]
         public async Task<IActionResult> Index()
         {
             int homePagePostsCount = _configuration.GetValue<int>("SiteSettings:HomePagePostsCount", 6);
@@ -45,6 +47,8 @@ namespace final_p_01.Controllers
 
         [Route("blog/{slug}")]
         [Route("Home/Post")]
+        // 🚀 اعمال سیستم کشینگ مبتنی بر تگ
+        [OutputCache(Duration = 3600, Tags = new[] { "BlogCache" })]
         public async Task<IActionResult> Post([FromRoute] string? slug, [FromQuery(Name = "slug")] string? querySlug)
         {
             var actualSlug = slug ?? querySlug;
@@ -99,6 +103,8 @@ namespace final_p_01.Controllers
 
         [Route("blog")]
         [Route("Home/Blog")]
+        // 🚀 اعمال سیستم کشینگ مبتنی بر تگ
+        [OutputCache(Duration = 3600, Tags = new[] { "BlogCache" })]
         public async Task<IActionResult> Blog([FromQuery] int page = 1)
         {
             if (Request.Path.Value != null && Request.Path.Value.Contains("Home/Blog", StringComparison.OrdinalIgnoreCase))
@@ -138,6 +144,8 @@ namespace final_p_01.Controllers
 
         // 🚀 URL جدید، تمیز و مستقل برای مقاله اصلی
         [Route("padel-court-construction-guide")]
+        // 🚀 اعمال سیستم کشینگ مبتنی بر تگ
+        [OutputCache(Duration = 3600, Tags = new[] { "BlogCache" })]
         public async Task<IActionResult> PadelGuide()
         {
             var guidePost = await _context.Posts
@@ -262,6 +270,7 @@ namespace final_p_01.Controllers
         }
 
         // 🚀 متد ثبت امتیاز (ستاره‌دهی) برای مقالات
+        // به این متد OutputCache نمی‌دهیم زیرا اکشن POST است و باید همیشه اطلاعات زنده را دریافت کند
         [HttpPost]
         public async Task<IActionResult> SubmitRating(int postId, int rating)
         {
