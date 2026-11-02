@@ -27,7 +27,6 @@ namespace final_p_01.Controllers
             _configuration = configuration;
         }
 
-        // 🚀 کش ۶۰ دقیقه‌ای به همراه تگ برای قابلیت تخلیه لحظه‌ای از طریق پنل ادمین
         [OutputCache(Duration = 3600, Tags = new[] { "BlogCache" })]
         public async Task<IActionResult> Index()
         {
@@ -36,7 +35,6 @@ namespace final_p_01.Controllers
             var latestPosts = await _context.Posts
                 .AsNoTracking()
                 .Include(p => p.Category)
-                // مقاله راهنمای جامع پدل از لیست بلاگ‌های صفحه اصلی مستثنی شده است
                 .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide")
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(homePagePostsCount)
@@ -47,14 +45,12 @@ namespace final_p_01.Controllers
 
         [Route("blog/{slug}")]
         [Route("Home/Post")]
-        // 🚀 اعمال سیستم کشینگ مبتنی بر تگ
         [OutputCache(Duration = 3600, Tags = new[] { "BlogCache" })]
         public async Task<IActionResult> Post([FromRoute] string? slug, [FromQuery(Name = "slug")] string? querySlug)
         {
             var actualSlug = slug ?? querySlug;
             if (string.IsNullOrEmpty(actualSlug)) return base.NotFound();
 
-            // 🚀 SEO FIX: Redirect 301 Permanent از مسیر قدیمی وبلاگ به مسیر Pillar مستقل
             if (actualSlug.Equals("padel-court-construction-guide", StringComparison.OrdinalIgnoreCase))
             {
                 return RedirectPermanent("/padel-court-construction-guide");
@@ -92,7 +88,6 @@ namespace final_p_01.Controllers
                 ViewData["MetaDescription"] = post.MetaDescription;
             }
 
-            // 🚀 SEO FIX: ارسال عکس مقاله به سمت View برای پر کردن متاتگ‌های og:image در _Layout
             if (!string.IsNullOrWhiteSpace(post.CoverImagePath))
             {
                 ViewData["OgImage"] = $"https://{Request.Host}{post.CoverImagePath}";
@@ -103,7 +98,6 @@ namespace final_p_01.Controllers
 
         [Route("blog")]
         [Route("Home/Blog")]
-        // 🚀 اعمال سیستم کشینگ مبتنی بر تگ
         [OutputCache(Duration = 3600, Tags = new[] { "BlogCache" })]
         public async Task<IActionResult> Blog([FromQuery] int page = 1)
         {
@@ -142,9 +136,7 @@ namespace final_p_01.Controllers
             return View(viewModel);
         }
 
-        // 🚀 URL جدید، تمیز و مستقل برای مقاله اصلی
         [Route("padel-court-construction-guide")]
-        // 🚀 اعمال سیستم کشینگ مبتنی بر تگ
         [OutputCache(Duration = 3600, Tags = new[] { "BlogCache" })]
         public async Task<IActionResult> PadelGuide()
         {
@@ -158,7 +150,20 @@ namespace final_p_01.Controllers
                 return base.NotFound();
             }
 
-            return View(guidePost);
+            var relatedPosts = await _context.Posts
+                .AsNoTracking()
+                .Where(p => p.IsPublished && p.Id != guidePost.Id)
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(4)
+                .ToListAsync();
+
+            var viewModel = new PostDetailsViewModel
+            {
+                Post = guidePost,
+                RelatedPosts = relatedPosts
+            };
+
+            return View(viewModel);
         }
 
         [Route("contact-us")]
@@ -191,7 +196,6 @@ namespace final_p_01.Controllers
         public IActionResult CoverArticle() { return View(); }
         public IActionResult ClubManagementArticle() { return View(); }
 
-        // 🚀 SEO FIX: تولید سایت‌مپ کاملاً داینامیک همراه با تگ‌های عکس (Image Sitemap)
         [Route("sitemap.xml")]
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
         public async Task<IActionResult> Sitemap()
@@ -204,7 +208,6 @@ namespace final_p_01.Controllers
 
             var xml = new StringBuilder();
             xml.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-            // اضافه کردن namespace برای عکس‌ها تا گوگل تصاویر مقالات را نیز ایندکس کند
             xml.AppendLine("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\" xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\">");
 
             var staticPages = new List<(string? Url, string ChangeFreq, string Priority)>
@@ -247,7 +250,6 @@ namespace final_p_01.Controllers
                     xml.AppendLine("    <changefreq>weekly</changefreq>");
                     xml.AppendLine("    <priority>0.7</priority>");
 
-                    // اگر مقاله عکس دارد، عکس آن هم به نقشه سایت اضافه می‌شود (بسیار عالی برای سئو)
                     if (!string.IsNullOrWhiteSpace(post.CoverImagePath))
                     {
                         string absoluteImageUrl = $"https://{Request.Host}{post.CoverImagePath}";
@@ -269,28 +271,22 @@ namespace final_p_01.Controllers
             return Content(xml.ToString(), "application/xml");
         }
 
-        // 🚀 متد ثبت امتیاز (ستاره‌دهی) برای مقالات
-        // به این متد OutputCache نمی‌دهیم زیرا اکشن POST است و باید همیشه اطلاعات زنده را دریافت کند
         [HttpPost]
         public async Task<IActionResult> SubmitRating(int postId, int rating)
         {
-            // اعتبارسنجی اولیه
             if (postId <= 0 || rating < 1 || rating > 5)
                 return Json(new { success = false, message = "مقادیر نامعتبر است." });
 
-            // پیدا کردن مقاله در دیتابیس
             var post = await _context.Posts.FindAsync(postId);
             if (post == null)
                 return Json(new { success = false, message = "مقاله یافت نشد." });
 
             try
             {
-                // محاسبه میانگین جدید
                 double currentTotalScore = post.AverageRating * post.TotalVotes;
                 post.TotalVotes += 1;
                 post.AverageRating = Math.Round((currentTotalScore + rating) / post.TotalVotes, 1);
 
-                // آپدیت دیتابیس
                 _context.Posts.Update(post);
                 await _context.SaveChangesAsync();
 

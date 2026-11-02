@@ -116,6 +116,12 @@
             overflow: hidden !important;
         }
 
+        .inner-page-header {
+            background-color: #0a0c12 !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
         .hero-actions {
             display: flex;
             gap: 15px;
@@ -217,20 +223,10 @@
         }
     </script>
 
-    <!-- Google Tag Manager (gtag.js) -->
-    <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-XXXXXXXXXX');
-    </script> -->
     @await RenderSectionAsync("Head", required: false)
 </head>
 
 <body class="loading-state">
-    <!-- Google Tag Manager (noscript) -->
-    <!-- <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript> -->
 
     <div id="brand-loader">
         <div class="loader-content">
@@ -241,7 +237,12 @@
         </div>
     </div>
 
-    <header class="site-header" id="main-header">
+    @{
+        string path = Context.Request.Path.Value?.ToLower() ?? "";
+        bool isHomePage = path == "/" || path == "/home" || path == "/home/index";
+    }
+
+    <header class="site-header @(isHomePage ? "" : "inner-page-header")" id="main-header">
         <div class="header-container">
             <div class="logo">
                 <a href="/">
@@ -272,7 +273,6 @@
                 <span class="mobile-logo-text">فهرست خدمات</span>
                 <button class="close-menu" id="close-menu-btn">&times;</button>
             </div>
-
             <nav>
                 <ul>
                     <li><a asp-controller="Home" asp-action="About" class="mobile-link">درباره ما</a></li>
@@ -282,7 +282,6 @@
                     <li><a asp-controller="Home" asp-action="PadelGuide" class="mobile-link">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
                 </ul>
             </nav>
-
             <div class="mobile-menu-footer">
                 <a asp-controller="Home" asp-action="Contact" class="mobile-cta">درخواست بازدید پروژه</a>
             </div>
@@ -290,12 +289,15 @@
         <div class="mobile-overlay" id="mobile-overlay"></div>
     </header>
 
-    @if (IsSectionDefined("Hero"))
+    @if (isHomePage)
     {
-        @await RenderSectionAsync("Hero", required: false)
-    }
-    else
-    {
+        // 🚀 راه حل خطای System.InvalidOperationException:
+        // اگر صفحه اصلی بود و ناخواسته تگ Hero را درونش تعریف کرده بودی، آن را ایگنور میکند تا سرور کرش نکند.
+        if (IsSectionDefined("Hero"))
+        {
+            IgnoreSection("Hero");
+        }
+
         <section class="hero">
             <img src="@Url.Content("~/H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp")" alt="اجرای زمین پدل استاندارد" class="hero-bg-img" fetchpriority="high" decoding="async" width="1920" height="1080">
             <div class="hero-overlay"></div>
@@ -321,6 +323,11 @@
                 </div>
             </div>
         </section>
+    }
+    else if (IsSectionDefined("Hero"))
+    {
+        // صفحات بلاگ و مقالات وارد این بخش می‌شوند و ارور برطرف می‌شود
+        @await RenderSectionAsync("Hero", required: false)
     }
 
     <main role="main" class="main-content-wrapper">
@@ -399,6 +406,8 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const header = document.getElementById("main-header");
+            const isHomePage = @(isHomePage.ToString().ToLower());
+
             if (header) {
                 let scrolled = false;
                 let ticking = false;
@@ -407,7 +416,9 @@
                     const next = window.scrollY > 50;
                     if (next !== scrolled) {
                         scrolled = next;
-                        header.classList.toggle("scrolled", next);
+                        if (isHomePage) {
+                            header.classList.toggle("scrolled", next);
+                        }
                     }
                     ticking = false;
                 };
@@ -432,7 +443,6 @@
                 if (mobileMenu && overlay) {
                     mobileMenu.classList.toggle("active", active);
                     overlay.classList.toggle("active", active);
-
                     if (!document.body.classList.contains("loading-state")) {
                         document.body.style.overflow = active ? "hidden" : "";
                     }

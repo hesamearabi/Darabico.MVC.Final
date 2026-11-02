@@ -5,6 +5,7 @@
 @using Ganss.Xss
 @using System.Text.Json
 @using System.Text.RegularExpressions
+@using final_p_01.Common
 
 @{
     ViewData["Title"] = Model.Post.Title;
@@ -437,7 +438,6 @@
                     box-shadow: 0 10px 20px rgba(0,0,0,0.05);
                 }
 
-            /* پلیر ریسپانسیو اختصاصی */
             .video-normal-wrapper {
                 position: relative;
                 width: 100%;
@@ -475,7 +475,6 @@
                     background: #000;
                 }
 
-            /* 🚀 کارت دانلود PDF */
             .pdf-premium-card {
                 background: #fff;
                 border: 1px solid #e2e8f0;
@@ -745,7 +744,6 @@
                     color: #fff;
                 }
 
-            /* استایل‌های اضافه شده برای حل مشکل مطالب پیشنهادی (طراحی مینیمال و ریسپانسیو) */
             .pd-related-section {
                 max-width: 1100px;
                 margin: 40px auto 100px;
@@ -895,7 +893,7 @@
                 <div class="pd-meta">
                     <span><i class="bi bi-person-circle" aria-hidden="true"></i> تحریریه دارابی کو</span>
                     <time datetime="@Model.Post.CreatedAt.ToString("yyyy-MM-dd")">
-                        <i class="bi bi-calendar3" aria-hidden="true"></i> @Model.Post.CreatedAt.ToString("yyyy/MM/dd")
+                        <i class="bi bi-calendar3" aria-hidden="true"></i> @Model.Post.CreatedAt.ToPersianDate()
                     </time>
                     @if (Model.Post.Category != null)
                     {
@@ -1013,7 +1011,7 @@
                             </div>
                             <div class="pd-card-body">
                                 <div class="pd-card-meta">
-                                    <time datetime="@rpost.CreatedAt.ToString("yyyy-MM-dd")"><i class="bi bi-clock"></i> @rpost.CreatedAt.ToString("yyyy/MM/dd")</time>
+                                    <time datetime="@rpost.CreatedAt.ToString("yyyy-MM-dd")"><i class="bi bi-clock"></i> @rpost.CreatedAt.ToPersianDate()</time>
                                 </div>
                                 <h5 class="pd-card-title">@rpost.Title</h5>
                             </div>

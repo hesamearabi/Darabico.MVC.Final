@@ -1,20 +1,21 @@
-﻿@model final_p_01.Domain.Entities.Post
+﻿@model final_p_01.Models.PostDetailsViewModel
 @using System.Linq
 @using System.Collections
 @using System.Collections.Generic
 @using Ganss.Xss
 @using System.Text.Json
 @using System.Text.RegularExpressions
+@using final_p_01.Common
 
 @{
-    ViewData["Title"] = Model?.Title ?? "راهنمای جامع 0 تا 100 ساخت زمین پدل";
-    if (Model != null && !string.IsNullOrWhiteSpace(Model.MetaDescription))
+    ViewData["Title"] = Model?.Post?.Title ?? "راهنمای جامع 0 تا 100 ساخت زمین پدل";
+    if (Model?.Post != null && !string.IsNullOrWhiteSpace(Model.Post.MetaDescription))
     {
-        ViewData["MetaDescription"] = Model.MetaDescription;
+        ViewData["MetaDescription"] = Model.Post.MetaDescription;
     }
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-    string coverImage = (Model != null && !string.IsNullOrWhiteSpace(Model.CoverImagePath)) ? Model.CoverImagePath : "/H-IMG/133.webp";
+    string coverImage = (Model?.Post != null && !string.IsNullOrWhiteSpace(Model.Post.CoverImagePath)) ? Model.Post.CoverImagePath : "/H-IMG/133.webp";
     string currentUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/padel-court-construction-guide";
     string absoluteCoverImage = $"{Context.Request.Scheme}://{Context.Request.Host}{coverImage}";
 
@@ -45,7 +46,7 @@
             if (!img.HasAttribute("decoding")) img.SetAttribute("decoding", "async");
             if (!img.HasAttribute("alt") || string.IsNullOrWhiteSpace(img.GetAttribute("alt")))
             {
-                img.SetAttribute("alt", Model?.Title ?? "تصویر راهنمای ساخت زمین پدل");
+                img.SetAttribute("alt", Model?.Post?.Title ?? "تصویر راهنمای ساخت زمین پدل");
             }
         }
     };
@@ -93,21 +94,17 @@
         string BuildAparatNormalHtml(string id) =>
             $"\u003Cdiv class=\"video-normal-wrapper\"\u003E\u003Ciframe src=\"https://www.aparat.com/video/video/embed/videohash/{id}/vt/frame\" allowfullscreen loading=\"lazy\"\u003E\u003C/iframe\u003E\u003C/div\u003E";
 
-        // 🚀 متد جدید: پردازش ویدیوهای آپلود شده روی سرور خودتان (Self-Hosted MP4)
         string BuildSelfHostedVideoHtml(string videoUrl) =>
             $"\u003Cdiv class=\"video-shorts-wrapper\"\u003E\u003Cvideo src=\"{videoUrl}\" controls preload=\"metadata\" style=\"width:100%; height:100%; border-radius: 16px; object-fit: cover; background:#000;\"\u003E\u003C/video\u003E\u003C/div\u003E";
 
         string content = rawHtml;
 
-        // گام ۰: شناسایی ویدیوهای HTML5 (که ادمین روی سرور آپلود کرده است)
         content = Regex.Replace(content, "\u003Cvideo[^\u003E]*\u003E.*?\u003Csource[^\u003E]*src=[\"']([^\"']+\\.mp4)[\"'][^\u003E]*\u003E.*?\u003C/video\u003E",
             m => CreateVideoToken(BuildSelfHostedVideoHtml(m.Groups[1].Value)), RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
-        // شناسایی فایل‌های MP4 که مستقیم لینک شده‌اند
         content = Regex.Replace(content, "(?:\u003Cp[^\u003E]*\u003E)?\\s*(\\/uploads\\/article-videos\\/[a-zA-Z0-9_-]+\\.mp4)\\s*(?:\u003C/p\u003E)?",
             m => CreateVideoToken(BuildSelfHostedVideoHtml(m.Groups[1].Value)), RegexOptions.IgnoreCase);
 
-        // گام ۱: شناسایی و استانداردسازی Iframe‌های آپارات و یوتیوب
         content = Regex.Replace(
             content,
             "(?:\u003Cdiv[^\u003E]*class=[\"'][^\"']*(?:aparat|video)[^\"']*[\"'][^\u003E]*\u003E\\s*)?\u003Ciframe[^\u003E]*src=[\"']([^\"']+)[\"'][^\u003E]*\u003E\\s*\u003C/iframe\u003E(?:\\s*\u003C/div\u003E)?",
@@ -141,24 +138,20 @@
             },
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
-        // گام ۲: خارج کردن لینک‌ها از داخل تگ <a>
         content = Regex.Replace(
             content,
             "\u003Ca[^\u003E]*href=[\"']((?:https?://)?(?:www\\.|m\\.)?(?:youtube\\.com|youtu\\.be|aparat\\.com)[^\"']*)[\"'][^\u003E]*\u003E.*?\u003C/a\u003E",
             "$1",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
-        // گام ۳: حذف استایل‌ها و ابعاد مزاحم
         content = Regex.Replace(content, "(width|height)=[\"'][^\"']*[\"']", "", RegexOptions.IgnoreCase);
         content = Regex.Replace(content, "style=[\"'][^\"']*[\"']", "", RegexOptions.IgnoreCase);
 
-        // گام ۴ تا ۷: پردازش لینک‌های متنی و تبدیل به توکن
         content = Regex.Replace(content, "(?:https?://)?(?:www\\.|m\\.)?youtube\\.com/shorts/([a-zA-Z0-9_-]{6,15})(?:\\?[^\\s\u003C\"']*)?", m => CreateVideoToken(BuildYoutubeShortsHtml(m.Groups[1].Value)), RegexOptions.IgnoreCase);
         content = Regex.Replace(content, "(?:https?://)?(?:www\\.)?aparat\\.com/shorts/(?:embed/)?([a-zA-Z0-9_-]+)(?:\\?[^\\s\u003C\"']*)?", m => CreateVideoToken(BuildAparatShortsHtml(m.Groups[1].Value)), RegexOptions.IgnoreCase);
         content = Regex.Replace(content, "(?:https?://)?(?:www\\.|m\\.)?(?:youtube\\.com/watch\\?v=|youtu\\.be/|youtube\\.com/embed/)([a-zA-Z0-9_-]{6,15})(?:[&?][^\\s\u003C\"']*)?", m => CreateVideoToken(BuildYoutubeNormalHtml(m.Groups[1].Value)), RegexOptions.IgnoreCase);
         content = Regex.Replace(content, "(?:https?://)?(?:www\\.)?aparat\\.com/v/([a-zA-Z0-9_-]+)(?:\\?[^\\s\u003C\"']*)?", m => CreateVideoToken(BuildAparatNormalHtml(m.Groups[1].Value)), RegexOptions.IgnoreCase);
 
-        // گام ۸: جایگذاری توکن‌ها
         foreach (var kvp in tokens)
         {
             content = Regex.Replace(content, $"(?:\u003Cp[^\u003E]*\u003E\\s*(?:&nbsp;)*\\s*)?{Regex.Escape(kvp.Key)}(?:\\s*(?:&nbsp;)*\\s*\u003C/p\u003E)?", kvp.Value, RegexOptions.IgnoreCase);
@@ -167,7 +160,7 @@
         return content;
     }
 
-    string sanitizedRaw = Model != null ? sanitizer.Sanitize(Model.Content ?? "") : "";
+    string sanitizedRaw = Model?.Post != null ? sanitizer.Sanitize(Model.Post.Content ?? "") : "";
     string processedContent = ProcessAllVideos(sanitizedRaw);
 
     string FormatFaqAnswer(string? rawAnswer)
@@ -178,28 +171,27 @@
         return sanitizer.Sanitize(preparedText);
     }
 
-    // ساخت اسکیما به صورت کاملاً ایمن در سی‌شارپ
     string schemaJson = "";
-    if (Model != null)
+    if (Model?.Post != null)
     {
         var schema = new Hashtable();
         schema["\u0040context"] = "https://schema.org";
         var graph = new ArrayList();
 
-        var webPageNode = new Hashtable { ["\u0040type"] = "WebPage", ["\u0040id"] = currentUrl, ["url"] = currentUrl, ["name"] = Model.Title };
+        var webPageNode = new Hashtable { ["\u0040type"] = "WebPage", ["\u0040id"] = currentUrl, ["url"] = currentUrl, ["name"] = Model.Post.Title };
         graph.Add(webPageNode);
 
         var authorNode = new Hashtable { ["\u0040type"] = "Organization", ["name"] = "دارابی کو" };
         var logoNode = new Hashtable { ["\u0040type"] = "ImageObject", ["url"] = $"{Context.Request.Scheme}://{Context.Request.Host}/siteLOGO/sitelogo.png" };
         var publisherNode = new Hashtable { ["\u0040type"] = "Organization", ["name"] = "دارابی کو", ["logo"] = logoNode };
-        var ratingNode = new Hashtable { ["\u0040type"] = "AggregateRating", ["ratingValue"] = Model.AverageRating.ToString(), ["bestRating"] = "5", ["ratingCount"] = Model.TotalVotes.ToString() };
+        var ratingNode = new Hashtable { ["\u0040type"] = "AggregateRating", ["ratingValue"] = Model.Post.AverageRating.ToString(), ["bestRating"] = "5", ["ratingCount"] = Model.Post.TotalVotes.ToString() };
 
         var articleNode = new Hashtable
         {
             ["\u0040type"] = "Article",
-            ["headline"] = Model.Title,
+            ["headline"] = Model.Post.Title,
             ["image"] = absoluteCoverImage,
-            ["datePublished"] = Model.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            ["datePublished"] = Model.Post.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"),
             ["author"] = authorNode,
             ["publisher"] = publisherNode,
             ["aggregateRating"] = ratingNode
@@ -207,14 +199,14 @@
         graph.Add(articleNode);
 
         var item1 = new Hashtable { ["\u0040type"] = "ListItem", ["position"] = 1, ["name"] = "خانه", ["item"] = $"{Context.Request.Scheme}://{Context.Request.Host}/" };
-        var item2 = new Hashtable { ["\u0040type"] = "ListItem", ["position"] = 2, ["name"] = Model.Title, ["item"] = currentUrl };
+        var item2 = new Hashtable { ["\u0040type"] = "ListItem", ["position"] = 2, ["name"] = Model.Post.Title, ["item"] = currentUrl };
         var breadcrumbNode = new Hashtable { ["\u0040type"] = "BreadcrumbList", ["itemListElement"] = new[] { item1, item2 } };
         graph.Add(breadcrumbNode);
 
-        if (Model.Faqs != null && Model.Faqs.Any())
+        if (Model.Post.Faqs != null && Model.Post.Faqs.Any())
         {
             var faqList = new ArrayList();
-            foreach (var f in Model.Faqs)
+            foreach (var f in Model.Post.Faqs)
             {
                 var ansNode = new Hashtable { ["\u0040type"] = "Answer", ["text"] = FormatFaqAnswer(f.Answer) };
                 var qNode = new Hashtable { ["\u0040type"] = "Question", ["name"] = f.Question, ["acceptedAnswer"] = ansNode };
@@ -235,7 +227,7 @@
         <link rel="preload" as="image" href="@coverImage" fetchpriority="high" />
         <link rel="canonical" href="@currentUrl" />
         <meta property="og:title" content="@ViewData["Title"]" />
-        <meta property="og:description" content="@(ViewData["MetaDescription"] ?? Model?.Title)" />
+        <meta property="og:description" content="@(ViewData["MetaDescription"] ?? Model?.Post?.Title)" />
         <meta property="og:type" content="article" />
         <meta property="og:url" content="@currentUrl" />
         <meta property="og:image" content="@absoluteCoverImage" />
@@ -448,7 +440,6 @@
                     box-shadow: 0 10px 20px rgba(0,0,0,0.05);
                 }
 
-            /* پلیر ریسپانسیو اختصاصی */
             .video-normal-wrapper {
                 position: relative;
                 width: 100%;
@@ -473,7 +464,7 @@
                 border: 3px solid #f1f5f9;
             }
 
-                .video-normal-wrapper iframe, .video-shorts-wrapper iframe {
+                .video-normal-wrapper iframe, .video-shorts-wrapper iframe, .video-shorts-wrapper video {
                     position: absolute !important;
                     top: 0 !important;
                     left: 0 !important;
@@ -486,7 +477,6 @@
                     background: #000;
                 }
 
-            /* 🚀 کارت دانلود PDF */
             .pdf-premium-card {
                 background: #fff;
                 border: 1px solid #e2e8f0;
@@ -756,6 +746,92 @@
                     color: #fff;
                 }
 
+            /* استایل‌های مطالب پیشنهادی */
+            .pd-related-section {
+                max-width: 1100px;
+                margin: 40px auto 100px;
+                padding: 0 20px;
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            }
+
+            .pd-related-title {
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: var(--pd-navy);
+                margin-bottom: 30px;
+                padding-bottom: 15px;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            .pd-related-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 24px;
+            }
+
+            .pd-card {
+                background-color: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                overflow: hidden;
+                text-decoration: none;
+                display: flex;
+                flex-direction: column;
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+            }
+
+                .pd-card:hover {
+                    transform: translateY(-4px);
+                    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+                }
+
+                .pd-card > div:first-child {
+                    width: 100%;
+                    aspect-ratio: 16 / 9;
+                    background-color: #f8fafc;
+                    overflow: hidden;
+                }
+
+            .pd-card-img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transition: transform 0.5s ease;
+            }
+
+            .pd-card:hover .pd-card-img {
+                transform: scale(1.03);
+            }
+
+            .pd-card-body {
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                flex-grow: 1;
+            }
+
+            .pd-card-meta {
+                font-size: 0.8rem;
+                color: #64748b;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .pd-card-title {
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: var(--pd-navy);
+                line-height: 1.5;
+                margin: 0;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+
             @@media (max-width: 768px) {
                 .pd-container {
                     margin: -30px 10px 40px !important;
@@ -799,26 +875,26 @@
         </style>
     }
 
-    @if (Model != null)
+    @if (Model?.Post != null)
     {
         <header class="pd-hero">
-            <img src="@coverImage" alt="@(Model.Title ?? "مقاله ساخت زمین پدل")" class="pd-hero-img" fetchpriority="high" decoding="sync" loading="eager" />
+            <img src="@coverImage" alt="@(Model.Post.Title ?? "مقاله ساخت زمین پدل")" class="pd-hero-img" fetchpriority="high" decoding="sync" loading="eager" />
 
             <div class="pd-hero-content">
                 <nav aria-label="مسیریابی صفحه">
                     <ol class="pd-breadcrumb">
                         <li><a href="/">خانه</a></li>
                         <li class="sep" aria-hidden="true">/</li>
-                        <li aria-current="page" style="color: #fff; font-weight: 700;">@Model.Title</li>
+                        <li aria-current="page" style="color: #fff; font-weight: 700;">@Model.Post.Title</li>
                     </ol>
                 </nav>
 
-                <h1 class="pd-title">@Model.Title</h1>
+                <h1 class="pd-title">@Model.Post.Title</h1>
 
                 <div class="pd-meta">
                     <span><i class="bi bi-person-circle" aria-hidden="true"></i> تحریریه دارابی کو</span>
-                    <time datetime="@Model.CreatedAt.ToString("yyyy-MM-dd")">
-                        <i class="bi bi-calendar3" aria-hidden="true"></i> @Model.CreatedAt.ToString("yyyy/MM/dd")
+                    <time datetime="@Model.Post.CreatedAt.ToString("yyyy-MM-dd")">
+                        <i class="bi bi-calendar3" aria-hidden="true"></i> @Model.Post.CreatedAt.ToPersianDate()
                     </time>
                 </div>
             </div>
@@ -829,21 +905,21 @@
                 @Html.Raw(processedContent)
             </article>
 
-            @if (!string.IsNullOrEmpty(Model.AudioFilePath))
+            @if (!string.IsNullOrEmpty(Model.Post.AudioFilePath))
             {
                 <div class="mt-5 p-4 rounded-4" style="background: #f8fafc; border: 1px solid #e2e8f0;">
                     <h5 class="fw-bold mb-3" style="color: #0a0c12;"><i class="bi bi-mic-fill text-primary"></i> پادکست صوتی مقاله</h5>
                     <audio controls class="w-100 rounded-pill">
-                        <source src="@Model.AudioFilePath" type="audio/mpeg" />
+                        <source src="@Model.Post.AudioFilePath" type="audio/mpeg" />
                         مرورگر شما از پخش صدا پشتیبانی نمی‌کند.
                     </audio>
                 </div>
             }
 
-            @if (!string.IsNullOrEmpty(Model.AttachmentFilePath))
+            @if (!string.IsNullOrEmpty(Model.Post.AttachmentFilePath))
             {
-                string title = string.IsNullOrWhiteSpace(Model.AttachmentTitle) ? "دانلود فایل ضمیمه" : Model.AttachmentTitle;
-                string desc = string.IsNullOrWhiteSpace(Model.AttachmentDescription) ? "برای دریافت اطلاعات فنی بیشتر، فایل کاتالوگ را دانلود کنید." : Model.AttachmentDescription;
+                string title = string.IsNullOrWhiteSpace(Model.Post.AttachmentTitle) ? "دانلود فایل ضمیمه" : Model.Post.AttachmentTitle;
+                string desc = string.IsNullOrWhiteSpace(Model.Post.AttachmentDescription) ? "برای دریافت اطلاعات فنی بیشتر، فایل کاتالوگ را دانلود کنید." : Model.Post.AttachmentDescription;
 
                 <div class="pdf-premium-card">
                     <div class="pdf-premium-icon">
@@ -854,7 +930,7 @@
                         <p class="pdf-premium-desc">@desc</p>
                     </div>
                     <div class="pdf-premium-action">
-                        <a href="@Model.AttachmentFilePath" download class="pdf-premium-btn">
+                        <a href="@Model.Post.AttachmentFilePath" download class="pdf-premium-btn">
                             <i class="bi bi-cloud-arrow-down-fill fs-5"></i> دریافت فایل
                         </a>
                     </div>
@@ -871,11 +947,11 @@
                     <i class="bi bi-star-fill pd-star-icon" data-value="1"></i>
                 </div>
                 <p class="text-muted mt-2 mb-0" id="rating-text">
-                    میانگین امتیاز: <strong class="text-dark">@Model.AverageRating</strong> از 5 (<strong class="text-dark">@Model.TotalVotes</strong> رای)
+                    میانگین امتیاز: <strong class="text-dark">@Model.Post.AverageRating</strong> از 5 (<strong class="text-dark">@Model.Post.TotalVotes</strong> رای)
                 </p>
             </div>
 
-            @if (Model.Faqs != null && Model.Faqs.Any())
+            @if (Model.Post.Faqs != null && Model.Post.Faqs.Any())
             {
                 <section class="pd-faq-wrapper" aria-labelledby="faq-heading">
                     <h3 id="faq-heading" class="pd-faq-title">
@@ -884,7 +960,7 @@
                     </h3>
 
                     <div class="pd-faq-list">
-                        @foreach (var faq in Model.Faqs)
+                        @foreach (var faq in Model.Post.Faqs)
                         {
                             <details class="pd-details">
                                 <summary class="pd-summary">@faq.Question</summary>
@@ -918,6 +994,29 @@
                 </div>
             </section>
         </main>
+
+        @if (Model.RelatedPosts != null && Model.RelatedPosts.Any())
+        {
+            <section class="pd-related-section">
+                <h3 class="pd-related-title">مطالب پیشنهادی</h3>
+                <div class="pd-related-grid">
+                    @foreach (var rpost in Model.RelatedPosts)
+                    {
+                        <a asp-controller="Home" asp-action="Post" asp-route-slug="@rpost.Slug" class="pd-card">
+                            <div style="overflow: hidden;">
+                                <img src="@(!string.IsNullOrWhiteSpace(rpost.CoverImagePath) ? rpost.CoverImagePath : "/H-IMG/133.webp")" alt="@rpost.Title" class="pd-card-img" loading="lazy" />
+                            </div>
+                            <div class="pd-card-body">
+                                <div class="pd-card-meta">
+                                    <time datetime="@rpost.CreatedAt.ToString("yyyy-MM-dd")"><i class="bi bi-clock"></i> @rpost.CreatedAt.ToPersianDate()</time>
+                                </div>
+                                <h5 class="pd-card-title">@rpost.Title</h5>
+                            </div>
+                        </a>
+                    }
+                </div>
+            </section>
+        }
     }
     else
     {
@@ -938,7 +1037,7 @@
                     header.classList.add("scrolled");
                 }
 
-                const postId = '@(Model?.Id ?? 0)';
+                const postId = '@(Model?.Post?.Id ?? 0)';
                 const stars = document.querySelectorAll('.pd-star-icon');
                 const ratingText = document.getElementById('rating-text');
 
