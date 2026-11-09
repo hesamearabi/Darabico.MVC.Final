@@ -11,6 +11,8 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Security.Cryptography;
 
 namespace final_p_01.Controllers
 {
@@ -19,12 +21,29 @@ namespace final_p_01.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IOutputCacheStore _outputCacheStore;
 
-        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, IConfiguration configuration)
+        // TODO: Owner to confirm mappings. Use /padel-court-construction-guide for guide topics, /blog for others.
+        // Some examples below are mapped to 410 Gone to show how to handle permanently removed content.
+        private static readonly Dictionary<string, string> LegacyRedirects = new(StringComparer.OrdinalIgnoreCase)
+        {
+            { "padelgrass", "/padel-court-construction-guide" },
+            { "structure", "/padel-court-construction-guide" },
+            { "Resume", "/about-us" },
+            { "CostArticle", "/padel-court-construction-guide" },
+            { "GlassArticle", "/padel-court-construction-guide" },
+            { "DimensionsArticle", "/padel-court-construction-guide" },
+            { "RulesArticle", "/blog" },
+            { "CoverArticle", "/padel-court-construction-guide" },
+            { "ClubManagementArticle", "410" } // Example: Content permanently removed
+        };
+
+        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, IConfiguration configuration, IOutputCacheStore outputCacheStore)
         {
             _logger = logger;
             _context = context;
             _configuration = configuration;
+            _outputCacheStore = outputCacheStore;
         }
 
         [OutputCache(Duration = 3600, Tags = new[] { "BlogCache" })]
@@ -44,7 +63,6 @@ namespace final_p_01.Controllers
         }
 
         [Route("blog/{slug}")]
-        [Route("Home/Post")]
         [OutputCache(Duration = 3600, Tags = new[] { "BlogCache" })]
         public async Task<IActionResult> Post([FromRoute] string? slug, [FromQuery(Name = "slug")] string? querySlug)
         {
@@ -54,11 +72,6 @@ namespace final_p_01.Controllers
             if (actualSlug.Equals("padel-court-construction-guide", StringComparison.OrdinalIgnoreCase))
             {
                 return RedirectPermanent("/padel-court-construction-guide");
-            }
-
-            if (string.IsNullOrEmpty(slug) && !string.IsNullOrEmpty(querySlug))
-            {
-                return RedirectPermanent($"/blog/{actualSlug}");
             }
 
             var post = await _context.Posts
@@ -97,16 +110,9 @@ namespace final_p_01.Controllers
         }
 
         [Route("blog")]
-        [Route("Home/Blog")]
         [OutputCache(Duration = 3600, Tags = new[] { "BlogCache" })]
         public async Task<IActionResult> Blog([FromQuery] int page = 1)
         {
-            if (Request.Path.Value != null && Request.Path.Value.Contains("Home/Blog", StringComparison.OrdinalIgnoreCase))
-            {
-                string targetUrl = page > 1 ? $"/blog?page={page}" : "/blog";
-                return RedirectPermanent(targetUrl);
-            }
-
             int pageSize = _configuration.GetValue<int>("SiteSettings:BlogPageSize", 9);
 
             var query = _context.Posts
@@ -167,34 +173,31 @@ namespace final_p_01.Controllers
         }
 
         [Route("contact-us")]
-        [Route("Home/Contact")]
         public IActionResult Contact()
         {
-            if (Request.Path.Value != null && Request.Path.Value.Contains("Home/Contact", StringComparison.OrdinalIgnoreCase))
-                return RedirectPermanent("/contact-us");
-
             return View();
         }
 
         [Route("about-us")]
-        [Route("Home/about")]
         public IActionResult about()
         {
-            if (Request.Path.Value != null && Request.Path.Value.Contains("Home/about", StringComparison.OrdinalIgnoreCase))
-                return RedirectPermanent("/about-us");
-
             return View();
         }
 
-        public IActionResult padelgrass() { return View(); }
-        public IActionResult structure() { return View(); }
-        public IActionResult Resume() { return View(); }
-        public IActionResult CostArticle() { return View(); }
-        public IActionResult GlassArticle() { return View(); }
-        public IActionResult DimensionsArticle() { return View(); }
-        public IActionResult RulesArticle() { return View(); }
-        public IActionResult CoverArticle() { return View(); }
-        public IActionResult ClubManagementArticle() { return View(); }
+        [Route("Home/{actionName}")]
+        public IActionResult LegacyRedirect(string actionName)
+        {
+            if (LegacyRedirects.TryGetValue(actionName, out string targetPath))
+            {
+                if (targetPath == "410")
+                {
+                    return StatusCode(410);
+                }
+                return RedirectPermanent(targetPath);
+            }
+
+            return base.NotFound();
+        }
 
         [Route("sitemap.xml")]
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
@@ -272,35 +275,69 @@ namespace final_p_01.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
+        [EnableRateLimiting("RatingRateLimit")]
         public async Task<IActionResult> SubmitRating(int postId, int rating)
         {
             if (postId <= 0 || rating < 1 || rating > 5)
-                return Json(new { success = false, message = "مقادیر نامعتبر است." });
+                return BadRequest(new { success = false, message = "مقادیر نامعتبر است." });
 
-            var post = await _context.Posts.FindAsync(postId);
-            if (post == null)
-                return Json(new { success = false, message = "مقاله یافت نشد." });
+            var isPublished = await _context.Posts
+                .Where(p => p.Id == postId)
+                .Select(p => p.IsPublished)
+                .FirstOrDefaultAsync();
+
+            if (!isPublished)
+                return NotFound(new { success = false, message = "مقاله یافت نشد." });
+
+            var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            var userAgent = Request.Headers["User-Agent"].ToString();
+
+            var hashInput = Encoding.UTF8.GetBytes($"{clientIp}|{userAgent}|{postId}");
+            var hashBytes = SHA256.HashData(hashInput);
+            var hashString = Convert.ToBase64String(hashBytes);
+            var cookieName = $"rated_cookie_{postId}";
+
+            if (Request.Cookies.ContainsKey(cookieName) && Request.Cookies[cookieName] == hashString)
+            {
+                return Json(new { success = false, message = "شما قبلاً به این مقاله رای داده‌اید." });
+            }
 
             try
             {
-                double currentTotalScore = post.AverageRating * post.TotalVotes;
-                post.TotalVotes += 1;
-                post.AverageRating = Math.Round((currentTotalScore + rating) / post.TotalVotes, 1);
+                await _context.Posts
+                    .Where(p => p.Id == postId)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(p => p.AverageRating, p => Math.Round(((p.AverageRating * p.TotalVotes) + rating) / (p.TotalVotes + 1.0), 1))
+                        .SetProperty(p => p.TotalVotes, p => p.TotalVotes + 1));
 
-                _context.Posts.Update(post);
-                await _context.SaveChangesAsync();
+                var updatedStats = await _context.Posts
+                    .Where(p => p.Id == postId)
+                    .Select(p => new { p.AverageRating, p.TotalVotes })
+                    .FirstOrDefaultAsync();
+
+                await _outputCacheStore.EvictByTagAsync("BlogCache", default);
+
+                var cookieOptions = new CookieOptions
+                {
+                    Expires = DateTimeOffset.UtcNow.AddDays(365),
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict
+                };
+                Response.Cookies.Append(cookieName, hashString, cookieOptions);
 
                 return Json(new
                 {
                     success = true,
-                    newAverage = post.AverageRating,
-                    newTotal = post.TotalVotes
+                    newAverage = updatedStats?.AverageRating,
+                    newTotal = updatedStats?.TotalVotes
                 });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating rating for post {PostId}", postId);
-                return Json(new { success = false, message = "خطای سرور در ثبت امتیاز." });
+                return StatusCode(500, new { success = false, message = "خطای سرور در ثبت امتیاز." });
             }
         }
 

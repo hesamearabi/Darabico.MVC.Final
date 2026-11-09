@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.HttpOverrides;
+﻿using System;
+using System.Linq;
+using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -8,18 +11,22 @@ using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http.Features;
+using final_p_01.Domain.Entities;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🚀 رفع ارور حجم آپلود در IIS (تا 100 مگابایت)
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Limits.MaxRequestBodySize = 104857600; // 100 MB
+    options.Limits.MaxRequestBodySize = 104857600;
 });
 builder.Services.Configure<FormOptions>(options =>
 {
-    options.MultipartBodyLengthLimit = 104857600; // 100 MB
+    options.MultipartBodyLengthLimit = 104857600;
 });
+
+builder.Services.AddSingleton<final_p_01.Services.ISiteUrlBuilder, final_p_01.Services.SiteUrlBuilder>();
 
 builder.Services.AddWebEncoders(options =>
 {
@@ -33,14 +40,12 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// 🚀 SEO: تنظیم مسیرها
 builder.Services.AddRouting(options =>
 {
     options.LowercaseUrls = true;
-    options.AppendTrailingSlash = false; // برای جلوگیری از داپلیکیت کانتنت سئو
+    options.AppendTrailingSlash = false;
 });
 
-// 🚀 Performance: فشرده‌سازی محتوا با اولویت Brotli
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true;
@@ -56,7 +61,7 @@ builder.Services.AddResponseCompression(options =>
         "text/html"
     });
 });
-// تنظیم سطح فشرده‌سازی روی Optimal برای تعادل بین سرعت سرور و سایز فایل
+
 builder.Services.Configure<BrotliCompressionProviderOptions>(options => options.Level = CompressionLevel.Optimal);
 builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Optimal);
 
@@ -67,13 +72,26 @@ builder.Services.AddHsts(options =>
     options.MaxAge = TimeSpan.FromDays(365);
 });
 
-// 🚀 ثبت سیستم کش خروجی (کاملاً سازگار با تگ‌گذاری)
 builder.Services.AddOutputCache(options =>
 {
-    // این پالیسی باعث می‌شود کش فقط برای کاربران لاگین‌نکرده (پابلیک) اعمال شود
-    // و مدیر سایت همیشه تغییرات زنده را ببیند
     options.AddBasePolicy(builder =>
         builder.With(c => c.HttpContext.User?.Identity?.IsAuthenticated != true));
+});
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("RatingRateLimit", context =>
+    {
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(1),
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            QueueLimit = 0
+        });
+    });
 });
 
 builder.Services.AddControllersWithViews();
@@ -100,26 +118,46 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var env = services.GetRequiredService<IWebHostEnvironment>();
+    var logger = services.GetRequiredService<ILogger<Program>>();
+
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
         context.Database.Migrate();
 
-        var hasher = new PasswordHasher<object>();
-        var hashedPassword = hasher.HashPassword(null, "2081189526Hesam");
+        if (!context.AdminUsers.Any())
+        {
+            var configuration = services.GetRequiredService<IConfiguration>();
+            var seedEmail = configuration["ADMIN_SEED_EMAIL"];
+            var seedPassword = configuration["ADMIN_SEED_PASSWORD"];
 
-        context.Database.ExecuteSqlRaw(
-            "IF NOT EXISTS (SELECT 1 FROM AdminUsers WHERE Email = 'admin@darabico.com') " +
-            "BEGIN INSERT INTO AdminUsers (Email, Password, FullName) VALUES ('admin@darabico.com', {0}, N'مدیر دارابیکو') END " +
-            "ELSE " +
-            "BEGIN UPDATE AdminUsers SET Password = {0} WHERE Email = 'admin@darabico.com' END",
-            hashedPassword
-        );
+            if (!string.IsNullOrEmpty(seedEmail) && !string.IsNullOrEmpty(seedPassword))
+            {
+                var hasher = new PasswordHasher<AdminUser>();
+                var adminUser = new AdminUser
+                {
+                    Email = seedEmail,
+                    FullName = "مدیر دارابیکو"
+                };
+                adminUser.Password = hasher.HashPassword(adminUser, seedPassword);
+
+                context.AdminUsers.Add(adminUser);
+                context.SaveChanges();
+            }
+            else
+            {
+                logger.LogWarning("ADMIN_SEED_EMAIL or ADMIN_SEED_PASSWORD is not set. No admin user was created.");
+            }
+        }
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "خطایی در دیتابیس رخ داد.");
+        logger.LogError(ex, "Database error during startup.");
+        if (!env.IsDevelopment())
+        {
+            throw;
+        }
     }
 }
 
@@ -135,7 +173,66 @@ else
     app.UseDeveloperExceptionPage();
 }
 
-// 🚀 Security Headers
+app.UseHttpsRedirection();
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Method == HttpMethods.Get || context.Request.Method == HttpMethods.Head)
+    {
+        var originalPath = context.Request.Path.Value ?? string.Empty;
+
+        if (!originalPath.StartsWith("/Admin", StringComparison.OrdinalIgnoreCase) &&
+            !originalPath.StartsWith("/uploads", StringComparison.OrdinalIgnoreCase) &&
+            !originalPath.StartsWith("/CSS-SOURCE", StringComparison.OrdinalIgnoreCase) &&
+            !originalPath.StartsWith("/JS-SOURCE", StringComparison.OrdinalIgnoreCase) &&
+            !originalPath.StartsWith("/fonts", StringComparison.OrdinalIgnoreCase) &&
+            !originalPath.StartsWith("/H-IMG", StringComparison.OrdinalIgnoreCase) &&
+            !originalPath.StartsWith("/footerimg", StringComparison.OrdinalIgnoreCase) &&
+            !originalPath.StartsWith("/siteLOGO", StringComparison.OrdinalIgnoreCase) &&
+            !originalPath.Equals("/sitemap.xml", StringComparison.OrdinalIgnoreCase))
+        {
+            var hasUpperCase = originalPath.Any(char.IsUpper);
+            var hasTrailingSlash = originalPath.Length > 1 && originalPath.EndsWith('/');
+
+            bool isLegacyHome = originalPath.Equals("/home", StringComparison.OrdinalIgnoreCase) ||
+                                originalPath.Equals("/home/index", StringComparison.OrdinalIgnoreCase) ||
+                                originalPath.Equals("/home/", StringComparison.OrdinalIgnoreCase) ||
+                                originalPath.Equals("/home/index/", StringComparison.OrdinalIgnoreCase);
+
+            if (isLegacyHome || hasUpperCase || hasTrailingSlash)
+            {
+                string targetPath = originalPath;
+
+                if (isLegacyHome)
+                {
+                    targetPath = "/";
+                }
+                else
+                {
+                    if (hasUpperCase)
+                    {
+                        var decodedPath = Uri.UnescapeDataString(originalPath);
+                        var lowerPath = decodedPath.ToLowerInvariant();
+                        targetPath = string.Join("/", lowerPath.Split('/').Select(Uri.EscapeDataString));
+                    }
+
+                    if (targetPath.Length > 1 && targetPath.EndsWith('/'))
+                    {
+                        targetPath = targetPath.TrimEnd('/');
+                    }
+                }
+
+                var queryString = context.Request.QueryString.Value;
+                var newUrl = $"{targetPath}{queryString}";
+
+                context.Response.Redirect(newUrl, permanent: true);
+                return;
+            }
+        }
+    }
+    await next();
+});
+
 app.Use(async (context, next) =>
 {
     var headers = context.Response.Headers;
@@ -146,12 +243,9 @@ app.Use(async (context, next) =>
 });
 
 app.UseStatusCodePagesWithReExecute("/Home/PageNotFound", "?statusCode={0}");
-app.UseHttpsRedirection();
 
-// میدلور فشرده‌سازی باید قبل از StaticFiles و Routing باشد
 app.UseResponseCompression();
 
-// 🚀 کش کردن قدرتمند فایل‌های استاتیک در مرورگر کاربر (CSS, JS, Fonts, Images)
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
@@ -173,11 +267,11 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.UseRouting();
 
-// 🚀 ترتیب Authentication و Authorization کاملاً درست است
+app.UseRateLimiter();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 🚀 میدلور OutputCache باید دقیقاً اینجا (بعد از احراز هویت و قبل از مپ شدن کنترلرها) باشد
 app.UseOutputCache();
 
 app.MapControllerRoute(
@@ -189,3 +283,27 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+namespace final_p_01.Services
+{
+    public interface ISiteUrlBuilder
+    {
+        string Absolute(string path);
+    }
+
+    public class SiteUrlBuilder : ISiteUrlBuilder
+    {
+        private readonly string _baseUrl;
+
+        public SiteUrlBuilder(IConfiguration configuration)
+        {
+            _baseUrl = configuration.GetValue<string>("SiteSettings:BaseUrl")?.TrimEnd('/') ?? "https://darabico.com";
+        }
+
+        public string Absolute(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return _baseUrl;
+            return $"{_baseUrl}/{path.TrimStart('/')}";
+        }
+    }
+}

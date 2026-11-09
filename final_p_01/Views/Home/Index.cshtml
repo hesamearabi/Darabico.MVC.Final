@@ -1,5 +1,6 @@
 ﻿@model IEnumerable<final_p_01.Domain.Entities.Post>
 @using System.Linq
+@inject final_p_01.Services.ISiteUrlBuilder UrlBuilder
 
 @{
     ViewData["Title"] = "مرجع تخصصی ساخت و تجهیز زمین های پدل";
@@ -15,7 +16,7 @@
           "@@type": "WebSite",
           "name": "دارابی کو",
           "alternateName": "Darabico",
-          "url": "@($"https://{Context.Request.Host}/")",
+          "url": "@UrlBuilder.Absolute("")",
           "inLanguage": "fa-IR",
           "description": "دارابی‌کو، پیمانکار تخصصی طراحی، ساخت و تجهیز زمین های پدل در ایران"
         }
@@ -743,7 +744,7 @@
 
             <a asp-controller="home" asp-action="blog" class="service-card">
                 <span class="service-number">02</span>
-                <img src="@Url.Content("~/H-IMG/shisheh.webp" )" alt="دیواره شیشه‌ای و تجهیزات کورت پدل" class="service-img" loading="lazy" width="400" height="360" />
+                <img src="@Url.Content("~/H-IMG/shisheh.webp")" alt="دیواره شیشه‌ای و تجهیزات کورت پدل" class="service-img" loading="lazy" width="400" height="360" />
                 <div class="service-overlay"></div>
                 <div class="service-info">
                     <h3>دیواره شیشه‌ای و تجهیزات</h3>
@@ -916,7 +917,7 @@
                 return;
             }
 
-            const duration = 1500; 
+            const duration = 1500;
             const start = performance.now();
 
             function tick(now) {

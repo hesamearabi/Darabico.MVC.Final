@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@inject final_p_01.Services.ISiteUrlBuilder UrlBuilder
+<!DOCTYPE html>
 <html lang="fa-IR" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -8,25 +9,31 @@
     <meta name="keywords" content="ساخت زمین پدل, احداث زمین پدل, پیمانکار زمین پدل, قیمت شیشه زمین پدل, هزینه ساخت زمین پدل, چمن مصنوعی پدل, دارابی کو, استاندارد FIP">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 
-    <link rel="canonical" href="@($"https://{Context.Request.Host}{Context.Request.Path}")" />
+    @{
+        string canonicalRaw = Context.Request.Path.Value ?? "";
+        string canonicalPath = canonicalRaw == "/" ? "" : canonicalRaw.ToLowerInvariant().TrimEnd('/');
+        string fullCanonicalUrl = UrlBuilder.Absolute(canonicalPath);
+    }
+
+    <link rel="canonical" href="@fullCanonicalUrl" />
 
     <meta property="og:site_name" content="دارابی کو | مجری ساخت زمین پدل">
     <meta property="og:title" content="دارابی کو | @(ViewData["Title"] ?? "مرجع تخصصی ساخت و تجهیز زمین پدل")">
     <meta property="og:type" content="website">
     <meta property="og:description" content="@(ViewData["MetaDescription"] ?? "صفر تا صد ساخت زمین پدل با شیشه‌های نشکن، چمن مصنوعی و سازه استاندارد جهانی بدون واسطه.")">
-    <meta property="og:image" content="@(ViewData["OgImage"] ?? $"https://{Context.Request.Host}/siteLOGO/sitelogo.png")">
-    <meta property="og:url" content="@($"https://{Context.Request.Host}{Context.Request.Path}")">
+    <meta property="og:image" content="@(ViewData["OgImage"] ?? UrlBuilder.Absolute("siteLOGO/sitelogo.png"))">
+    <meta property="og:url" content="@fullCanonicalUrl">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="دارابی کو | @(ViewData["Title"] ?? "مرجع تخصصی ساخت زمین پدل")">
     <meta name="twitter:description" content="@(ViewData["MetaDescription"] ?? "دارابی کو، پیمانکار تخصصی احداث زمین پدل و تولیدکننده شیشه‌های استاندارد پدل در ایران.")">
-    <meta name="twitter:image" content="@(ViewData["OgImage"] ?? $"https://{Context.Request.Host}/siteLOGO/sitelogo.png")">
+    <meta name="twitter:image" content="@(ViewData["OgImage"] ?? UrlBuilder.Absolute("siteLOGO/sitelogo.png"))">
 
     <title>دارابی کو | @(ViewData["Title"] ?? "مرجع تخصصی ساخت و تجهیز زمین های پدل")</title>
 
-    <link rel="icon" type="image/x-icon" href="@($"https://{Context.Request.Host}/favicon.ico")" sizes="48x48">
-    <link rel="icon" type="image/png" sizes="192x192" href="@($"https://{Context.Request.Host}/siteLOGO/favicon.png")">
-    <link rel="apple-touch-icon" sizes="180x180" href="@($"https://{Context.Request.Host}/apple-touch-icon.png")">
+    <link rel="icon" type="image/x-icon" href="@UrlBuilder.Absolute("favicon.ico")" sizes="48x48">
+    <link rel="icon" type="image/png" sizes="192x192" href="@UrlBuilder.Absolute("siteLOGO/favicon.png")">
+    <link rel="apple-touch-icon" sizes="180x180" href="@UrlBuilder.Absolute("apple-touch-icon.png")">
 
     <link rel="stylesheet" href="@Url.Content("~/CSS-SOURCE/layouts.css")" asp-append-version="true">
 
@@ -199,8 +206,8 @@
           "@@context": "https://schema.org",
           "@@type": "GeneralContractor",
           "name": "دارابی کو - Darabico",
-          "url": "@($"https://{Context.Request.Host}")",
-          "logo": "@($"https://{Context.Request.Host}/siteLOGO/sitelogo.png")",
+          "url": "@UrlBuilder.Absolute("")",
+          "logo": "@UrlBuilder.Absolute("siteLOGO/sitelogo.png")",
           "description": "پیمانکار تخصصی طراحی، زیرسازی، ساخت سازه و تجهیز زمین های پدل در ایران با تولید مستقیم شیشه.",
           "priceRange": "$$",
           "address": {
@@ -238,8 +245,8 @@
     </div>
 
     @{
-        string path = Context.Request.Path.Value?.ToLower() ?? "";
-        bool isHomePage = path == "/" || path == "/home" || path == "/home/index";
+        string currentPathForHome = Context.Request.Path.Value?.ToLowerInvariant().TrimEnd('/') ?? "";
+        bool isHomePage = currentPathForHome == "" || currentPathForHome == "/home" || currentPathForHome == "/home/index";
     }
 
     <header class="site-header @(isHomePage ? "" : "inner-page-header")" id="main-header">
@@ -291,8 +298,6 @@
 
     @if (isHomePage)
     {
-        // 🚀 راه حل خطای System.InvalidOperationException:
-        // اگر صفحه اصلی بود و ناخواسته تگ Hero را درونش تعریف کرده بودی، آن را ایگنور میکند تا سرور کرش نکند.
         if (IsSectionDefined("Hero"))
         {
             IgnoreSection("Hero");
@@ -326,7 +331,6 @@
     }
     else if (IsSectionDefined("Hero"))
     {
-        // صفحات بلاگ و مقالات وارد این بخش می‌شوند و ارور برطرف می‌شود
         @await RenderSectionAsync("Hero", required: false)
     }
 
@@ -406,7 +410,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const header = document.getElementById("main-header");
-            const isHomePage = @(isHomePage.ToString().ToLower());
+            const isHomePage = @(isHomePage.ToString().ToLowerInvariant());
 
             if (header) {
                 let scrolled = false;

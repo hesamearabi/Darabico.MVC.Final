@@ -6,6 +6,7 @@
 @using System.Text.Json
 @using System.Text.RegularExpressions
 @using final_p_01.Common
+@inject final_p_01.Services.ISiteUrlBuilder UrlBuilder
 
 @{
     ViewData["Title"] = Model.Post.Title;
@@ -13,9 +14,10 @@
 
     string coverImage = !string.IsNullOrWhiteSpace(Model.Post.CoverImagePath) ? Model.Post.CoverImagePath : "/H-IMG/133.webp";
     string coverAlt = !string.IsNullOrWhiteSpace(Model.Post.CoverImageAlt) ? Model.Post.CoverImageAlt : Model.Post.Title;
-    string absoluteCoverImage = $"{Context.Request.Scheme}://{Context.Request.Host}{coverImage}";
+    string absoluteCoverImage = UrlBuilder.Absolute(coverImage);
 
-    string currentUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}";
+    string rawPath = Context.Request.Path.Value ?? "";
+    string currentUrl = UrlBuilder.Absolute(rawPath == "/" ? "" : rawPath.ToLowerInvariant().TrimEnd('/'));
 
     var sanitizer = new HtmlSanitizer();
 
@@ -179,9 +181,8 @@
         graph.Add(webPageNode);
 
         var authorNode = new Hashtable { ["\u0040type"] = "Organization", ["name"] = "دارابی کو" };
-        var logoNode = new Hashtable { ["\u0040type"] = "ImageObject", ["url"] = $"{Context.Request.Scheme}://{Context.Request.Host}/siteLOGO/sitelogo.png" };
+        var logoNode = new Hashtable { ["\u0040type"] = "ImageObject", ["url"] = UrlBuilder.Absolute("siteLOGO/sitelogo.png") };
         var publisherNode = new Hashtable { ["\u0040type"] = "Organization", ["name"] = "دارابی کو", ["logo"] = logoNode };
-        var ratingNode = new Hashtable { ["\u0040type"] = "AggregateRating", ["ratingValue"] = Model.Post.AverageRating.ToString(), ["bestRating"] = "5", ["ratingCount"] = Model.Post.TotalVotes.ToString() };
 
         var articleNode = new Hashtable
         {
@@ -190,13 +191,12 @@
             ["image"] = absoluteCoverImage,
             ["datePublished"] = Model.Post.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"),
             ["author"] = authorNode,
-            ["publisher"] = publisherNode,
-            ["aggregateRating"] = ratingNode
+            ["publisher"] = publisherNode
         };
         graph.Add(articleNode);
 
-        var item1 = new Hashtable { ["\u0040type"] = "ListItem", ["position"] = 1, ["name"] = "خانه", ["item"] = $"{Context.Request.Scheme}://{Context.Request.Host}/" };
-        var item2 = new Hashtable { ["\u0040type"] = "ListItem", ["position"] = 2, ["name"] = "مقالات", ["item"] = $"{Context.Request.Scheme}://{Context.Request.Host}/Blog" };
+        var item1 = new Hashtable { ["\u0040type"] = "ListItem", ["position"] = 1, ["name"] = "خانه", ["item"] = UrlBuilder.Absolute("") };
+        var item2 = new Hashtable { ["\u0040type"] = "ListItem", ["position"] = 2, ["name"] = "مقالات", ["item"] = UrlBuilder.Absolute("blog") };
         var item3 = new Hashtable { ["\u0040type"] = "ListItem", ["position"] = 3, ["name"] = Model.Post.Title, ["item"] = currentUrl };
         var breadcrumbNode = new Hashtable { ["\u0040type"] = "BreadcrumbList", ["itemListElement"] = new[] { item1, item2, item3 } };
         graph.Add(breadcrumbNode);
@@ -872,7 +872,7 @@
         </style>
     }
 
-    @if (Model != null)
+    @if (Model?.Post != null)
     {
         <header class="pd-hero">
             <img src="@coverImage" alt="@(Model.Post.Title ?? "مقاله ساخت زمین پدل")" class="pd-hero-img" fetchpriority="high" decoding="sync" loading="eager" />
@@ -895,10 +895,6 @@
                     <time datetime="@Model.Post.CreatedAt.ToString("yyyy-MM-dd")">
                         <i class="bi bi-calendar3" aria-hidden="true"></i> @Model.Post.CreatedAt.ToPersianDate()
                     </time>
-                    @if (Model.Post.Category != null)
-                    {
-                        <span><i class="bi bi-folder2-open"></i> @Model.Post.Category.Name</span>
-                    }
                 </div>
             </div>
         </header>
@@ -947,10 +943,17 @@
                     <i class="bi bi-star-fill pd-star-icon" data-value="4"></i>
                     <i class="bi bi-star-fill pd-star-icon" data-value="3"></i>
                     <i class="bi bi-star-fill pd-star-icon" data-value="2"></i>
-                    <i class="bi bi-star-fill pd-star-icon" data-value="1"></i>
+                    <i class="bi bi-star-icon" data-value="1"></i>
                 </div>
                 <p class="text-muted mt-2 mb-0" id="rating-text">
-                    میانگین امتیاز: <strong class="text-dark">@Model.Post.AverageRating</strong> از 5 (<strong class="text-dark">@Model.Post.TotalVotes</strong> رای)
+                    @if (Model.Post.TotalVotes > 0)
+                    {
+                        <text>میانگین امتیاز: <strong class="text-dark">@Model.Post.AverageRating</strong> از 5 (<strong class="text-dark">@Model.Post.TotalVotes</strong> رای)</text>
+                    }
+                    else
+                    {
+                        <text>اولین نفری باشید که به این مقاله امتیاز می‌دهد!</text>
+                    }
                 </p>
             </div>
 
@@ -1044,6 +1047,8 @@
                 const stars = document.querySelectorAll('.pd-star-icon');
                 const ratingText = document.getElementById('rating-text');
 
+                const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
                 if (postId !== '0' && stars.length > 0 && ratingText) {
                     const hasRated = localStorage.getItem('rated_post_' + postId);
 
@@ -1078,10 +1083,22 @@
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/x-www-form-urlencoded',
+                                    'RequestVerificationToken': csrfToken
                                 },
                                 body: `postId=${postId}&rating=${value}`
                             })
-                            .then(response => response.json())
+                            .then(response => {
+                                if (response.status === 429) {
+                                    throw new Error('تعداد درخواست‌ها بیش از حد مجاز است. لطفاً کمی صبر کنید.');
+                                }
+                                if (response.status === 404) {
+                                    throw new Error('مقاله یافت نشد یا منتشر نشده است.');
+                                }
+                                if (response.status === 400) {
+                                    throw new Error('مقادیر ارسالی نامعتبر است.');
+                                }
+                                return response.json();
+                            })
                             .then(data => {
                                 if (data.success) {
                                     localStorage.setItem('rated_post_' + postId, 'true');
@@ -1092,7 +1109,7 @@
                                 }
                             })
                             .catch(error => {
-                                ratingText.innerHTML = '<span class="text-danger fw-bold"><i class="bi bi-x-circle-fill"></i> خطای ارتباط با سرور.</span>';
+                                ratingText.innerHTML = '<span class="text-danger fw-bold"><i class="bi bi-x-circle-fill"></i> ' + error.message + '</span>';
                                 console.error('Error:', error);
                             });
                         });

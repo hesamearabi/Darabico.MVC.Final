@@ -1,21 +1,21 @@
 ﻿@model final_p_01.Models.BlogListViewModel
 @using System.Text.Json
+@inject final_p_01.Services.ISiteUrlBuilder UrlBuilder
 
 @{
-    // 🚀 SEO: جلوگیری از Duplicate Content در صفحات Pagination
     ViewData["Title"] = Model.CurrentPage > 1 ? $"مجله آموزشی پدل - صفحه {Model.CurrentPage}" : "مجله آموزشی پدل | دارابی کو";
     ViewData["MetaDescription"] = Model.CurrentPage > 1
         ? $"آرشیو مقالات و آموزش‌های تخصصی ساخت زمین پدل دارابی کو - صفحه {Model.CurrentPage}"
         : "مرجع تخصصی مقالات، آموزش‌ها و راهنمای ساخت، تجهیز و سرمایه‌گذاری زمین پدل در ایران.";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-    string absoluteUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}";
+    string rawPath = Context.Request.Path.Value ?? "";
+    string absoluteUrl = UrlBuilder.Absolute(rawPath == "/" ? "" : rawPath.ToLowerInvariant().TrimEnd('/'));
 }
 
 @section Head {
     <link rel="stylesheet" href="~/CSS-SOURCE/index.css" asp-append-version="true" />
 
-    <!-- 🚀 SEO: تگ‌های کنترلی صفحه‌بندی -->
     @if (Model.CurrentPage > 1)
     {
         <link rel="prev" href="@($"{absoluteUrl}?page={Model.CurrentPage - 1}")" />
@@ -25,7 +25,6 @@
         <link rel="next" href="@($"{absoluteUrl}?page={Model.CurrentPage + 1}")" />
     }
 
-    <!-- 🚀 SEO: اسکیمای لیست مقالات -->
     <script type="application/ld+json">
         {
             "@@context": "https://schema.org",
@@ -33,29 +32,28 @@
             "itemListElement": [
                 @if (Model.Posts != null && Model.Posts.Any())
                 {
-                        int index = 1;
-                        var postList = Model.Posts.ToList();
-                        for (int i = 0; i < postList.Count; i++)
-                        {
-                                var post = postList[i];
-                                <text>
-                                {
-                                    "@@type": "ListItem",
-                                    "position": @index,
-                                    "url": "@($"{Context.Request.Scheme}://{Context.Request.Host}/blog/{post.Slug}")",
-                                    "name": @Html.Raw(JsonSerializer.Serialize(post.Title))
-                                }
-                                @(i < postList.Count - 1 ? "," : "")
-                                </text>
-                                index++;
-                        }
+                            int index = 1;
+                            var postList = Model.Posts.ToList();
+                            for (int i = 0; i < postList.Count; i++)
+                            {
+                                        var post = postList[i];
+                                        <text>
+                                        {
+                                            "@@type": "ListItem",
+                                            "position": @index,
+                                            "url": "@UrlBuilder.Absolute($"blog/{post.Slug}")",
+                                            "name": @Html.Raw(JsonSerializer.Serialize(post.Title))
+                                        }
+                                        @(i < postList.Count - 1 ? "," : "")
+                                        </text>
+                                        index++;
+                            }
                 }
             ]
         }
     </script>
 
     <style>
-        /* طراحی مینیمال مشابه اپل */
         .blog-page-wrapper {
             padding: 120px 24px 80px;
             max-width: 1200px;
@@ -150,7 +148,6 @@
             overflow: hidden;
         }
 
-        /* استایل صفحه‌بندی مینیمال */
         .pagination-container {
             display: flex;
             justify-content: center;
@@ -283,7 +280,6 @@
         document.addEventListener("DOMContentLoaded", function() {
             const header = document.getElementById("main-header");
             if (header) {
-                // استفاده از افکت بلور برای هدر مشابه iOS
                 header.style.background = "rgba(255, 255, 255, 0.8)";
                 header.style.backdropFilter = "blur(12px)";
                 header.style.webkitBackdropFilter = "blur(12px)";

@@ -1,4 +1,4 @@
-﻿@model final_p_01.Domain.Entities.AdminUser
+﻿@model final_p_01.Areas.Admin.Models.AdminSettingsViewModel
 
 @{
     ViewData["Title"] = "تنظیمات حساب کاربری";
@@ -6,7 +6,6 @@
 }
 
 <div class="card" style="border-radius: 16px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); max-width: 600px; margin: 0 auto; padding: 30px;">
-
     <h3 class="fw-bold mb-4" style="color: #121D35;"><i class="bi bi-person-gear me-2"></i> تنظیمات امنیتی</h3>
 
     @if (ViewBag.SuccessMessage != null)
@@ -15,21 +14,34 @@
     }
 
     <form asp-action="Index" method="post">
-        <input type="hidden" asp-for="Id" />
-
         <div class="mb-3">
             <label class="form-label fw-bold">نام نمایشی</label>
             <input asp-for="FullName" class="form-control" />
+            <span asp-validation-for="FullName" class="text-danger small"></span>
         </div>
 
         <div class="mb-3">
-            <label class="form-label fw-bold">ایمیل (نام کاربری جدید)</label>
+            <label class="form-label fw-bold">ایمیل (نام کاربری)</label>
             <input asp-for="Email" class="form-control" style="direction: ltr;" />
+            <span asp-validation-for="Email" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">رمز عبور فعلی (جهت تایید تغییرات)</label>
+            <input type="password" asp-for="CurrentPassword" class="form-control" style="direction: ltr;" autocomplete="off" />
+            <span asp-validation-for="CurrentPassword" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">رمز عبور جدید</label>
+            <input type="password" asp-for="NewPassword" class="form-control" style="direction: ltr;" autocomplete="new-password" placeholder="در صورت عدم تغییر، خالی بگذارید..." />
+            <span asp-validation-for="NewPassword" class="text-danger small"></span>
         </div>
 
         <div class="mb-4">
-            <label class="form-label fw-bold">رمز عبور جدید</label>
-            <input type="text" asp-for="Password" class="form-control" style="direction: ltr;" placeholder="در صورت عدم تغییر، خالی بگذارید..." />
+            <label class="form-label fw-bold">تکرار رمز عبور جدید</label>
+            <input type="password" asp-for="ConfirmNewPassword" class="form-control" style="direction: ltr;" autocomplete="new-password" />
+            <span asp-validation-for="ConfirmNewPassword" class="text-danger small"></span>
         </div>
 
         <button type="submit" class="btn w-100 fw-bold" style="background: #121D35; color: #fff; padding: 12px;">

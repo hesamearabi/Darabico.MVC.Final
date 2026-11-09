@@ -29,27 +29,23 @@ namespace final_p_01.Domain.Entities
         [MaxLength(500)]
         public string? CoverImagePath { get; set; }
 
-        // 🚀 SEO: متن جایگزین برای تصویر شاخص مقاله
         [MaxLength(200)]
         public string? CoverImageAlt { get; set; }
 
-        // 🚀 فیچرهای جدید: فایل صوتی (پادکست) و فایل ضمیمه (PDF/ZIP و...)
         [MaxLength(500)]
         public string? AudioFilePath { get; set; }
 
         [MaxLength(500)]
         public string? AttachmentFilePath { get; set; }
 
-        // 🚀 ویژگی‌های جدید برای UI/UX حرفه‌ای دانلود فایل
         [MaxLength(150)]
         public string? AttachmentTitle { get; set; }
 
         [MaxLength(500)]
         public string? AttachmentDescription { get; set; }
 
-        // 🚀 SEO & UX: فیلدهای امتیازدهی ستاره‌ای (برای اسکیمای گوگل بدون نیاز به لاگین)
-        public double AverageRating { get; set; } = 5.0; // پیش‌فرض 5 ستاره
-        public int TotalVotes { get; set; } = 1; // یک رای پیش‌فرض برای اینکه گوگل اسکیما را قبول کند
+        public double AverageRating { get; set; } = 0.0;
+        public int TotalVotes { get; set; } = 0;
 
         public ICollection<Faq> Faqs { get; set; } = new List<Faq>();
     }
