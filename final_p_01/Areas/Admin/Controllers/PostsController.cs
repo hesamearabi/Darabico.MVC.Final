@@ -57,6 +57,30 @@ public class PostsController : Controller
         return text.Trim('-');
     }
 
+    private static string? GetMetaDescriptionWarning(string? metaDescription)
+    {
+        if (string.IsNullOrWhiteSpace(metaDescription))
+        {
+            return "هشدار سئو: توضیحات متا (Meta Description) خالی است. توصیه می‌شود متنی اختصاصی بین ۷۰ تا ۱۶۰ کاراکتر وارد کنید.";
+        }
+
+        if (metaDescription.Length > 160)
+        {
+            return $"هشدار سئو: طول توضیحات متا ({metaDescription.Length} کاراکتر) بیشتر از ۱۶۰ کاراکتر است و ممکن است در نتایج گوگل بریده شود.";
+        }
+
+        return null;
+    }
+
+    private void ApplyMetaDescriptionWarningToModelState(string? metaDescription)
+    {
+        string? warning = GetMetaDescriptionWarning(metaDescription);
+        if (!string.IsNullOrEmpty(warning))
+        {
+            ModelState.AddModelError(nameof(Post.MetaDescription), warning);
+        }
+    }
+
     private async Task<string> ProcessAndSaveImageAsync(IFormFile file, string subFolder)
     {
         if (file == null || file.Length == 0) throw new InvalidOperationException("فایلی ارسال نشده است.");
@@ -229,6 +253,7 @@ public class PostsController : Controller
             if (isSlugExist)
             {
                 ModelState.AddModelError("Slug", "این آدرس (URL) قبلاً ثبت شده یا مشابه آدرس دیگری است.");
+                ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
                 ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
                 return View(post);
             }
@@ -269,12 +294,20 @@ public class PostsController : Controller
 
                 await _outputCacheStore.EvictByTagAsync("BlogCache", default);
 
+                string? metaWarning = GetMetaDescriptionWarning(post.MetaDescription);
+                if (!string.IsNullOrEmpty(metaWarning))
+                {
+                    TempData["WarningMessage"] = metaWarning;
+                    TempData["MetaDescriptionWarning"] = metaWarning;
+                }
+
                 TempData["SuccessMessage"] = "مقاله با موفقیت ذخیره و منتشر شد.";
                 return RedirectToAction("Index", new { t = DateTime.UtcNow.Ticks });
             }
             catch (InvalidOperationException ex)
             {
                 ModelState.AddModelError("", ex.Message);
+                ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
                 ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
                 return View(post);
             }
@@ -286,11 +319,13 @@ public class PostsController : Controller
 
                 _logger.LogError(ex, "System Error during Post Create.");
                 ModelState.AddModelError("", "خطای داخلی رخ داد. مجدداً تلاش کنید.");
+                ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
                 ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
                 return View(post);
             }
         }
 
+        ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
         ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
         return View(post);
     }
@@ -301,6 +336,7 @@ public class PostsController : Controller
         var post = await _context.Posts.Include(p => p.Faqs).FirstOrDefaultAsync(p => p.Id == id);
         if (post == null) return NotFound();
 
+        ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
         ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
         return View(post);
     }
@@ -326,12 +362,35 @@ public class PostsController : Controller
             if (isSlugExist)
             {
                 ModelState.AddModelError("Slug", "این آدرس (URL) قبلاً ثبت شده یا مشابه آدرس دیگری است.");
+                ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
                 ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
                 return View(post);
             }
 
             var existingPost = await _context.Posts.Include(p => p.Faqs).FirstOrDefaultAsync(p => p.Id == id);
             if (existingPost == null) return NotFound();
+
+            bool hasMetadataOrContentChanges =
+                existingPost.Title != post.Title ||
+                existingPost.Slug != post.Slug ||
+                existingPost.Content != post.Content ||
+                existingPost.CategoryId != post.CategoryId ||
+                (existingPost.MetaDescription ?? string.Empty) != (post.MetaDescription ?? string.Empty) ||
+                existingPost.IsPublished != post.IsPublished ||
+                (existingPost.CoverImageAlt ?? string.Empty) != (post.CoverImageAlt ?? string.Empty) ||
+                (existingPost.AttachmentTitle ?? string.Empty) != (post.AttachmentTitle ?? string.Empty) ||
+                (existingPost.AttachmentDescription ?? string.Empty) != (post.AttachmentDescription ?? string.Empty);
+
+            var existingFaqs = existingPost.Faqs
+                .Select(f => (f.Question, f.Answer))
+                .ToList();
+
+            var incomingFaqs = (post.Faqs ?? Enumerable.Empty<Faq>())
+                .Where(f => !string.IsNullOrWhiteSpace(f.Question) && !string.IsNullOrWhiteSpace(f.Answer))
+                .Select(f => (f.Question, f.Answer))
+                .ToList();
+
+            bool hasFaqChanges = !existingFaqs.SequenceEqual(incomingFaqs);
 
             existingPost.Title = post.Title;
             existingPost.Slug = post.Slug;
@@ -388,6 +447,16 @@ public class PostsController : Controller
                     }
                 }
 
+                bool hasMediaChanges =
+                    newlyUploadedImagePath != null ||
+                    newlyUploadedAudioPath != null ||
+                    newlyUploadedAttachmentPath != null;
+
+                if (hasMetadataOrContentChanges || hasMediaChanges || hasFaqChanges)
+                {
+                    existingPost.UpdatedAt = DateTime.UtcNow;
+                }
+
                 await _context.SaveChangesAsync();
 
                 await _outputCacheStore.EvictByTagAsync("BlogCache", default);
@@ -396,12 +465,20 @@ public class PostsController : Controller
                 if (!string.IsNullOrEmpty(oldAudioPathToDelete)) DeleteSecurely(oldAudioPathToDelete);
                 if (!string.IsNullOrEmpty(oldAttachmentPathToDelete)) DeleteSecurely(oldAttachmentPathToDelete);
 
+                string? metaWarning = GetMetaDescriptionWarning(post.MetaDescription);
+                if (!string.IsNullOrEmpty(metaWarning))
+                {
+                    TempData["WarningMessage"] = metaWarning;
+                    TempData["MetaDescriptionWarning"] = metaWarning;
+                }
+
                 TempData["SuccessMessage"] = "تغییرات مقاله با موفقیت ذخیره شد.";
                 return RedirectToAction("Index", new { t = DateTime.UtcNow.Ticks });
             }
             catch (InvalidOperationException ex)
             {
                 ModelState.AddModelError("", ex.Message);
+                ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
                 ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
                 return View(post);
             }
@@ -413,11 +490,13 @@ public class PostsController : Controller
 
                 _logger.LogError(ex, "Error updating Post ID: {PostId}", existingPost.Id);
                 ModelState.AddModelError("", "خطایی در ذخیره اطلاعات رخ داد.");
+                ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
                 ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
                 return View(post);
             }
         }
 
+        ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
         ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
         return View(post);
     }

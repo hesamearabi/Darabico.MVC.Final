@@ -1,4 +1,4 @@
-﻿@model IEnumerable<final_p_01.Domain.Entities.Post>
+﻿@model IEnumerable<final_p_01.Models.PostCardViewModel>
 @using System.Linq
 @inject final_p_01.Services.ISiteUrlBuilder UrlBuilder
 
@@ -832,7 +832,7 @@
                         }
                     </div>
                     <div class="blog-info">
-                        <span class="blog-category">@post.Category?.Name</span>
+                        <span class="blog-category">@post.CategoryName</span>
                         <h3 class="blog-title">@post.Title</h3>
                     </div>
                 </a>

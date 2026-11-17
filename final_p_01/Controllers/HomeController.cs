@@ -1,16 +1,12 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using System.Xml;
+using System.Xml.Linq;
 using final_p_01.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using final_p_01.Infrastructure.Data;
-using System.Collections.Generic;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Cryptography;
 
@@ -35,7 +31,7 @@ namespace final_p_01.Controllers
             { "DimensionsArticle", "/padel-court-construction-guide" },
             { "RulesArticle", "/blog" },
             { "CoverArticle", "/padel-court-construction-guide" },
-            { "ClubManagementArticle", "410" } // Example: Content permanently removed
+            { "ClubManagementArticle", "410" }
         };
 
         public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, IConfiguration configuration, IOutputCacheStore outputCacheStore)
@@ -53,10 +49,20 @@ namespace final_p_01.Controllers
 
             var latestPosts = await _context.Posts
                 .AsNoTracking()
-                .Include(p => p.Category)
                 .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide")
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(homePagePostsCount)
+                .Select(p => new PostCardViewModel
+                {
+                    Id = p.Id,
+                    Slug = p.Slug,
+                    Title = p.Title,
+                    CoverImagePath = p.CoverImagePath,
+                    CoverImageAlt = p.CoverImageAlt,
+                    MetaDescription = p.MetaDescription,
+                    CreatedAt = p.CreatedAt,
+                    CategoryName = p.Category != null ? p.Category.Name : null
+                })
                 .ToListAsync();
 
             return View(latestPosts);
@@ -87,6 +93,17 @@ namespace final_p_01.Controllers
                 .Where(p => p.IsPublished && p.Id != post.Id && p.Slug != "padel-court-construction-guide")
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(4)
+                .Select(p => new PostCardViewModel
+                {
+                    Id = p.Id,
+                    Slug = p.Slug,
+                    Title = p.Title,
+                    CoverImagePath = p.CoverImagePath,
+                    CoverImageAlt = p.CoverImageAlt,
+                    MetaDescription = p.MetaDescription,
+                    CreatedAt = p.CreatedAt,
+                    CategoryName = p.Category != null ? p.Category.Name : null
+                })
                 .ToListAsync();
 
             var viewModel = new PostDetailsViewModel
@@ -113,6 +130,11 @@ namespace final_p_01.Controllers
         [OutputCache(Duration = 3600, Tags = new[] { "BlogCache" })]
         public async Task<IActionResult> Blog([FromQuery] int page = 1)
         {
+            if (Request.Query.ContainsKey("page") && page <= 1)
+            {
+                return RedirectPermanent("/blog");
+            }
+
             int pageSize = _configuration.GetValue<int>("SiteSettings:BlogPageSize", 9);
 
             var query = _context.Posts
@@ -122,14 +144,26 @@ namespace final_p_01.Controllers
             int totalPosts = await query.CountAsync();
             int totalPages = (int)Math.Ceiling(totalPosts / (double)pageSize);
 
-            if (page < 1) page = 1;
-            if (page > totalPages && totalPages > 0) page = totalPages;
+            if (page > 1 && page > totalPages)
+            {
+                return base.NotFound();
+            }
 
             var posts = await query
-                .Include(p => p.Category)
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
+                .Select(p => new PostCardViewModel
+                {
+                    Id = p.Id,
+                    Slug = p.Slug,
+                    Title = p.Title,
+                    CoverImagePath = p.CoverImagePath,
+                    CoverImageAlt = p.CoverImageAlt,
+                    MetaDescription = p.MetaDescription,
+                    CreatedAt = p.CreatedAt,
+                    CategoryName = p.Category != null ? p.Category.Name : null
+                })
                 .ToListAsync();
 
             var viewModel = new BlogListViewModel
@@ -161,6 +195,17 @@ namespace final_p_01.Controllers
                 .Where(p => p.IsPublished && p.Id != guidePost.Id)
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(4)
+                .Select(p => new PostCardViewModel
+                {
+                    Id = p.Id,
+                    Slug = p.Slug,
+                    Title = p.Title,
+                    CoverImagePath = p.CoverImagePath,
+                    CoverImageAlt = p.CoverImageAlt,
+                    MetaDescription = p.MetaDescription,
+                    CreatedAt = p.CreatedAt,
+                    CategoryName = p.Category != null ? p.Category.Name : null
+                })
                 .ToListAsync();
 
             var viewModel = new PostDetailsViewModel
@@ -168,6 +213,17 @@ namespace final_p_01.Controllers
                 Post = guidePost,
                 RelatedPosts = relatedPosts
             };
+
+            ViewData["Title"] = guidePost.Title;
+            if (!string.IsNullOrWhiteSpace(guidePost.MetaDescription))
+            {
+                ViewData["MetaDescription"] = guidePost.MetaDescription;
+            }
+
+            if (!string.IsNullOrWhiteSpace(guidePost.CoverImagePath))
+            {
+                ViewData["OgImage"] = $"https://{Request.Host}{guidePost.CoverImagePath}";
+            }
 
             return View(viewModel);
         }
@@ -200,78 +256,144 @@ namespace final_p_01.Controllers
         }
 
         [Route("sitemap.xml")]
-        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
+        [OutputCache(Duration = 3600, Tags = new[] { "BlogCache" })]
         public async Task<IActionResult> Sitemap()
         {
             var posts = await _context.Posts
                 .AsNoTracking()
                 .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide")
                 .OrderByDescending(p => p.CreatedAt)
+                .Select(p => new
+                {
+                    p.Slug,
+                    p.CreatedAt,
+                    p.UpdatedAt,
+                    p.CoverImagePath
+                })
                 .ToListAsync();
 
-            var xml = new StringBuilder();
-            xml.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-            xml.AppendLine("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\" xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\">");
+            string baseUrl = ResolveBaseUrl();
+            DateTime? newestPostDate = posts.Count > 0
+                ? posts.Max(p => p.UpdatedAt ?? p.CreatedAt)
+                : null;
 
-            var staticPages = new List<(string? Url, string ChangeFreq, string Priority)>
+            XNamespace sitemapNs = "http://www.sitemaps.org/schemas/sitemap/0.9";
+            XNamespace imageNs = "http://www.google.com/schemas/sitemap-image/1.1";
+
+            var urlset = new XElement(
+                sitemapNs + "urlset",
+                new XAttribute(XNamespace.Xmlns + "image", imageNs.NamespaceName));
+
+            var staticPaths = new[]
             {
-                (Url.Action("Index", "Home", null, Request.Scheme), "daily", "1.0"),
-                (Url.Action("about", "Home", null, Request.Scheme), "monthly", "0.8"),
-                (Url.Action("Contact", "Home", null, Request.Scheme), "monthly", "0.8"),
-                (Url.Action("Blog", "Home", null, Request.Scheme), "daily", "0.9"),
-                (Url.Action("PadelGuide", "Home", null, Request.Scheme), "weekly", "0.9")
+                "/",
+                "/about-us",
+                "/contact-us",
+                "/blog",
+                "/padel-court-construction-guide"
             };
 
-            foreach (var page in staticPages)
+            foreach (var path in staticPaths)
             {
-                if (!string.IsNullOrEmpty(page.Url))
+                var urlElement = new XElement(
+                    sitemapNs + "url",
+                    new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, path)));
+
+                if ((path == "/" || path == "/blog") && newestPostDate.HasValue)
                 {
-                    string cleanUrl = page.Url
-                        .Replace("/Home/Contact", "/contact-us", StringComparison.OrdinalIgnoreCase)
-                        .Replace("/Home/about", "/about-us", StringComparison.OrdinalIgnoreCase)
-                        .Replace("/Home/Blog", "/blog", StringComparison.OrdinalIgnoreCase);
-
-                    if (cleanUrl.StartsWith("http://")) cleanUrl = cleanUrl.Replace("http://", "https://");
-
-                    xml.AppendLine("  <url>");
-                    xml.AppendLine($"    <loc>{cleanUrl}</loc>");
-                    xml.AppendLine($"    <changefreq>{page.ChangeFreq}</changefreq>");
-                    xml.AppendLine($"    <priority>{page.Priority}</priority>");
-                    xml.AppendLine("  </url>");
+                    urlElement.Add(new XElement(sitemapNs + "lastmod", newestPostDate.Value.ToString("yyyy-MM-dd")));
                 }
+
+                urlset.Add(urlElement);
             }
 
             foreach (var post in posts)
             {
-                var postUrl = $"https://{Request.Host}/blog/{post.Slug}";
-
-                if (!string.IsNullOrEmpty(postUrl))
+                if (string.IsNullOrWhiteSpace(post.Slug))
                 {
-                    xml.AppendLine("  <url>");
-                    xml.AppendLine($"    <loc>{postUrl}</loc>");
-                    xml.AppendLine($"    <lastmod>{post.CreatedAt:yyyy-MM-dd}</lastmod>");
-                    xml.AppendLine("    <changefreq>weekly</changefreq>");
-                    xml.AppendLine("    <priority>0.7</priority>");
-
-                    if (!string.IsNullOrWhiteSpace(post.CoverImagePath))
-                    {
-                        string absoluteImageUrl = $"https://{Request.Host}{post.CoverImagePath}";
-                        xml.AppendLine("    <image:image>");
-                        xml.AppendLine($"      <image:loc>{absoluteImageUrl}</image:loc>");
-                        if (!string.IsNullOrWhiteSpace(post.CoverImageAlt))
-                        {
-                            xml.AppendLine($"      <image:title>{post.CoverImageAlt}</image:title>");
-                        }
-                        xml.AppendLine("    </image:image>");
-                    }
-
-                    xml.AppendLine("  </url>");
+                    continue;
                 }
+
+                string encodedSlug = EncodePathSegments(post.Slug);
+                string postUrl = BuildAbsoluteUrl(baseUrl, $"/blog/{encodedSlug}");
+                DateTime lastModified = post.UpdatedAt ?? post.CreatedAt;
+
+                var urlElement = new XElement(
+                    sitemapNs + "url",
+                    new XElement(sitemapNs + "loc", postUrl),
+                    new XElement(sitemapNs + "lastmod", lastModified.ToString("yyyy-MM-dd")));
+
+                if (!string.IsNullOrWhiteSpace(post.CoverImagePath))
+                {
+                    string absoluteImageUrl = post.CoverImagePath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                                              post.CoverImagePath.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+                        ? post.CoverImagePath
+                        : BuildAbsoluteUrl(baseUrl, $"/{EncodePathSegments(post.CoverImagePath)}");
+
+                    urlElement.Add(
+                        new XElement(
+                            imageNs + "image",
+                            new XElement(imageNs + "loc", absoluteImageUrl)));
+                }
+
+                urlset.Add(urlElement);
             }
 
-            xml.AppendLine("</urlset>");
+            var document = new XDocument(new XDeclaration("1.0", "utf-8", null), urlset);
 
-            return Content(xml.ToString(), "application/xml");
+            await using var memoryStream = new MemoryStream();
+            var writerSettings = new XmlWriterSettings
+            {
+                Encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+                Indent = true,
+                Async = true
+            };
+
+            await using (var xmlWriter = XmlWriter.Create(memoryStream, writerSettings))
+            {
+                await document.SaveAsync(xmlWriter, HttpContext.RequestAborted);
+            }
+
+            string xmlContent = Encoding.UTF8.GetString(memoryStream.ToArray());
+            return Content(xmlContent, "application/xml", Encoding.UTF8);
+        }
+
+        private string ResolveBaseUrl()
+        {
+            var configuredBaseUrl = _configuration["SiteSettings:BaseUrl"]?.Trim().TrimEnd('/');
+            if (!string.IsNullOrWhiteSpace(configuredBaseUrl))
+            {
+                return configuredBaseUrl;
+            }
+
+            var env = HttpContext?.RequestServices?.GetService<IWebHostEnvironment>();
+            if (env?.IsDevelopment() == true && Request?.Host.HasValue == true)
+            {
+                return $"{Request.Scheme}://{Request.Host}";
+            }
+
+            return "https://darabico.com";
+        }
+
+        private static string BuildAbsoluteUrl(string baseUrl, string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return baseUrl;
+            }
+
+            return $"{baseUrl}/{path.TrimStart('/')}";
+        }
+
+        private static string EncodePathSegments(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return string.Empty;
+            }
+
+            var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            return string.Join("/", segments.Select(Uri.EscapeDataString));
         }
 
         [HttpPost]

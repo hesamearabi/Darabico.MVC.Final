@@ -168,6 +168,9 @@ namespace final_p_01.Infrastructure.Migrations
                     b.Property<int>("TotalVotes")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");

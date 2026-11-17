@@ -4,14 +4,18 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using final_p_01.Areas.Admin.Models;
 using final_p_01.Domain.Entities;
 using final_p_01.Infrastructure.Data;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace final_p_01.Areas.Admin.Controllers;
 
@@ -19,13 +23,28 @@ namespace final_p_01.Areas.Admin.Controllers;
 [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
 public class AuthController : Controller
 {
+    public const string PasswordFingerprintClaimType = "pwd_fp";
+
     private readonly ApplicationDbContext _context;
     private readonly PasswordHasher<AdminUser> _passwordHasher;
+    private readonly IMemoryCache _memoryCache;
+    private readonly ILogger<AuthController> _logger;
+    private readonly int _maxFailedAttempts;
+    private readonly TimeSpan _lockoutDuration;
 
-    public AuthController(ApplicationDbContext context)
+    public AuthController(
+        ApplicationDbContext context,
+        IMemoryCache memoryCache,
+        ILogger<AuthController> logger,
+        IConfiguration configuration)
     {
         _context = context;
+        _memoryCache = memoryCache;
+        _logger = logger;
         _passwordHasher = new PasswordHasher<AdminUser>();
+        _maxFailedAttempts = configuration.GetValue<int?>("AdminAuth:MaxFailedAttempts") ?? 5;
+        var lockoutMinutes = configuration.GetValue<double?>("AdminAuth:LockoutMinutes") ?? 15;
+        _lockoutDuration = TimeSpan.FromMinutes(lockoutMinutes);
     }
 
     [HttpGet]
@@ -42,11 +61,32 @@ public class AuthController : Controller
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("AdminLoginRateLimit")]
     public async Task<IActionResult> Login(LoginViewModel model)
     {
         if (!ModelState.IsValid) return View(model);
 
-        var user = await _context.AdminUsers.FirstOrDefaultAsync(u => u.Email == model.Email);
+        var normalizedEmail = model.Email.Trim();
+        var accountKey = normalizedEmail.ToLowerInvariant();
+        var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var safeEmailForLog = SanitizeForLog(normalizedEmail);
+
+        // NOTE: Lockout counters are stored in local IMemoryCache per application instance.
+        // If deployed across multiple servers or IIS worker processes (Web Garden), switch to IDistributedCache (Redis/SQL Server).
+        if (IsAccountLockedOut(accountKey, out var lockoutEndUtc))
+        {
+            _logger.LogWarning(
+                "Blocked admin login attempt for locked-out account {Email} from IP {ClientIp} until {LockoutEndUtc:O}.",
+                safeEmailForLog,
+                clientIp,
+                lockoutEndUtc);
+
+            await Task.Delay(Random.Shared.Next(1000, 2000));
+            ModelState.AddModelError(string.Empty, "ایمیل یا رمز عبور اشتباه است.");
+            return View(model);
+        }
+
+        var user = await _context.AdminUsers.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
 
         if (user != null && !string.IsNullOrEmpty(user.Password))
         {
@@ -67,10 +107,17 @@ public class AuthController : Controller
                     needsUpgrade = true;
                 }
             }
-            catch (Exception)
+            catch (FormatException)
             {
-                // TODO: Delete this compatibility path once all legacy passwords are migrated to hashes
-                if (CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(user.Password), Encoding.UTF8.GetBytes(model.Password)))
+                // Handled below by legacy plaintext compatibility check
+            }
+
+            // TODO: Delete this legacy plaintext compatibility path once all existing AdminUser rows are migrated to Identity v3 hashes.
+            if (!isPasswordValid && !IsIdentityPasswordHash(user.Password))
+            {
+                if (CryptographicOperations.FixedTimeEquals(
+                    Encoding.UTF8.GetBytes(user.Password),
+                    Encoding.UTF8.GetBytes(model.Password)))
                 {
                     isPasswordValid = true;
                     needsUpgrade = true;
@@ -79,17 +126,19 @@ public class AuthController : Controller
 
             if (isPasswordValid)
             {
+                ClearFailedAttempts(accountKey);
+
                 if (needsUpgrade)
                 {
                     user.Password = _passwordHasher.HashPassword(user, model.Password);
-                    _context.AdminUsers.Update(user);
                     await _context.SaveChangesAsync();
                 }
 
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, user.Email),
-                    new Claim(ClaimTypes.Role, "Administrator")
+                    new Claim(ClaimTypes.Role, "Administrator"),
+                    new Claim(PasswordFingerprintClaimType, ComputePasswordFingerprint(user.Password))
                 };
 
                 var identity = new ClaimsIdentity(claims, "DarabicoAuth");
@@ -98,13 +147,38 @@ public class AuthController : Controller
                 var authProperties = new AuthenticationProperties
                 {
                     IsPersistent = true,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                    AllowRefresh = true
                 };
 
                 await HttpContext.SignInAsync("DarabicoAuth", principal, authProperties);
 
+                _logger.LogInformation(
+                    "Successful admin login for user {AdminId} ({Email}) from IP {ClientIp}.",
+                    user.Id,
+                    safeEmailForLog,
+                    clientIp);
+
                 return RedirectToAction("Index", "Posts", new { area = "Admin" });
             }
+        }
+
+        var attemptState = RecordFailedAttempt(accountKey);
+        if (attemptState.LockoutEndUtc.HasValue)
+        {
+            _logger.LogWarning(
+                "Failed admin login attempt #{FailedCount} for {Email} from IP {ClientIp}. Account temporarily locked until {LockoutEndUtc:O}.",
+                attemptState.FailedCount,
+                safeEmailForLog,
+                clientIp,
+                attemptState.LockoutEndUtc.Value);
+        }
+        else
+        {
+            _logger.LogWarning(
+                "Failed admin login attempt #{FailedCount} for {Email} from IP {ClientIp}.",
+                attemptState.FailedCount,
+                safeEmailForLog,
+                clientIp);
         }
 
         await Task.Delay(Random.Shared.Next(1000, 2000));
@@ -119,6 +193,101 @@ public class AuthController : Controller
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync("DarabicoAuth");
-        return RedirectToAction("Login");
+        return RedirectToAction("Login", "Auth", new { area = "Admin" });
+    }
+
+    public static string ComputePasswordFingerprint(string passwordHash)
+    {
+        var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(passwordHash));
+        return Convert.ToHexString(hashBytes);
+    }
+
+    public static string SanitizeForLog(string value)
+    {
+        return value.Replace("\r", string.Empty).Replace("\n", string.Empty);
+    }
+
+    private static string GetLockoutCacheKey(string normalizedAccountKey) => $"admin_login_lockout:{normalizedAccountKey}";
+
+    private bool IsAccountLockedOut(string normalizedAccountKey, out DateTimeOffset lockoutEndUtc)
+    {
+        lockoutEndUtc = default;
+        if (!_memoryCache.TryGetValue(GetLockoutCacheKey(normalizedAccountKey), out LoginAttemptState? state) || state == null)
+        {
+            return false;
+        }
+
+        lock (state)
+        {
+            if (state.LockoutEndUtc.HasValue && state.LockoutEndUtc.Value > DateTimeOffset.UtcNow)
+            {
+                lockoutEndUtc = state.LockoutEndUtc.Value;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private LoginAttemptState RecordFailedAttempt(string normalizedAccountKey)
+    {
+        var cacheKey = GetLockoutCacheKey(normalizedAccountKey);
+        var state = _memoryCache.GetOrCreate(cacheKey, entry =>
+        {
+            entry.SlidingExpiration = _lockoutDuration;
+            return new LoginAttemptState();
+        })!;
+
+        lock (state)
+        {
+            if (state.LockoutEndUtc.HasValue && state.LockoutEndUtc.Value <= DateTimeOffset.UtcNow)
+            {
+                state.FailedCount = 0;
+                state.LockoutEndUtc = null;
+            }
+
+            state.FailedCount++;
+            if (state.FailedCount >= _maxFailedAttempts)
+            {
+                state.LockoutEndUtc = DateTimeOffset.UtcNow.Add(_lockoutDuration);
+            }
+
+            _memoryCache.Set(cacheKey, state, new MemoryCacheEntryOptions
+            {
+                SlidingExpiration = _lockoutDuration
+            });
+
+            return new LoginAttemptState
+            {
+                FailedCount = state.FailedCount,
+                LockoutEndUtc = state.LockoutEndUtc
+            };
+        }
+    }
+
+    private void ClearFailedAttempts(string normalizedAccountKey)
+    {
+        _memoryCache.Remove(GetLockoutCacheKey(normalizedAccountKey));
+    }
+
+    private sealed class LoginAttemptState
+    {
+        public int FailedCount { get; set; }
+        public DateTimeOffset? LockoutEndUtc { get; set; }
+    }
+
+    // TODO: Delete this helper together with the legacy plaintext compatibility path once all rows are migrated.
+    private static bool IsIdentityPasswordHash(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return false;
+        try
+        {
+            var decoded = Convert.FromBase64String(value);
+            return decoded.Length >= 49 && (decoded[0] == 0x00 || decoded[0] == 0x01);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
     }
 }

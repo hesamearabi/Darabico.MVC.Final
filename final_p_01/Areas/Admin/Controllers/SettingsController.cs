@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -9,11 +8,16 @@ using final_p_01.Areas.Admin.Models;
 using final_p_01.Domain.Entities;
 using final_p_01.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace final_p_01.Areas.Admin.Controllers;
 
+[Area("Admin")]
+[Authorize]
+[ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
 public class SettingsController : AdminBaseController
 {
     private readonly ApplicationDbContext _context;
@@ -26,12 +30,19 @@ public class SettingsController : AdminBaseController
     }
 
     [HttpGet]
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
         var email = User.Identity?.Name;
-        var admin = _context.AdminUsers.FirstOrDefault(a => a.Email == email);
+        if (string.IsNullOrEmpty(email))
+        {
+            return RedirectToAction("Login", "Auth", new { area = "Admin" });
+        }
 
-        if (admin == null) return RedirectToAction("Login", "Auth");
+        var admin = await _context.AdminUsers.FirstOrDefaultAsync(a => a.Email == email);
+        if (admin == null)
+        {
+            return RedirectToAction("Login", "Auth", new { area = "Admin" });
+        }
 
         var model = new AdminSettingsViewModel
         {
@@ -46,77 +57,143 @@ public class SettingsController : AdminBaseController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Index(AdminSettingsViewModel model)
     {
-        if (!ModelState.IsValid) return View(model);
+        if (!ModelState.IsValid)
+        {
+            ClearPasswordFields(model);
+            return View(model);
+        }
 
         var currentEmail = User.Identity?.Name;
-        var admin = _context.AdminUsers.FirstOrDefault(a => a.Email == currentEmail);
-
-        if (admin != null)
+        if (string.IsNullOrEmpty(currentEmail))
         {
-            bool isCurrentPasswordValid = false;
+            return RedirectToAction("Login", "Auth", new { area = "Admin" });
+        }
 
+        var admin = await _context.AdminUsers.FirstOrDefaultAsync(a => a.Email == currentEmail);
+        if (admin == null)
+        {
+            return RedirectToAction("Login", "Auth", new { area = "Admin" });
+        }
+
+        bool isCurrentPasswordValid = false;
+        bool needsUpgrade = false;
+
+        if (!string.IsNullOrEmpty(admin.Password))
+        {
             try
             {
                 var verificationResult = _passwordHasher.VerifyHashedPassword(admin, admin.Password, model.CurrentPassword);
-                if (verificationResult == PasswordVerificationResult.Success || verificationResult == PasswordVerificationResult.SuccessRehashNeeded)
+                if (verificationResult == PasswordVerificationResult.Success)
                 {
                     isCurrentPasswordValid = true;
                 }
-            }
-            catch (Exception)
-            {
-                // TODO: Delete this compatibility path once all legacy passwords are migrated to hashes
-                if (CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(admin.Password), Encoding.UTF8.GetBytes(model.CurrentPassword)))
+                else if (verificationResult == PasswordVerificationResult.SuccessRehashNeeded)
                 {
                     isCurrentPasswordValid = true;
+                    needsUpgrade = true;
                 }
             }
-
-            if (!isCurrentPasswordValid)
+            catch (FormatException)
             {
-                ModelState.AddModelError("CurrentPassword", "رمز عبور فعلی اشتباه است.");
-                return View(model);
+                // Handled below by legacy plaintext compatibility check
             }
 
-            bool emailChanged = admin.Email != model.Email;
-
-            admin.Email = model.Email;
-            admin.FullName = model.FullName;
-
-            if (!string.IsNullOrEmpty(model.NewPassword))
+            // TODO: Delete this legacy plaintext compatibility path once all existing AdminUser rows are migrated to Identity v3 hashes.
+            if (!isCurrentPasswordValid && !IsIdentityPasswordHash(admin.Password))
             {
-                admin.Password = _passwordHasher.HashPassword(admin, model.NewPassword);
-            }
-            else if (admin.Password == model.CurrentPassword)
-            {
-                admin.Password = _passwordHasher.HashPassword(admin, model.CurrentPassword);
-            }
-
-            await _context.SaveChangesAsync();
-            ViewBag.SuccessMessage = "اطلاعات حساب با موفقیت بروزرسانی شد!";
-
-            if (emailChanged)
-            {
-                var claims = new List<Claim>
+                if (CryptographicOperations.FixedTimeEquals(
+                    Encoding.UTF8.GetBytes(admin.Password),
+                    Encoding.UTF8.GetBytes(model.CurrentPassword)))
                 {
-                    new Claim(ClaimTypes.Name, admin.Email),
-                    new Claim(ClaimTypes.Role, "Administrator")
-                };
-                var identity = new ClaimsIdentity(claims, "DarabicoAuth");
-                var principal = new ClaimsPrincipal(identity);
-                var authProperties = new AuthenticationProperties
-                {
-                    IsPersistent = true,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
-                };
-                await HttpContext.SignInAsync("DarabicoAuth", principal, authProperties);
+                    isCurrentPasswordValid = true;
+                    needsUpgrade = true;
+                }
             }
-
-            model.CurrentPassword = string.Empty;
-            model.NewPassword = string.Empty;
-            model.ConfirmNewPassword = string.Empty;
         }
 
+        if (!isCurrentPasswordValid)
+        {
+            ModelState.AddModelError(nameof(model.CurrentPassword), "رمز عبور فعلی اشتباه است.");
+            ClearPasswordFields(model);
+            return View(model);
+        }
+
+        var normalizedEmail = model.Email.Trim();
+        var normalizedFullName = model.FullName.Trim();
+        bool emailChanged = !string.Equals(admin.Email, normalizedEmail, StringComparison.OrdinalIgnoreCase);
+        bool passwordChanged = !string.IsNullOrEmpty(model.NewPassword) || needsUpgrade;
+
+        if (emailChanged)
+        {
+            bool emailExists = await _context.AdminUsers.AnyAsync(a => a.Id != admin.Id && a.Email == normalizedEmail);
+            if (emailExists)
+            {
+                ModelState.AddModelError(nameof(model.Email), "این ایمیل قبلاً ثبت شده است.");
+                ClearPasswordFields(model);
+                return View(model);
+            }
+        }
+
+        admin.Email = normalizedEmail;
+        admin.FullName = normalizedFullName;
+
+        if (!string.IsNullOrEmpty(model.NewPassword))
+        {
+            admin.Password = _passwordHasher.HashPassword(admin, model.NewPassword);
+        }
+        else if (needsUpgrade)
+        {
+            admin.Password = _passwordHasher.HashPassword(admin, model.CurrentPassword);
+        }
+
+        await _context.SaveChangesAsync();
+        ViewBag.SuccessMessage = "اطلاعات حساب با موفقیت بروزرسانی شد!";
+
+        if (emailChanged || passwordChanged)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, admin.Email),
+                new Claim(ClaimTypes.Role, "Administrator"),
+                new Claim(AuthController.PasswordFingerprintClaimType, AuthController.ComputePasswordFingerprint(admin.Password))
+            };
+            var identity = new ClaimsIdentity(claims, "DarabicoAuth");
+            var principal = new ClaimsPrincipal(identity);
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = true,
+                AllowRefresh = true
+            };
+            await HttpContext.SignInAsync("DarabicoAuth", principal, authProperties);
+        }
+
+        ClearPasswordFields(model);
         return View(model);
+    }
+
+    private void ClearPasswordFields(AdminSettingsViewModel model)
+    {
+        model.CurrentPassword = string.Empty;
+        model.NewPassword = null;
+        model.ConfirmNewPassword = null;
+
+        ModelState.Remove(nameof(model.CurrentPassword));
+        ModelState.Remove(nameof(model.NewPassword));
+        ModelState.Remove(nameof(model.ConfirmNewPassword));
+    }
+
+    // TODO: Delete this helper together with the legacy plaintext compatibility path once all rows are migrated.
+    private static bool IsIdentityPasswordHash(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return false;
+        try
+        {
+            var decoded = Convert.FromBase64String(value);
+            return decoded.Length >= 49 && (decoded[0] == 0x00 || decoded[0] == 0x01);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
     }
 }

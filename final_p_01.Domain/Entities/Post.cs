@@ -2,51 +2,51 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace final_p_01.Domain.Entities
+namespace final_p_01.Domain.Entities;
+
+public class Post
 {
-    public class Post
-    {
-        public int Id { get; set; }
+    public int Id { get; set; }
 
-        [Required, MaxLength(200)]
-        public string Title { get; set; }
+    [Required, MaxLength(200)]
+    public string Title { get; set; }
 
-        [Required, MaxLength(200)]
-        public string Slug { get; set; }
+    [Required, MaxLength(200)]
+    public string Slug { get; set; }
 
-        [Required]
-        public string Content { get; set; }
+    [Required]
+    public string Content { get; set; }
 
-        [MaxLength(500)]
-        public string? MetaDescription { get; set; }
+    [MaxLength(500)]
+    public string? MetaDescription { get; set; }
 
-        public bool IsPublished { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public bool IsPublished { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
 
-        public int CategoryId { get; set; }
-        public Category Category { get; set; } = null!;
+    public int CategoryId { get; set; }
+    public Category Category { get; set; } = null!;
 
-        [MaxLength(500)]
-        public string? CoverImagePath { get; set; }
+    [MaxLength(500)]
+    public string? CoverImagePath { get; set; }
 
-        [MaxLength(200)]
-        public string? CoverImageAlt { get; set; }
+    [MaxLength(200)]
+    public string? CoverImageAlt { get; set; }
 
-        [MaxLength(500)]
-        public string? AudioFilePath { get; set; }
+    [MaxLength(500)]
+    public string? AudioFilePath { get; set; }
 
-        [MaxLength(500)]
-        public string? AttachmentFilePath { get; set; }
+    [MaxLength(500)]
+    public string? AttachmentFilePath { get; set; }
 
-        [MaxLength(150)]
-        public string? AttachmentTitle { get; set; }
+    [MaxLength(150)]
+    public string? AttachmentTitle { get; set; }
 
-        [MaxLength(500)]
-        public string? AttachmentDescription { get; set; }
+    [MaxLength(500)]
+    public string? AttachmentDescription { get; set; }
 
-        public double AverageRating { get; set; } = 0.0;
-        public int TotalVotes { get; set; } = 0;
+    public double AverageRating { get; set; } = 0.0;
+    public int TotalVotes { get; set; } = 0;
 
-        public ICollection<Faq> Faqs { get; set; } = new List<Faq>();
-    }
+    public ICollection<Faq> Faqs { get; set; } = new List<Faq>();
 }

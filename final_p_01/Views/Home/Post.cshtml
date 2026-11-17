@@ -19,6 +19,13 @@
     string rawPath = Context.Request.Path.Value ?? "";
     string currentUrl = UrlBuilder.Absolute(rawPath == "/" ? "" : rawPath.ToLowerInvariant().TrimEnd('/'));
 
+    ViewData["Canonical"] = currentUrl;
+    ViewData["OgType"] = "article";
+    ViewData["OgTitle"] = Model.Post.Title;
+    ViewData["OgDescription"] = ViewData["MetaDescription"] ?? Model.Post.Title;
+    ViewData["OgImage"] = absoluteCoverImage;
+    ViewData["TwitterCard"] = "summary_large_image";
+
     var sanitizer = new HtmlSanitizer();
 
     var allowedTags = new[] { "p", "br", "strong", "em", "u", "b", "i", "ul", "ol", "li", "a", "span", "h1", "h2", "h3", "h4", "h5", "h6", "table", "tbody", "thead", "tr", "td", "th", "img", "figure", "figcaption", "blockquote", "iframe", "video", "source", "div" };
@@ -190,6 +197,7 @@
             ["headline"] = Model.Post.Title,
             ["image"] = absoluteCoverImage,
             ["datePublished"] = Model.Post.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            ["dateModified"] = (Model.Post.UpdatedAt ?? Model.Post.CreatedAt).ToString("yyyy-MM-ddTHH:mm:ssZ"),
             ["author"] = authorNode,
             ["publisher"] = publisherNode
         };
@@ -223,13 +231,6 @@
 
     @section Head {
         <link rel="preload" as="image" href="@coverImage" fetchpriority="high" />
-        <link rel="canonical" href="@currentUrl" />
-        <meta property="og:title" content="@ViewData["Title"]" />
-        <meta property="og:description" content="@(ViewData["MetaDescription"] ?? Model?.Post.Title)" />
-        <meta property="og:type" content="article" />
-        <meta property="og:url" content="@currentUrl" />
-        <meta property="og:image" content="@absoluteCoverImage" />
-        <meta name="twitter:card" content="summary_large_image" />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
 
         @if (!string.IsNullOrEmpty(schemaJson))
@@ -257,7 +258,7 @@
                 background-color: var(--pd-bg) !important;
             }
 
-            * {
+            - {
                 box-sizing: border-box;
             }
 
@@ -899,7 +900,7 @@
             </div>
         </header>
 
-        <main role="main" class="pd-container">
+        <article class="pd-container">
             <article class="pd-body">
                 @Html.Raw(processedContent)
             </article>
@@ -999,7 +1000,7 @@
                     </a>
                 </div>
             </section>
-        </main>
+        </article>
 
         @if (Model.RelatedPosts != null && Model.RelatedPosts.Any())
         {
