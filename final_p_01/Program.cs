@@ -31,6 +31,7 @@ builder.Services.Configure<FormOptions>(options =>
 
 builder.Services.AddSingleton<ISiteUrlBuilder, SiteUrlBuilder>();
 builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<IInquiryAttachmentStorage, InquiryAttachmentStorage>();
 
 builder.Services.AddWebEncoders(options =>
 {
@@ -92,6 +93,7 @@ builder.Services.AddOutputCache(options =>
 });
 
 builder.Services.AddMemoryCache();
+builder.Services.AddAuthorization(options => options.AddPolicy("AdminOnly", policy => policy.RequireAuthenticatedUser().RequireRole("Administrator")));
 
 var loginRateLimitPermit = builder.Configuration.GetValue<int?>("AdminAuth:RateLimitPermitLimit") ?? 5;
 var loginRateLimitWindowMinutes = builder.Configuration.GetValue<double?>("AdminAuth:RateLimitWindowMinutes") ?? 10;

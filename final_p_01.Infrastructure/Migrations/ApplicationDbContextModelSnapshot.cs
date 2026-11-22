@@ -500,6 +500,14 @@ namespace final_p_01.Infrastructure.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
+                    b.Property<string>("ApproximateBudget")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("AssignedTo")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
                     b.Property<int?>("BookingSlotId")
                         .HasColumnType("int");
 
@@ -522,6 +530,10 @@ namespace final_p_01.Infrastructure.Migrations
                     b.Property<long?>("EstimatedMinCost")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("EstimatedStartTime")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -529,6 +541,10 @@ namespace final_p_01.Infrastructure.Migrations
 
                     b.Property<bool>("IsHandled")
                         .HasColumnType("bit");
+
+                    b.Property<string>("LandingPage")
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
 
                     b.Property<string>("LeadType")
                         .IsRequired()
@@ -547,9 +563,39 @@ namespace final_p_01.Infrastructure.Migrations
                         .HasMaxLength(15)
                         .HasColumnType("nvarchar(15)");
 
+                    b.Property<int?>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Referrer")
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
                     b.Property<string>("ServiceType")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("SiteType")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Source")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UtmCampaign")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("UtmMedium")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("UtmSource")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("VisitType")
                         .HasMaxLength(50)
@@ -563,9 +609,88 @@ namespace final_p_01.Infrastructure.Migrations
 
                     b.HasIndex("IsHandled");
 
+                    b.HasIndex("ProjectId");
+
                     b.HasIndex("LeadType", "CreatedAtUtc");
 
-                    b.ToTable("InquiryLeads", (string)null);
+                    b.HasIndex("Source", "CreatedAtUtc");
+
+                    b.HasIndex("Status", "CreatedAtUtc", "Id");
+
+                    b.ToTable("InquiryLeads", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_InquiryLeads_Status", "[Status] IN (0,1,2,3,4)");
+                        });
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.InquiryLeadAttachment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<long>("ByteLength")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("InquiryLeadId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("StorageKey")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InquiryLeadId");
+
+                    b.ToTable("InquiryLeadAttachments");
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.InquiryLeadNote", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Author")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("InquiryLeadId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InquiryLeadId");
+
+                    b.ToTable("InquiryLeadNotes");
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.PillarPage", b =>
@@ -831,6 +956,34 @@ namespace final_p_01.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<string>("InquiryBudgetRanges")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("InquiryCities")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("InquiryThanksBody")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("InquiryThanksTitle")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("LeadNotificationEmail")
+                        .HasMaxLength(254)
+                        .HasColumnType("nvarchar(254)");
+
+                    b.Property<string>("LeadNotificationPhone")
+                        .HasMaxLength(11)
+                        .HasColumnType("nvarchar(11)");
+
                     b.Property<string>("PaymentTermsHtml")
                         .HasColumnType("nvarchar(max)");
 
@@ -868,6 +1021,10 @@ namespace final_p_01.Infrastructure.Migrations
                             CanonicalUseWww = false,
                             EnableMultiLanguage = false,
                             FeasibilityPageTitle = "نمونه طرح توجیهی احداث زمین پدل",
+                            InquiryBudgetRanges = "",
+                            InquiryCities = "",
+                            InquiryThanksBody = "کارشناسان دارابیکو برای بررسی پروژه با شما تماس می‌گیرند.",
+                            InquiryThanksTitle = "درخواست شما ثبت شد",
                             UpdatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         });
                 });
@@ -918,7 +1075,36 @@ namespace final_p_01.Infrastructure.Migrations
                         .HasForeignKey("BookingSlotId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Darabico.Domain.Entities.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("BookingSlot");
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.InquiryLeadAttachment", b =>
+                {
+                    b.HasOne("final_p_01.Domain.Entities.InquiryLead", "Lead")
+                        .WithMany("Attachments")
+                        .HasForeignKey("InquiryLeadId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lead");
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.InquiryLeadNote", b =>
+                {
+                    b.HasOne("final_p_01.Domain.Entities.InquiryLead", "Lead")
+                        .WithMany("Notes")
+                        .HasForeignKey("InquiryLeadId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lead");
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.Post", b =>
@@ -958,6 +1144,13 @@ namespace final_p_01.Infrastructure.Migrations
                     b.Navigation("CityMultipliers");
 
                     b.Navigation("MaterialTiers");
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.InquiryLead", b =>
+                {
+                    b.Navigation("Attachments");
+
+                    b.Navigation("Notes");
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.Post", b =>

@@ -1,0 +1,23 @@
+@model final_p_01.Domain.Entities.InquiryLead
+@using final_p_01.Models
+@using final_p_01.Domain.Enums
+@{ ViewData["Title"] = "جزئیات لید"; }
+<section class="lead-panel"><a href="/admin/leads" class="inquiry-back">بازگشت به لیدها</a><h1>@(Model.FullName ?? "بدون نام")</h1><p>ثبت: @LeadPresentation.Date(Model.CreatedAtUtc) · به وقت تهران</p>
+<dl class="lead-filters">
+<div><dt>موبایل</dt><dd><bdi>@Model.Mobile</bdi></dd></div><div><dt>شهر</dt><dd>@Model.City</dd></div>
+<div><dt>نوع محل</dt><dd>@Model.SiteType</dd></div><div><dt>تعداد زمین</dt><dd>@Model.CourtCount</dd></div>
+<div><dt>نوع زمین</dt><dd>@(Model.LeadType == "inquiry" && Model.CourtType is < 3 ? InquiryFormViewModel.CourtTypes[Model.CourtType.Value] : Model.CourtType?.ToString())</dd></div>
+<div><dt>زمان شروع</dt><dd>@Model.EstimatedStartTime</dd></div><div><dt>بودجه تقریبی</dt><dd>@Model.ApproximateBudget</dd></div>
+<div><dt>منبع / نوع لید</dt><dd>@(Model.Source ?? Model.LeadType) / @Model.LeadType</dd></div>
+<div><dt>پروژه مرجع</dt><dd>@Model.ProjectId</dd></div><div><dt>برآورد هزینه (تومان)</dt><dd>@Model.EstimatedMinCost — @Model.EstimatedMaxCost</dd></div>
+<div><dt>صفحه فرود</dt><dd>@Model.LandingPage</dd></div><div><dt>ارجاع‌دهنده</dt><dd>@Model.Referrer</dd></div>
+<div><dt>UTM Source / Medium / Campaign</dt><dd>@Model.UtmSource / @Model.UtmMedium / @Model.UtmCampaign</dd></div>
+</dl><h2>توضیحات</h2><p class="inquiry-thanks">@Model.Message</p>
+<form action="/admin/leads/@Model.Id/update" method="post" class="lead-inline">@Html.AntiForgeryToken()
+<div><label for="Status">وضعیت</label><select id="Status" name="Status" class="form-select">@foreach(var status in Enum.GetValues<LeadStatus>()){<option value="@status" selected="@(Model.Status == status)">@LeadPresentation.Status(status)</option>}</select></div>
+<div><label for="AssignedTo">مسئول پیگیری</label><input id="AssignedTo" name="AssignedTo" value="@Model.AssignedTo" maxlength="150" class="form-input" /></div><button class="btn-submit">ذخیره پیگیری</button></form>
+<h2>فایل‌های خصوصی</h2>@if(Model.Attachments.Count == 0){<p>فایلی ثبت نشده است.</p>}else{<ul>@foreach(var file in Model.Attachments){<li><a class="inquiry-back" href="/admin/leads/attachments/@file.Id">دانلود @file.OriginalFileName</a><span>@LeadPresentation.Date(file.CreatedAtUtc) · @file.ByteLength بایت</span></li>}</ul>}
+<h2>یادداشت‌های داخلی</h2>@if(Model.Notes.Count == 0){<p>هنوز یادداشتی ثبت نشده است.</p>}
+@foreach(var note in Model.Notes.OrderByDescending(n => n.CreatedAtUtc)){<article class="result-card"><p class="inquiry-thanks">@note.Text</p><p class="field-hint">@note.Author · @LeadPresentation.Date(note.CreatedAtUtc)</p></article>}
+<form action="/admin/leads/@Model.Id/notes" method="post">@Html.AntiForgeryToken()<label for="note">یادداشت جدید (فقط برای مدیریت)</label><textarea id="note" name="text" class="form-textarea" required maxlength="2000" rows="4"></textarea><button class="btn-submit">ثبت یادداشت</button></form>
+</section>

@@ -66,6 +66,10 @@
         }
     </div>
 </section>
+<section class="form-page" aria-label="درخواست مشاوره پروژه پدل">
+    <h2 class="form-page__title">پروژه بعدی، زمین پدل شما</h2>
+    @await Component.InvokeAsync("InquiryForm", new { source = "projects" })
+</section>
 
 <style>
     .projects-section {

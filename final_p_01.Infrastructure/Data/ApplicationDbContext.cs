@@ -20,6 +20,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     // جداول فاز ۲ و ۳
     public DbSet<InquiryLead> InquiryLeads => Set<InquiryLead>();
+    public DbSet<InquiryLeadAttachment> InquiryLeadAttachments => Set<InquiryLeadAttachment>();
+    public DbSet<InquiryLeadNote> InquiryLeadNotes => Set<InquiryLeadNote>();
     public DbSet<SiteSettings> SiteSettings => Set<SiteSettings>();
     public DbSet<EstimatorSettings> EstimatorSettings => Set<EstimatorSettings>();
     public DbSet<PillarPage> PillarPages => Set<PillarPage>();
@@ -114,6 +116,12 @@ public class InquiryLeadConfiguration : IEntityTypeConfiguration<InquiryLead>
         builder.HasIndex(l => new { l.LeadType, l.CreatedAtUtc });
         builder.HasIndex(l => l.AccessToken);
         builder.HasIndex(l => l.IsHandled);
+        builder.HasIndex(l => new { l.Status, l.CreatedAtUtc, l.Id });
+        builder.HasIndex(l => new { l.Source, l.CreatedAtUtc });
+        builder.ToTable(t => t.HasCheckConstraint("CK_InquiryLeads_Status", "[Status] IN (0,1,2,3,4)"));
+        builder.HasOne(l => l.Project).WithMany().HasForeignKey(l => l.ProjectId).OnDelete(DeleteBehavior.SetNull);
+        builder.HasMany(l => l.Attachments).WithOne(a => a.Lead).HasForeignKey(a => a.InquiryLeadId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany(l => l.Notes).WithOne(n => n.Lead).HasForeignKey(n => n.InquiryLeadId).OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(l => l.BookingSlot)
                .WithMany()

@@ -5,6 +5,13 @@ namespace final_p_01.Domain.Entities;
 /// <summary>تنظیمات سراسری سایت؛ همیشه فقط یک ردیف با Id = 1 وجود دارد.</summary>
 public class SiteSettings
 {
+    [MaxLength(200)] public string InquiryThanksTitle { get; set; } = "درخواست شما ثبت شد";
+    [MaxLength(2000)] public string InquiryThanksBody { get; set; } = "کارشناسان دارابیکو برای بررسی پروژه با شما تماس می‌گیرند.";
+    [MaxLength(4000)] public string InquiryCities { get; set; } = "";
+    [MaxLength(4000)] public string InquiryBudgetRanges { get; set; } = "";
+    [MaxLength(254)] public string? LeadNotificationEmail { get; set; }
+    [MaxLength(11)] public string? LeadNotificationPhone { get; set; }
+
     public const int SingletonId = 1;
 
     public int Id { get; set; }

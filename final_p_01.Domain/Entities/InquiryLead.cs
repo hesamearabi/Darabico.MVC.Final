@@ -2,10 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace final_p_01.Domain.Entities;
 
-/// <summary>
-/// تک‌جدول لیدهای عمومی سایت. نوع لید در LeadType مشخص می‌شود
-/// ("estimator", "feasibility_pdf", "booking", "aftersales").
-/// </summary>
+
 public class InquiryLead
 {
     public int Id { get; set; }
@@ -48,6 +45,21 @@ public class InquiryLead
     [MaxLength(64)]
     public string? AccessToken { get; set; }
 
+    [MaxLength(100)] public string? SiteType { get; set; }
+    [MaxLength(100)] public string? EstimatedStartTime { get; set; }
+    [MaxLength(150)] public string? ApproximateBudget { get; set; }
+    [MaxLength(50)] public string? Source { get; set; }
+    public int? ProjectId { get; set; }
+    public Darabico.Domain.Entities.Project? Project { get; set; }
+    public final_p_01.Domain.Enums.LeadStatus Status { get; set; }
+    [MaxLength(150)] public string? AssignedTo { get; set; }
+    [MaxLength(2048)] public string? LandingPage { get; set; }
+    [MaxLength(2048)] public string? Referrer { get; set; }
+    [MaxLength(200)] public string? UtmSource { get; set; }
+    [MaxLength(200)] public string? UtmMedium { get; set; }
+    [MaxLength(200)] public string? UtmCampaign { get; set; }
+    public List<InquiryLeadAttachment> Attachments { get; set; } = [];
+    public List<InquiryLeadNote> Notes { get; set; } = [];
     public bool IsHandled { get; set; }
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;

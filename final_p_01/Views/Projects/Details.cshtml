@@ -160,6 +160,10 @@
         </aside>
     </div>
 </article>
+<section class="form-page" aria-label="درخواست مشاوره پروژه">
+    <h2 class="form-page__title">درباره پروژه مشابه مشاوره بگیرید</h2>
+    @await Component.InvokeAsync("InquiryForm", new { source = "projects", projectRef = Model.Id })
+</section>
 
 <!-- Lightbox بومی -->
 <div class="lightbox" id="projectLightbox" hidden aria-modal="true" role="dialog">

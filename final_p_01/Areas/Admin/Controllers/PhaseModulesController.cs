@@ -465,17 +465,8 @@ public class PhaseModulesController : Controller
         await _context.Set<Faq>().AsNoTracking().OrderBy(f => f.PageKey).ThenBy(f => f.SortOrder).ToListAsync();
 
     // ---------- Leads inbox ----------
-    [HttpGet("admin/leads")]
-    public async Task<IActionResult> Leads(string? type)
-    {
-        var query = _context.InquiryLeads.AsNoTracking().AsQueryable();
-        if (!string.IsNullOrWhiteSpace(type))
-            query = query.Where(l => l.LeadType == type);
-
-        var leads = await query.OrderByDescending(l => l.CreatedAtUtc).Take(500).ToListAsync();
-        ViewData["TypeFilter"] = type;
-        return View(leads);
-    }
+    [NonAction]
+    public IActionResult Leads(string? type) => RedirectToAction("Index", "Leads", new { area = "Admin", leadType = type });
 
     [HttpPost("admin/leads/{id:int}/toggle"), ValidateAntiForgeryToken]
     public async Task<IActionResult> ToggleLead(int id)
@@ -484,8 +475,9 @@ public class PhaseModulesController : Controller
         if (lead is not null)
         {
             lead.IsHandled = !lead.IsHandled;
+            lead.Status = lead.IsHandled ? final_p_01.Domain.Enums.LeadStatus.Contacted : final_p_01.Domain.Enums.LeadStatus.New;
             await _context.SaveChangesAsync();
         }
-        return RedirectToAction(nameof(Leads), new { type = lead?.LeadType });
+        return RedirectToAction("Index", "Leads", new { area = "Admin", leadType = lead?.LeadType });
     }
 }

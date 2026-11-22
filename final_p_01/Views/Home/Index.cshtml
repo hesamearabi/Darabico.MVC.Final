@@ -882,6 +882,11 @@
     </div>
 </section>
 
+<section class="form-page" aria-label="درخواست مشاوره ساخت زمین پدل">
+    <h2 class="form-page__title">برای پروژه خود مشاوره بگیرید</h2>
+    @await Component.InvokeAsync("InquiryForm", new { source = "home" })
+</section>
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const counters = document.querySelectorAll(".about__stat-number");
