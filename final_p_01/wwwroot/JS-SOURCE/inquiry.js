@@ -43,7 +43,12 @@
         back.hidden = false;
         progress.hidden = false;
         steps.forEach(step => step.querySelector('legend').tabIndex = -1);
-        show(form.querySelector('[data-valmsg-for="FullName"].field-validation-error:not(:empty), [data-valmsg-for="Mobile"].field-validation-error:not(:empty), [data-valmsg-for="Files"].field-validation-error:not(:empty)') ? 1 : 0);
+        show(steps[1].querySelector('.field-validation-error:not(:empty)') && !steps[0].querySelector('.field-validation-error:not(:empty)') ? 1 : 0);
+        window.addEventListener('pageshow', () => {
+            submit.disabled = false;
+            submit.removeAttribute('aria-busy');
+            submit.querySelector('span').textContent = 'ثبت درخواست و دریافت مشاوره';
+        });
         next.addEventListener('click', () => { if (validate(steps[0])) show(1, true); });
         back.addEventListener('click', () => show(0, true));
         form.addEventListener('submit', event => {

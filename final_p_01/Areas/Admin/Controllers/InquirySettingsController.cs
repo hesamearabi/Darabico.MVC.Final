@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace final_p_01.Areas.Admin.Controllers;
 
-[Area("Admin"), Authorize(Policy = "AdminOnly"), Route("admin/inquiry-settings")]
+[Area("Admin"), Authorize(Policy = "AdminOnly"), Route("admin/inquiry-settings"), Route("admin/InquirySettings")]
 public class InquirySettingsController(ApplicationDbContext db) : Controller
 {
     [HttpGet("")]

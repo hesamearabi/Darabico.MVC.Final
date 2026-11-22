@@ -105,6 +105,53 @@ public class InquiryTests
         public Stream Open(string key) => throw new InvalidOperationException();
         public void Delete(string key) => throw new InvalidOperationException();
     }
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task MissingStorageRootCreatesDurablePrivateFallback(string? configuredRoot)
+    {
+        var parent = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var contentRoot = Path.Combine(parent, "site");
+        var expectedRoot = Path.Combine(parent, "App_Data", "inquiry-attachments");
+        var environment = new TestEnvironment { ContentRootPath = contentRoot, WebRootPath = Path.Combine(contentRoot, "wwwroot") };
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["InquiryStorage:Root"] = configuredRoot }).Build();
+        try
+        {
+            var storage = new InquiryAttachmentStorage(configuration, environment);
+            Assert.True(Directory.Exists(expectedRoot));
+            var pdf = "%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\n%%EOF"u8.ToArray();
+            var file = new FormFile(new MemoryStream(pdf), 0, pdf.Length, "Files", "site.pdf");
+            var attachment = await storage.SaveAsync(file, CancellationToken.None);
+            Assert.True(File.Exists(Path.Combine(expectedRoot, attachment.StorageKey)));
+            using (var stream = new InquiryAttachmentStorage(configuration, environment).Open(attachment.StorageKey))
+            using (var copy = new MemoryStream())
+            {
+                await stream.CopyToAsync(copy);
+                Assert.Equal(pdf, copy.ToArray());
+            }
+            storage.Delete(attachment.StorageKey);
+            Assert.False(File.Exists(Path.Combine(expectedRoot, attachment.StorageKey)));
+        }
+        finally { if (Directory.Exists(parent)) Directory.Delete(parent, true); }
+    }
+
+    [Theory]
+    [InlineData("relative")]
+    [InlineData("wwwroot")]
+    [InlineData("wwwroot/")]
+    [InlineData("wwwroot/uploads")]
+    [InlineData("private/../wwwroot/uploads")]
+    public void ExplicitInvalidStorageRootIsRejected(string path)
+    {
+        var parent = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var environment = new TestEnvironment { ContentRootPath = parent, WebRootPath = Path.Combine(parent, "wwwroot") };
+        var root = path == "relative" ? path : Path.Combine(parent, path);
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["InquiryStorage:Root"] = root }).Build();
+        Assert.Throws<InvalidOperationException>(() => new InquiryAttachmentStorage(configuration, environment));
+        Assert.False(Directory.Exists(parent));
+    }
+
     private class TestEnvironment : IWebHostEnvironment
     {
         public string ApplicationName { get; set; } = "test";

@@ -17,11 +17,14 @@ public sealed class InquiryAttachmentStorage : IInquiryAttachmentStorage
     public InquiryAttachmentStorage(IConfiguration configuration, IWebHostEnvironment environment)
     {
         var configured = configuration["InquiryStorage:Root"];
-        if (string.IsNullOrWhiteSpace(configured) || !Path.IsPathFullyQualified(configured))
+        if (string.IsNullOrWhiteSpace(configured))
+            configured = Path.GetFullPath(Path.Combine(environment.ContentRootPath, "..", "App_Data", "inquiry-attachments"));
+        else if (!Path.IsPathFullyQualified(configured))
             throw new InvalidOperationException("Configure InquiryStorage:Root as an absolute durable private storage path.");
-        root = Path.GetFullPath(configured);
-        var webRoot = Path.GetFullPath(environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot"));
-        if (root == webRoot || root.StartsWith(webRoot + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+        root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(configured));
+        var webRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot")));
+        var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        if (root.Equals(webRoot, comparison) || root.StartsWith(webRoot + Path.DirectorySeparatorChar, comparison))
             throw new InvalidOperationException("Inquiry storage must be outside wwwroot.");
         Directory.CreateDirectory(root);
     }
