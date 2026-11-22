@@ -1,0 +1,38 @@
+@model IEnumerable<final_p_01.Domain.Entities.BookingSlot>
+@{
+    ViewData["Title"] = "اسلات‌های بازدید";
+}
+<div class="container py-4" dir="rtl">
+    <h1>اسلات‌های بازدید</h1>
+    <table class="table">
+        <thead><tr><th>تاریخ</th><th>ساعت</th><th>ظرفیت</th><th>رزروشده</th><th>وضعیت</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var slot in Model)
+        {
+            <tr>
+                <td>@slot.Date.ToString("yyyy/MM/dd")</td>
+                <td>@slot.StartTime تا @slot.EndTime</td>
+                <td>@slot.Capacity</td>
+                <td>@slot.BookedCount</td>
+                <td>@(slot.IsActive ? "فعال" : "غیرفعال")</td>
+                <td>
+                    <form method="post" asp-action="ToggleBookingSlot" asp-route-id="@slot.Id" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-sm btn-outline-secondary">تغییر وضعیت</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <h2 class="mt-4">اسلات جدید</h2>
+    <form method="post" asp-action="CreateBookingSlot" class="row g-2">
+        @Html.AntiForgeryToken()
+        <div class="col-md-3"><label class="form-label">تاریخ (میلادی)</label><input name="Date" type="date" class="form-control" required /></div>
+        <div class="col-md-2"><label class="form-label">از ساعت</label><input name="StartTime" class="form-control" dir="ltr" value="09:00" required /></div>
+        <div class="col-md-2"><label class="form-label">تا ساعت</label><input name="EndTime" class="form-control" dir="ltr" value="10:00" required /></div>
+        <div class="col-md-2"><label class="form-label">ظرفیت</label><input name="Capacity" type="number" min="1" class="form-control" value="1" /></div>
+        <div class="col-md-2 d-flex align-items-end"><button class="btn btn-outline-primary">افزودن</button></div>
+    </form>
+</div>

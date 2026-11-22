@@ -1,0 +1,56 @@
+@model IEnumerable<final_p_01.Domain.Entities.InquiryLead>
+@{
+    ViewData["Title"] = "صندوق لیدها";
+    var typeFilter = (string?)ViewData["TypeFilter"];
+    var filters = new (string Value, string Label)[]
+    {
+        ("", "همه"), ("estimator", "برآوردگر"), ("feasibility_pdf", "طرح توجیهی"),
+        ("booking", "رزرو بازدید"), ("aftersales", "خدمات پس از اجرا")
+    };
+}
+<div class="container py-4" dir="rtl">
+    <h1>صندوق لیدها</h1>
+    <div class="mb-3">
+        @foreach (var filter in filters)
+        {
+            <a class="btn btn-sm @(typeFilter == filter.Value ? "btn-primary" : "btn-outline-secondary")"
+               asp-action="Leads" asp-route-type="@filter.Value">@filter.Label</a>
+        }
+    </div>
+    <table class="table">
+        <thead><tr><th>نوع</th><th>نام</th><th>موبایل</th><th>جزئیات</th><th>تاریخ</th><th>وضعیت</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var lead in Model)
+        {
+            <tr class="@(lead.IsHandled ? "table-light" : "")">
+                <td>@lead.LeadType</td>
+                <td>@lead.FullName</td>
+                <td dir="ltr">@lead.Mobile</td>
+                <td class="small">
+                    @if (lead.BookingSlotId is not null)
+                    {
+                        <span>اسلات @lead.BookingSlotId — </span>
+                    }
+                    @if (lead.EstimatedMinCost is not null)
+                    {
+                        <span>@lead.EstimatedMinCost?.ToString("N0") تا @lead.EstimatedMaxCost?.ToString("N0") تومان — </span>
+                    }
+                    @if (!string.IsNullOrEmpty(lead.ServiceType))
+                    {
+                        <span>@lead.ServiceType (@lead.VisitType) — </span>
+                    }
+                    @lead.Message
+                </td>
+                <td class="small">@lead.CreatedAtUtc.ToString("yyyy/MM/dd HH:mm")</td>
+                <td>@(lead.IsHandled ? "پیگیری شد" : "جدید")</td>
+                <td>
+                    <form method="post" asp-action="ToggleLead" asp-route-id="@lead.Id" asp-route-type="@typeFilter" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-sm btn-outline-secondary">تغییر وضعیت</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

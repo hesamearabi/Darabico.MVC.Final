@@ -1,0 +1,47 @@
+@model final_p_01.Controllers.FeasibilityLeadViewModel
+@{
+    ViewData["Title"] = Model.MetaTitle ?? "نمونه طرح توجیهی احداث زمین پدل";
+    if (!string.IsNullOrEmpty(Model.MetaDescription))
+    {
+        ViewData["Description"] = Model.MetaDescription;
+    }
+}
+<main class="container py-5" dir="rtl">
+    <h1>@(Model.PageTitle ?? "نمونه طرح توجیهی")</h1>
+    @if (!string.IsNullOrEmpty(Model.PageIntro))
+    {
+        <p class="text-muted">@Model.PageIntro</p>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.DownloadToken) && Model.PdfConfigured)
+    {
+        <div class="alert alert-success">
+            <p>ثبت شد. فایل نمونه طرح توجیهی آماده دانلود است:</p>
+            <a class="btn btn-success" href="/feasibility-study/download?token=@Model.DownloadToken" download>دانلود فایل PDF</a>
+        </div>
+    }
+    else
+    {
+        <form method="post" asp-action="Index" class="row g-3">
+            @Html.AntiForgeryToken()
+            <div class="col-md-6">
+                <label asp-for="FullName" class="form-label"></label>
+                <input asp-for="FullName" class="form-control" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Mobile" class="form-label">شماره موبایل</label>
+                <input asp-for="Mobile" class="form-control" inputmode="tel" dir="ltr" />
+                <span asp-validation-for="Mobile" class="text-danger"></span>
+            </div>
+            <input type="text" name="Website" value="" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true" />
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">دریافت نمونه طرح توجیهی</button>
+            </div>
+        </form>
+    }
+</main>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

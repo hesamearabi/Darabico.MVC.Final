@@ -1,0 +1,57 @@
+@model final_p_01.Domain.Entities.SiteSettings
+@{
+    ViewData["Title"] = "تنظیمات سایت";
+}
+<div class="container py-4" dir="rtl">
+    <h1>تنظیمات سایت</h1>
+    @if (TempData["Success"] is not null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <form method="post" asp-action="SiteSettingsForm" class="row g-3">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+
+        <h2 class="mt-4">هاست کانونی (SEO)</h2>
+        <div class="col-md-6"><label class="form-label">هاست</label><input asp-for="CanonicalHost" class="form-control" dir="ltr" /></div>
+        <div class="col-md-6 d-flex align-items-end">
+            <div class="form-check">
+                <input asp-for="CanonicalUseWww" class="form-check-input" />
+                <label asp-for="CanonicalUseWww" class="form-check-label">استفاده از www</label>
+            </div>
+        </div>
+
+        <h2 class="mt-4">ویدیوی کارگاه</h2>
+        <div class="col-md-6"><label class="form-label">آدرس ویدیو</label><input asp-for="WorkshopVideoUrl" class="form-control" dir="ltr" /></div>
+        <div class="col-md-6"><label class="form-label">پوستر ویدیو</label><input asp-for="WorkshopVideoPosterUrl" class="form-control" dir="ltr" /></div>
+        <div class="col-md-6"><label class="form-label">عنوان</label><input asp-for="WorkshopVideoTitle" class="form-control" /></div>
+        <div class="col-md-6"><label class="form-label">توضیحات</label><input asp-for="WorkshopVideoDescription" class="form-control" /></div>
+
+        <h2 class="mt-4">صفحه نمونه طرح توجیهی</h2>
+        <div class="col-md-6"><label class="form-label">مسیر فایل PDF</label><input asp-for="FeasibilityPdfPath" class="form-control" dir="ltr" placeholder="/files/feasibility-sample.pdf" /></div>
+        <div class="col-md-6"><label class="form-label">عنوان صفحه</label><input asp-for="FeasibilityPageTitle" class="form-control" /></div>
+        <div class="col-12"><label class="form-label">مقدمه صفحه</label><textarea asp-for="FeasibilityPageIntro" rows="2" class="form-control"></textarea></div>
+        <div class="col-md-6"><label class="form-label">Meta Title</label><input asp-for="FeasibilityMetaTitle" class="form-control" /></div>
+        <div class="col-md-6"><label class="form-label">Meta Description</label><input asp-for="FeasibilityMetaDescription" class="form-control" /></div>
+
+        <h2 class="mt-4">صفحه فرایند اجرا</h2>
+        <div class="col-12"><label class="form-label">شیوه پرداخت (HTML)</label><textarea asp-for="PaymentTermsHtml" rows="4" class="form-control" dir="ltr"></textarea></div>
+        <div class="col-12"><label class="form-label">ضمانت و خدمات پس از اجرا (HTML)</label><textarea asp-for="WarrantyHtml" rows="4" class="form-control" dir="ltr"></textarea></div>
+
+        <h2 class="mt-4">خدمات پس از اجرا</h2>
+        <div class="col-12"><label class="form-label">مقدمه صفحه</label><textarea asp-for="AfterSalesIntro" rows="2" class="form-control"></textarea></div>
+
+        <h2 class="mt-4">زبان</h2>
+        <div class="col-12">
+            <div class="form-check form-switch">
+                <input asp-for="EnableMultiLanguage" class="form-check-input" role="switch" />
+                <label asp-for="EnableMultiLanguage" class="form-check-label">
+                    فعال‌سازی زیرساخت چندزبانه (انگلیسی/عربی) — پیش‌فرض خاموش
+                </label>
+            </div>
+        </div>
+
+        <div class="col-12"><button class="btn btn-primary">ذخیره</button></div>
+    </form>
+</div>

@@ -1,0 +1,38 @@
+@model IEnumerable<final_p_01.Domain.Entities.ProcessStage>
+@{
+    ViewData["Title"] = "مراحل فرایند اجرا";
+}
+<div class="container py-4" dir="rtl">
+    <h1>مراحل فرایند اجرا</h1>
+    <table class="table">
+        <thead><tr><th>شماره</th><th>عنوان</th><th>مدت</th><th>وضعیت</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var stage in Model)
+        {
+            <tr>
+                <td>@stage.StepNumber</td>
+                <td>@stage.Title</td>
+                <td>@stage.EstimatedDuration</td>
+                <td>@(stage.IsActive ? "فعال" : "غیرفعال")</td>
+                <td>
+                    <form method="post" asp-action="ToggleProcessStage" asp-route-id="@stage.Id" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-sm btn-outline-secondary">تغییر وضعیت</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <h2 class="mt-4">مرحله جدید</h2>
+    <form method="post" asp-action="CreateProcessStage" class="row g-2">
+        @Html.AntiForgeryToken()
+        <div class="col-md-4"><input name="Title" class="form-control" placeholder="عنوان" required /></div>
+        <div class="col-md-6"><textarea name="Description" class="form-control" placeholder="توضیحات" required></textarea></div>
+        <div class="col-md-2"><input name="EstimatedDuration" class="form-control" placeholder="مثلا ۲ هفته" /></div>
+        <div class="col-md-2"><input name="StepNumber" type="number" class="form-control" placeholder="شماره" /></div>
+        <div class="col-md-2"><input name="SortOrder" type="number" class="form-control" placeholder="ترتیب" /></div>
+        <div class="col-md-2"><button class="btn btn-outline-primary">افزودن</button></div>
+    </form>
+</div>

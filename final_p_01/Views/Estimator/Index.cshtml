@@ -1,0 +1,83 @@
+@model final_p_01.Controllers.EstimatorFormViewModel
+@{
+    ViewData["Title"] = "برآوردگر هزینه احداث زمین پدل";
+}
+<main class="container py-5" dir="rtl">
+    <h1>برآوردگر هزینه احداث زمین پدل</h1>
+    <p class="text-muted">مشخصات زمین موردنظر خود را وارد کنید تا بازه هزینه برآورد شود.</p>
+
+    @if (Model.Result is not null)
+    {
+        <div class="alert alert-success">
+            <h2>بازه برآورد هزینه</h2>
+            <p>برای @Model.CourtCount زمین @(Model.CourtType == 2 ? "سرپوشیده" : "روباز"):</p>
+            <p class="fw-bold fs-4">
+                @Model.Result.MinCost.ToString("N0") تا @Model.Result.MaxCost.ToString("N0") تومان
+            </p>
+            @if (!string.IsNullOrEmpty(Model.Result.Disclaimer))
+            {
+                <p class="small text-muted">@Model.Result.Disclaimer</p>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-warning">@Model.ErrorMessage</div>
+    }
+
+    <form method="post" asp-action="Index" class="row g-3">
+        @Html.AntiForgeryToken()
+        <div class="col-md-6">
+            <label asp-for="FullName" class="form-label"></label>
+            <input asp-for="FullName" class="form-control" />
+            <span asp-validation-for="FullName" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Mobile" class="form-label">شماره موبایل</label>
+            <input asp-for="Mobile" class="form-control" inputmode="tel" dir="ltr" />
+            <span asp-validation-for="Mobile" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="CourtType" class="form-label">نوع زمین</label>
+            <select asp-for="CourtType" class="form-select">
+                <option value="1">روباز</option>
+                <option value="2">سرپوشیده</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="CourtCount" class="form-label">تعداد زمین</label>
+            <input asp-for="CourtCount" type="number" min="1" max="50" class="form-control" />
+            <span asp-validation-for="CourtCount" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="City" class="form-label">شهر</label>
+            <select asp-for="City" class="form-select">
+                <option value="">— انتخاب شهر —</option>
+                @foreach (var city in Model.CityMultipliers)
+                {
+                    <option value="@city.City">@city.City</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="MaterialTier" class="form-label">سطح کیفیت متریال</label>
+            <select asp-for="MaterialTier" class="form-select">
+                <option value="">— انتخاب کنید —</option>
+                @foreach (var tier in Model.MaterialTiers)
+                {
+                    <option value="@tier.Title">@tier.Title</option>
+                }
+            </select>
+        </div>
+        @* تله ضداسپم *@
+        <input type="text" name="Website" value="" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true" />
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">محاسبه هزینه</button>
+        </div>
+    </form>
+</main>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

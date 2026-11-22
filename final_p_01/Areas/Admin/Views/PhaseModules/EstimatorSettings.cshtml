@@ -1,0 +1,91 @@
+@model final_p_01.Domain.Entities.EstimatorSettings
+@{
+    ViewData["Title"] = "تنظیمات برآوردگر هزینه";
+}
+<div class="container py-4" dir="rtl">
+    <h1>تنظیمات برآوردگر هزینه</h1>
+    @if (TempData["Success"] is not null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <form method="post" asp-action="EstimatorSettingsForm" class="row g-3">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <div class="col-md-4">
+            <label class="form-label">قیمت پایه هر زمین روباز (تومان)</label>
+            <input asp-for="BasePricePerCourtOutdoor" type="number" class="form-control" min="0" step="1000" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">قیمت پایه هر زمین سرپوشیده (تومان)</label>
+            <input asp-for="BasePricePerCourtIndoor" type="number" class="form-control" min="0" step="1000" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">ضریب سقف</label>
+            <input asp-for="UpperBoundMultiplier" type="number" class="form-control" min="1" max="3" step="0.01" />
+        </div>
+        <div class="col-12">
+            <label class="form-label">سلب مسئولیت</label>
+            <textarea asp-for="Disclaimer" rows="2" class="form-control"></textarea>
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">ذخیره</button>
+        </div>
+    </form>
+
+    <h2 class="mt-5">سطح‌های متریال</h2>
+    <table class="table">
+        <thead><tr><th>عنوان</th><th>ضریب</th><th>ترتیب</th><th>وضعیت</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var tier in Model.MaterialTiers)
+        {
+            <tr>
+                <td>@tier.Title</td>
+                <td>@tier.Multiplier</td>
+                <td>@tier.SortOrder</td>
+                <td>@(tier.IsActive ? "فعال" : "غیرفعال")</td>
+                <td>
+                    <form method="post" asp-action="ToggleTier" asp-route-id="@tier.Id" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-sm btn-outline-secondary">تغییر وضعیت</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <form method="post" asp-action="AddTier" class="row g-2">
+        @Html.AntiForgeryToken()
+        <div class="col-md-4"><input name="title" class="form-control" placeholder="عنوان" required /></div>
+        <div class="col-md-2"><input name="multiplier" type="number" step="0.01" min="0.1" class="form-control" placeholder="ضریب" /></div>
+        <div class="col-md-2"><input name="sortOrder" type="number" class="form-control" placeholder="ترتیب" /></div>
+        <div class="col-md-2"><button class="btn btn-outline-primary">افزودن</button></div>
+    </form>
+
+    <h2 class="mt-5">ضریب شهرها</h2>
+    <table class="table">
+        <thead><tr><th>شهر</th><th>ضریب</th><th>وضعیت</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var city in Model.CityMultipliers)
+        {
+            <tr>
+                <td>@city.City</td>
+                <td>@city.Multiplier</td>
+                <td>@(city.IsActive ? "فعال" : "غیرفعال")</td>
+                <td>
+                    <form method="post" asp-action="ToggleCity" asp-route-id="@city.Id" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-sm btn-outline-secondary">تغییر وضعیت</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <form method="post" asp-action="AddCity" class="row g-2">
+        @Html.AntiForgeryToken()
+        <div class="col-md-4"><input name="city" class="form-control" placeholder="شهر" required /></div>
+        <div class="col-md-2"><input name="multiplier" type="number" step="0.01" min="0.1" class="form-control" placeholder="ضریب" /></div>
+        <div class="col-md-2"><button class="btn btn-outline-primary">افزودن</button></div>
+    </form>
+</div>

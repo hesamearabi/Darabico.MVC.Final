@@ -177,7 +177,48 @@ namespace final_p_01.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AdminUsers");
+                    b.ToTable("AdminUsers", (string)null);
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.BookingSlot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookedCount")
+                        .IsConcurrencyToken()
+                        .HasColumnType("int");
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<string>("EndTime")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("StartTime")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Date", "IsActive");
+
+                    b.ToTable("BookingSlots", (string)null);
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.Category", b =>
@@ -200,7 +241,219 @@ namespace final_p_01.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+<<<<<<< ours
                     b.ToTable("Categories");
+=======
+                    b.ToTable("Categories", (string)null);
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.CityPage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Canonical")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("CityName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ContentHtml")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsPublished")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetaDescription")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("MetaTitle")
+                        .HasMaxLength(160)
+                        .HasColumnType("nvarchar(160)");
+
+                    b.Property<string>("OgImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(220)
+                        .HasColumnType("nvarchar(220)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("CityPages", (string)null);
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.DocumentItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<long>("FileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsPublished")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsPublished", "SortOrder");
+
+                    b.ToTable("DocumentItems", (string)null);
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.EstimatorCityMultiplier", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("EstimatorSettingsId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("Multiplier")
+                        .HasPrecision(5, 3)
+                        .HasColumnType("decimal(5,3)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EstimatorSettingsId");
+
+                    b.ToTable("EstimatorCityMultiplier", (string)null);
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.EstimatorMaterialTier", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EstimatorSettingsId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("Multiplier")
+                        .HasPrecision(5, 3)
+                        .HasColumnType("decimal(5,3)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EstimatorSettingsId");
+
+                    b.ToTable("EstimatorMaterialTier", (string)null);
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.EstimatorSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<long>("BasePricePerCourtIndoor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BasePricePerCourtOutdoor")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Disclaimer")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("UpperBoundMultiplier")
+                        .HasPrecision(5, 3)
+                        .HasColumnType("decimal(5,3)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EstimatorSettings", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            BasePricePerCourtIndoor = 0L,
+                            BasePricePerCourtOutdoor = 0L,
+                            UpdatedAtUtc = new DateTime(2026, 11, 22, 17, 18, 59, 430, DateTimeKind.Utc).AddTicks(4808),
+                            UpperBoundMultiplier = 1.35m
+                        });
+>>>>>>> theirs
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.Faq", b =>
@@ -215,7 +468,11 @@ namespace final_p_01.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("PostId")
+                    b.Property<string>("PageKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("PostId")
                         .HasColumnType("int");
 
                     b.Property<string>("Question")
@@ -223,11 +480,156 @@ namespace final_p_01.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("PageKey");
 
                     b.HasIndex("PostId");
 
-                    b.ToTable("Faqs");
+                    b.ToTable("Faqs", (string)null);
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.InquiryLead", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AccessToken")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int?>("BookingSlotId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("CourtCount")
+                        .HasColumnType("int");
+
+                    b.Property<byte?>("CourtType")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("EstimatedMaxCost")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("EstimatedMinCost")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<bool>("IsHandled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LeadType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("MaterialTier")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Mobile")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
+
+                    b.Property<string>("ServiceType")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("VisitType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccessToken");
+
+                    b.HasIndex("BookingSlotId");
+
+                    b.HasIndex("IsHandled");
+
+                    b.HasIndex("LeadType", "CreatedAtUtc");
+
+                    b.ToTable("InquiryLeads", (string)null);
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.PillarPage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Canonical")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ContentHtml")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsPublished")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MetaDescription")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("MetaTitle")
+                        .HasMaxLength(160)
+                        .HasColumnType("nvarchar(160)");
+
+                    b.Property<string>("OgImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(220)
+                        .HasColumnType("nvarchar(220)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.HasIndex("IsPublished", "SortOrder");
+
+                    b.ToTable("PillarPages", (string)null);
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.Post", b =>
@@ -254,8 +656,16 @@ namespace final_p_01.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<string>("AuthorName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
                     b.Property<double>("AverageRating")
                         .HasColumnType("float");
+
+                    b.Property<string>("Canonical")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
@@ -282,6 +692,13 @@ namespace final_p_01.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<string>("MetaTitle")
+                        .HasMaxLength(160)
+                        .HasColumnType("nvarchar(160)");
+
+                    b.Property<DateTime?>("PublishedAtUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -302,7 +719,14 @@ namespace final_p_01.Infrastructure.Migrations
 
                     b.HasIndex("CategoryId");
 
+<<<<<<< ours
                     b.ToTable("Posts");
+=======
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("Posts", (string)null);
+>>>>>>> theirs
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.PostSlugHistory", b =>
@@ -328,7 +752,165 @@ namespace final_p_01.Infrastructure.Migrations
 
                     b.HasIndex("PostId");
 
+<<<<<<< ours
                     b.ToTable("PostSlugHistories");
+=======
+                    b.ToTable("PostSlugHistories", (string)null);
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.ProcessStage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EstimatedDuration")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("IconClass")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StepNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive", "SortOrder");
+
+                    b.ToTable("ProcessStages", (string)null);
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.SiteSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AfterSalesIntro")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("CanonicalHost")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("CanonicalUseWww")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("EnableMultiLanguage")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("FeasibilityMetaDescription")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("FeasibilityMetaTitle")
+                        .HasMaxLength(160)
+                        .HasColumnType("nvarchar(160)");
+
+                    b.Property<string>("FeasibilityPageIntro")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FeasibilityPageTitle")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("FeasibilityPdfPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("PaymentTermsHtml")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("WarrantyHtml")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("WorkshopVideoDescription")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("WorkshopVideoPosterUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("WorkshopVideoTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("WorkshopVideoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SiteSettings", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CanonicalHost = "darabico.com",
+                            CanonicalUseWww = false,
+                            EnableMultiLanguage = false,
+                            FeasibilityPageTitle = "نمونه طرح توجیهی احداث زمین پدل",
+                            UpdatedAtUtc = new DateTime(2026, 11, 22, 17, 18, 59, 427, DateTimeKind.Utc).AddTicks(5289)
+                        });
+                });
+
+            modelBuilder.Entity("Darabico.Domain.Entities.ProjectImage", b =>
+                {
+                    b.HasOne("Darabico.Domain.Entities.Project", "Project")
+                        .WithMany("Images")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.EstimatorCityMultiplier", b =>
+                {
+                    b.HasOne("final_p_01.Domain.Entities.EstimatorSettings", null)
+                        .WithMany("CityMultipliers")
+                        .HasForeignKey("EstimatorSettingsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.EstimatorMaterialTier", b =>
+                {
+                    b.HasOne("final_p_01.Domain.Entities.EstimatorSettings", null)
+                        .WithMany("MaterialTiers")
+                        .HasForeignKey("EstimatorSettingsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+>>>>>>> theirs
                 });
 
             modelBuilder.Entity("Darabico.Domain.Entities.ProjectImage", b =>
@@ -347,10 +929,19 @@ namespace final_p_01.Infrastructure.Migrations
                     b.HasOne("final_p_01.Domain.Entities.Post", "Post")
                         .WithMany("Faqs")
                         .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Post");
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.InquiryLead", b =>
+                {
+                    b.HasOne("final_p_01.Domain.Entities.BookingSlot", "BookingSlot")
+                        .WithMany()
+                        .HasForeignKey("BookingSlotId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("BookingSlot");
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.Post", b =>
@@ -383,6 +974,13 @@ namespace final_p_01.Infrastructure.Migrations
             modelBuilder.Entity("final_p_01.Domain.Entities.Category", b =>
                 {
                     b.Navigation("Posts");
+                });
+
+            modelBuilder.Entity("final_p_01.Domain.Entities.EstimatorSettings", b =>
+                {
+                    b.Navigation("CityMultipliers");
+
+                    b.Navigation("MaterialTiers");
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.Post", b =>
