@@ -1,14 +1,16 @@
 ﻿using System.Diagnostics;
+using System.Net;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
+using final_p_01.Infrastructure.Data;
 using final_p_01.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
-using Microsoft.EntityFrameworkCore;
-using final_p_01.Infrastructure.Data;
 using Microsoft.AspNetCore.RateLimiting;
-using System.Security.Cryptography;
+using Microsoft.EntityFrameworkCore;
 
 namespace final_p_01.Controllers
 {
@@ -19,8 +21,6 @@ namespace final_p_01.Controllers
         private readonly IConfiguration _configuration;
         private readonly IOutputCacheStore _outputCacheStore;
 
-        // TODO: Owner to confirm mappings. Use /padel-court-construction-guide for guide topics, /blog for others.
-        // Some examples below are mapped to 410 Gone to show how to handle permanently removed content.
         private static readonly Dictionary<string, string> LegacyRedirects = new(StringComparer.OrdinalIgnoreCase)
         {
             { "padelgrass", "/padel-court-construction-guide" },
@@ -88,23 +88,7 @@ namespace final_p_01.Controllers
 
             if (post == null) return base.NotFound();
 
-            var relatedPosts = await _context.Posts
-                .AsNoTracking()
-                .Where(p => p.IsPublished && p.Id != post.Id && p.Slug != "padel-court-construction-guide")
-                .OrderByDescending(p => p.CreatedAt)
-                .Take(4)
-                .Select(p => new PostCardViewModel
-                {
-                    Id = p.Id,
-                    Slug = p.Slug,
-                    Title = p.Title,
-                    CoverImagePath = p.CoverImagePath,
-                    CoverImageAlt = p.CoverImageAlt,
-                    MetaDescription = p.MetaDescription,
-                    CreatedAt = p.CreatedAt,
-                    CategoryName = p.Category != null ? p.Category.Name : null
-                })
-                .ToListAsync();
+            var relatedPosts = await GetRelatedPostsAsync(post.Id, post.CategoryId);
 
             var viewModel = new PostDetailsViewModel
             {
@@ -113,14 +97,11 @@ namespace final_p_01.Controllers
             };
 
             ViewData["Title"] = post.Title;
-            if (!string.IsNullOrWhiteSpace(post.MetaDescription))
-            {
-                ViewData["MetaDescription"] = post.MetaDescription;
-            }
+            ViewData["MetaDescription"] = ResolveMetaDescription(post.MetaDescription, post.Content, post.Title);
 
             if (!string.IsNullOrWhiteSpace(post.CoverImagePath))
             {
-                ViewData["OgImage"] = $"https://{Request.Host}{post.CoverImagePath}";
+                ViewData["OgImage"] = BuildAbsoluteUrl(ResolveBaseUrl(), post.CoverImagePath);
             }
 
             return View(viewModel);
@@ -182,6 +163,7 @@ namespace final_p_01.Controllers
         {
             var guidePost = await _context.Posts
                 .AsNoTracking()
+                .Include(p => p.Category)
                 .Include(p => p.Faqs)
                 .FirstOrDefaultAsync(p => p.Slug == "padel-court-construction-guide" && p.IsPublished);
 
@@ -190,23 +172,7 @@ namespace final_p_01.Controllers
                 return base.NotFound();
             }
 
-            var relatedPosts = await _context.Posts
-                .AsNoTracking()
-                .Where(p => p.IsPublished && p.Id != guidePost.Id)
-                .OrderByDescending(p => p.CreatedAt)
-                .Take(4)
-                .Select(p => new PostCardViewModel
-                {
-                    Id = p.Id,
-                    Slug = p.Slug,
-                    Title = p.Title,
-                    CoverImagePath = p.CoverImagePath,
-                    CoverImageAlt = p.CoverImageAlt,
-                    MetaDescription = p.MetaDescription,
-                    CreatedAt = p.CreatedAt,
-                    CategoryName = p.Category != null ? p.Category.Name : null
-                })
-                .ToListAsync();
+            var relatedPosts = await GetRelatedPostsAsync(guidePost.Id, guidePost.CategoryId);
 
             var viewModel = new PostDetailsViewModel
             {
@@ -215,14 +181,11 @@ namespace final_p_01.Controllers
             };
 
             ViewData["Title"] = guidePost.Title;
-            if (!string.IsNullOrWhiteSpace(guidePost.MetaDescription))
-            {
-                ViewData["MetaDescription"] = guidePost.MetaDescription;
-            }
+            ViewData["MetaDescription"] = ResolveMetaDescription(guidePost.MetaDescription, guidePost.Content, guidePost.Title);
 
             if (!string.IsNullOrWhiteSpace(guidePost.CoverImagePath))
             {
-                ViewData["OgImage"] = $"https://{Request.Host}{guidePost.CoverImagePath}";
+                ViewData["OgImage"] = BuildAbsoluteUrl(ResolveBaseUrl(), guidePost.CoverImagePath);
             }
 
             return View(viewModel);
@@ -243,7 +206,7 @@ namespace final_p_01.Controllers
         [Route("Home/{actionName}")]
         public IActionResult LegacyRedirect(string actionName)
         {
-            if (LegacyRedirects.TryGetValue(actionName, out string targetPath))
+            if (LegacyRedirects.TryGetValue(actionName, out string? targetPath) && !string.IsNullOrEmpty(targetPath))
             {
                 if (targetPath == "410")
                 {
@@ -358,6 +321,68 @@ namespace final_p_01.Controllers
             return Content(xmlContent, "application/xml", Encoding.UTF8);
         }
 
+        private async Task<List<PostCardViewModel>> GetRelatedPostsAsync(int currentPostId, int? categoryId)
+        {
+            var query = _context.Posts
+                .AsNoTracking()
+                .Where(p => p.IsPublished && p.Id != currentPostId && p.Slug != "padel-court-construction-guide");
+
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                int targetCategoryId = categoryId.Value;
+                query = query
+                    .OrderByDescending(p => p.CategoryId == targetCategoryId)
+                    .ThenByDescending(p => p.CreatedAt);
+            }
+            else
+            {
+                query = query.OrderByDescending(p => p.CreatedAt);
+            }
+
+            return await query
+                .Take(4)
+                .Select(p => new PostCardViewModel
+                {
+                    Id = p.Id,
+                    Slug = p.Slug,
+                    Title = p.Title,
+                    CoverImagePath = p.CoverImagePath,
+                    CoverImageAlt = p.CoverImageAlt,
+                    MetaDescription = p.MetaDescription,
+                    CreatedAt = p.CreatedAt,
+                    CategoryName = p.Category != null ? p.Category.Name : null
+                })
+                .ToListAsync();
+        }
+
+        private static string ResolveMetaDescription(string? metaDescription, string? htmlContent, string? fallbackTitle)
+        {
+            if (!string.IsNullOrWhiteSpace(metaDescription))
+            {
+                return metaDescription.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(htmlContent))
+            {
+                string plainText = Regex.Replace(htmlContent, "<[^>]+>", " ");
+                plainText = WebUtility.HtmlDecode(plainText);
+                plainText = Regex.Replace(plainText, "\\s+", " ").Trim();
+
+                if (!string.IsNullOrWhiteSpace(plainText))
+                {
+                    if (plainText.Length <= 155)
+                    {
+                        return plainText;
+                    }
+
+                    int lastSpace = plainText.LastIndexOf(' ', 152);
+                    return (lastSpace > 80 ? plainText.Substring(0, lastSpace) : plainText.Substring(0, 152)).TrimEnd() + "...";
+                }
+            }
+
+            return fallbackTitle ?? string.Empty;
+        }
+
         private string ResolveBaseUrl()
         {
             var configuredBaseUrl = _configuration["SiteSettings:BaseUrl"]?.Trim().TrimEnd('/');
@@ -380,6 +405,12 @@ namespace final_p_01.Controllers
             if (string.IsNullOrEmpty(path))
             {
                 return baseUrl;
+            }
+
+            if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                path.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                return path;
             }
 
             return $"{baseUrl}/{path.TrimStart('/')}";

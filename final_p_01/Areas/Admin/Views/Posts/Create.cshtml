@@ -185,7 +185,7 @@
                 </div>
 
                 <div class="mb-5">
-                    <label asp-for="Content" class="form-label">متن اصلی مقاله</label>
+                    <label asp-for="Content" class="form-label">متن اصلی مقاله <span class="form-hint">از H2 تا H4 استفاده کنید و برای تصاویر Alt بنویسید</span></label>
                     <textarea asp-for="Content" id="Content" class="form-control" rows="15"></textarea>
                 </div>
 
@@ -229,7 +229,6 @@
                     <input asp-for="CoverImageAlt" class="form-control" placeholder="توضیح کوتاه درباره عکس کاور..." />
                 </div>
 
-                <!-- 🚀 ویژگی دانلود فایل ضمیمه با UI اختصاصی -->
                 <div class="mb-4 p-3 rounded-4" style="border: 1px solid var(--border-color); background: #f8fafc;">
                     <label class="form-label text-success mb-3 border-bottom pb-2">
                         <i class="bi bi-file-earmark-pdf-fill me-2"></i> باکس دانلود فایل (PDF/Zip)
@@ -288,7 +287,7 @@
             var file = input.files[0];
             if (file) {
                 var reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     document.getElementById('previewImg').src = e.target.result;
                     document.getElementById('previewImg').style.display = 'block';
                     document.getElementById('uploadContent').style.display = 'none';
@@ -350,16 +349,17 @@
             selector: '#Content',
             directionality: 'rtl',
             height: 600,
-
-            // 🚀 تنظیمات اضافه شده برای رفع مشکل آدرس‌های نسبی عکس‌ها
             relative_urls: false,
             remove_script_host: true,
             document_base_url: '/',
-
+            block_formats: 'پاراگراف=p; تیتر ۲ (بخش اصلی)=h2; تیتر ۳ (زیربخش)=h3; تیتر ۴=h4',
             plugins: 'preview importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media table charmap pagebreak nonbreaking anchor insertdatetime advlist lists wordcount help charmap quickbars emoticons',
             toolbar: 'undo redo | smartmedia custompdf | bold italic underline strikethrough | fontfamily fontsize blocks | alignleft aligncenter alignright alignjustify | outdent indent | numlist bullist | forecolor backcolor removeformat | image link | code preview fullscreen',
             toolbar_mode: 'sliding',
             image_title: true,
+            image_description: true,
+            image_dimensions: true,
+            a11y_advanced_options: true,
             media_live_embeds: false,
             extended_valid_elements: 'iframe[*],video[*],source[*],div[*],p[*],a[*]',
             content_style: 'body { font-family: Tahoma, Arial, sans-serif; font-size: 16px; line-height: 1.8; }',
@@ -379,7 +379,9 @@
                 var html = processVideoLink(url, false);
                 if (html) {
                     args.content = html;
+                    return;
                 }
+                args.content = args.content.replace(/<(\/?)h1(\b[^>]*)>/gi, '<$1h2$2>');
             },
 
             setup: function (editor) {
@@ -464,6 +466,23 @@
                     formData.append('upload', blobInfo.blob(), blobInfo.filename());
                     xhr.send(formData);
                 });
+            }
+        });
+
+        document.getElementById('postForm')?.addEventListener('submit', function (e) {
+            if (typeof tinymce !== 'undefined') {
+                tinymce.triggerSave();
+                const editor = tinymce.get('Content');
+                if (editor) {
+                    const doc = new DOMParser().parseFromString(editor.getContent(), 'text/html');
+                    const missingAlt = Array.from(doc.querySelectorAll('img')).filter(img => !img.hasAttribute('alt'));
+                    if (missingAlt.length > 0) {
+                        const proceed = confirm(`تعداد ${missingAlt.length} تصویر داخل متن فاقد توضیح Alt است (برای تصاویر تزئینی می‌توانید تیک «Image is decorative» را بزنید). آیا مایل به ادامه ذخیره هستید؟`);
+                        if (!proceed) {
+                            e.preventDefault();
+                        }
+                    }
+                }
             }
         });
 

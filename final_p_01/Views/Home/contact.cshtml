@@ -1,60 +1,76 @@
-﻿@{
+﻿@inject final_p_01.Services.ISiteUrlBuilder UrlBuilder
+@{
     Layout = "_Layout";
-    ViewData["Title"] = "ارتباط با ما";
+    ViewData["Title"] = "تماس و مشاوره ساخت زمین پدل";
     ViewData["MetaDescription"] = "راه‌های ارتباط با دارابی کو؛ تماس با دفتر مرکزی و کارخانه در ساری جهت مشاوره تخصصی و استعلام هزینه ساخت زمین پدل استاندارد.";
-    string absoluteUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}";
+    string currentUrl = UrlBuilder.Absolute("contact-us");
+    string homeUrl = UrlBuilder.Absolute("");
+    string logoUrl = UrlBuilder.Absolute("siteLOGO/sitelogo.png");
+
+    ViewData["Canonical"] = currentUrl;
+    ViewData["OgImage"] = UrlBuilder.Absolute("H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp");
+    ViewData["OgImageWidth"] = "1920";
+    ViewData["OgImageHeight"] = "1080";
+    ViewData["OgImageAlt"] = "تماس با دارابی کو جهت مشاوره و استعلام هزینه ساخت زمین پدل";
+    ViewData["TwitterCard"] = "summary_large_image";
 }
 
 @section Head {
     <script type="application/ld+json">
         {
           "@@context": "https://schema.org",
-          "@@graph": [
-            {
-              "@@type": "ContactPage",
-              "@@id": "@absoluteUrl",
-              "url": "@absoluteUrl",
-              "name": "تماس با دارابی کو",
-              "description": "راه‌های ارتباطی با دفتر مرکزی و کارخانه تولیدی هلدینگ دارابی جهت مشاوره و استعلام هزینه ساخت زمین پدل."
-            },
-            {
-              "@@type": "GeneralContractor",
-              "name": "هلدینگ دارابی (دارابی کو)",
-              "image": "@($"{Context.Request.Scheme}://{Context.Request.Host}/siteLOGO/sitelogo.png")",
-              "url": "@($"{Context.Request.Scheme}://{Context.Request.Host}")",
-              "telephone": ["+989111515971", "+989121729882"],
-              "address": [
-                {
-                  "@@type": "PostalAddress",
-                  "streetAddress": "بلوار خزر، خیابان دریا ۴، فروشگاه دارابی",
-                  "addressLocality": "ساری",
-                  "addressRegion": "مازندران",
-                  "addressCountry": "IR",
-                  "name": "دفتر مرکزی هلدینگ"
-                },
-                {
-                  "@@type": "PostalAddress",
-                  "streetAddress": "کیلومتر ۲۰ جاده فرح آباد، شهرک صنعتی شماره ۲، قطعه D5",
-                  "addressLocality": "ساری",
-                  "addressRegion": "مازندران",
-                  "addressCountry": "IR",
-                  "name": "کارخانه تولید شیشه و سازه"
-                }
-              ],
-              "openingHoursSpecification": {
-                "@@type": "OpeningHoursSpecification",
-                "dayOfWeek": [
-                  "Saturday",
-                  "Sunday",
-                  "Monday",
-                  "Tuesday",
-                  "Wednesday"
-                ],
-                "opens": "08:00",
-                "closes": "17:00"
+          "@@type": "ContactPage",
+          "@@id": "@currentUrl",
+          "url": "@currentUrl",
+          "name": "تماس با دارابی کو",
+          "description": "راه‌های ارتباطی با دفتر مرکزی و کارخانه تولیدی هلدینگ دارابی جهت مشاوره و استعلام هزینه ساخت زمین پدل.",
+          "mainEntity": {
+            "@@type": "Organization",
+            "name": "هلدینگ دارابی (دارابی کو)",
+            "url": "@homeUrl",
+            "logo": "@logoUrl",
+            "telephone": ["+989111515971", "+989121729882"],
+            "address": [
+              {
+                "@@type": "PostalAddress",
+                "streetAddress": "بلوار خزر، خیابان دریا ۴، فروشگاه دارابی",
+                "addressLocality": "ساری",
+                "addressRegion": "مازندران",
+                "addressCountry": "IR",
+                "name": "دفتر مرکزی هلدینگ"
+              },
+              {
+                "@@type": "PostalAddress",
+                "streetAddress": "کیلومتر ۲۰ جاده فرح آباد، شهرک صنعتی شماره ۲، قطعه D5",
+                "addressLocality": "ساری",
+                "addressRegion": "مازندران",
+                "addressCountry": "IR",
+                "name": "کارخانه تولید شیشه و سازه"
               }
-            }
-          ]
+            ],
+            "contactPoint": [
+              {
+                "@@type": "ContactPoint",
+                "telephone": "+989111515971",
+                "contactType": "sales",
+                "areaServed": "IR",
+                "availableLanguage": "Persian",
+                "hoursAvailable": {
+                  "@@type": "OpeningHoursSpecification",
+                  "dayOfWeek": ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday"],
+                  "opens": "08:00",
+                  "closes": "17:00"
+                }
+              },
+              {
+                "@@type": "ContactPoint",
+                "telephone": "+989121729882",
+                "contactType": "technical support",
+                "areaServed": "IR",
+                "availableLanguage": "Persian"
+              }
+            ]
+          }
         }
     </script>
 
@@ -75,7 +91,7 @@
         }
 
             .page-title-section h1 {
-                font-size: 3rem;
+                font-size: clamp(2.1rem, 4vw, 3rem);
                 font-weight: 900;
                 margin-bottom: 10px;
             }
@@ -224,7 +240,7 @@
 
     <div class="page-title-section">
         <div class="container">
-            <h1>تماس با ما</h1>
+            <h1>تماس با دارابی کو</h1>
             <p>مشاوره تخصصی و استعلام هزینه ساخت زمین پدل</p>
         </div>
     </div>
@@ -263,7 +279,7 @@
                             <span class="c-icon" aria-hidden="true">📍</span>
                             <span>دفتر مرکزی هلدینگ</span>
                         </div>
-                        <span class="c-value" style="font-size:1rem; direction:rtl;">ساری، بلوار خزر، خیابان دریا 4 ، فروشگاه دارابی</span>
+                        <span class="c-value" style="font-size:1rem; direction:rtl;">ساری، بلوار خزر، خیابان دریا ۴، فروشگاه دارابی</span>
                     </div>
                 </div>
 
@@ -285,6 +301,7 @@
         <script>
             document.addEventListener("DOMContentLoaded", () => {
                 const container = document.querySelector('.floating-container');
+                if (!container) return;
                 container.style.opacity = '0';
                 container.style.transform = 'translateY(30px)';
                 container.style.transition = 'all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)';

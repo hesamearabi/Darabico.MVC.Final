@@ -3,13 +3,17 @@
 @inject final_p_01.Services.ISiteUrlBuilder UrlBuilder
 
 @{
-    ViewData["Title"] = Model.CurrentPage > 1 ? $"مجله آموزشی پدل - صفحه {Model.CurrentPage}" : "مجله آموزشی پدل | دارابی کو";
+    ViewData["Title"] = Model.CurrentPage > 1 ? $"مجله آموزشی پدل - صفحه {Model.CurrentPage}" : "مجله آموزشی پدل";
     ViewData["MetaDescription"] = Model.CurrentPage > 1
         ? $"آرشیو مقالات و آموزش‌های تخصصی ساخت زمین پدل دارابی کو - صفحه {Model.CurrentPage}"
         : "مرجع تخصصی مقالات، آموزش‌ها و راهنمای ساخت، تجهیز و سرمایه‌گذاری زمین پدل در ایران.";
     ViewData["Canonical"] = Model.CurrentPage > 1
         ? UrlBuilder.Absolute($"blog?page={Model.CurrentPage}")
         : UrlBuilder.Absolute("blog");
+    ViewData["OgImage"] = UrlBuilder.Absolute("H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp");
+    ViewData["OgImageWidth"] = "1920";
+    ViewData["OgImageHeight"] = "1080";
+    ViewData["OgImageAlt"] = "مجله آموزشی ساخت و تجهیز زمین پدل دارابی کو";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -23,22 +27,22 @@
             "itemListElement": [
                 @if (Model.Posts != null && Model.Posts.Any())
                 {
-                                    int index = 1;
-                                    var postList = Model.Posts.ToList();
-                                    for (int i = 0; i < postList.Count; i++)
-                                    {
-                                                        var post = postList[i];
-                                                        <text>
-                                                        {
-                                                            "@@type": "ListItem",
-                                                            "position": @index,
-                                                            "url": "@UrlBuilder.Absolute($"blog/{post.Slug}")",
-                                                            "name": @Html.Raw(JsonSerializer.Serialize(post.Title))
-                                                        }
-                                                        @(i < postList.Count - 1 ? "," : "")
-                                                        </text>
-                                                        index++;
-                                    }
+                        int index = 1;
+                        var postList = Model.Posts.ToList();
+                        for (int i = 0; i < postList.Count; i++)
+                        {
+                                var post = postList[i];
+                                <text>
+                                {
+                                    "@@type": "ListItem",
+                                    "position": @index,
+                                    "url": "@UrlBuilder.Absolute($"blog/{post.Slug}")",
+                                    "name": @Html.Raw(JsonSerializer.Serialize(post.Title))
+                                }
+                                @(i < postList.Count - 1 ? "," : "")
+                                </text>
+                                index++;
+                        }
                 }
             ]
         }
@@ -197,18 +201,15 @@
     <div class="blog-cards" dir="rtl">
         @if (Model.Posts != null && Model.Posts.Any())
         {
+            int cardIndex = 0;
             foreach (var post in Model.Posts)
             {
+                bool isFirstRow = cardIndex < 3;
+                string cardAlt = !string.IsNullOrWhiteSpace(post.CoverImageAlt) ? post.CoverImageAlt : post.Title;
+                string imageSrc = !string.IsNullOrEmpty(post.CoverImagePath) ? Url.Content(post.CoverImagePath) : Url.Content("~/H-IMG/133.webp");
                 <a asp-controller="Home" asp-action="Post" asp-route-slug="@post.Slug" class="blog-card" aria-label="مطالعه مقاله @post.Title">
                     <div class="blog-img">
-                        @if (!string.IsNullOrEmpty(post.CoverImagePath))
-                        {
-                            <img src="@post.CoverImagePath" alt="@post.Title" loading="lazy">
-                        }
-                        else
-                        {
-                            <img src="@Url.Content("~/H-IMG/133.webp")" alt="@post.Title" loading="lazy">
-                        }
+                        <img src="@imageSrc" alt="@cardAlt" width="640" height="360" loading="@(isFirstRow ? "eager" : "lazy")" decoding="@(isFirstRow ? "sync" : "async")" fetchpriority="@(cardIndex == 0 ? "high" : null)">
                     </div>
                     <div class="blog-info">
                         <span class="blog-category">
@@ -217,6 +218,7 @@
                         <h2 class="blog-title">@post.Title</h2>
                     </div>
                 </a>
+                cardIndex++;
             }
         }
         else

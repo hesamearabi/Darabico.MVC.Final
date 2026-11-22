@@ -3,8 +3,12 @@
 @inject final_p_01.Services.ISiteUrlBuilder UrlBuilder
 
 @{
-    ViewData["Title"] = "مرجع تخصصی ساخت و تجهیز زمین های پدل";
+    ViewData["Title"] = "ساخت زمین پدل و تجهیزات استاندارد FIP";
     ViewData["MetaDescription"] = "دارابی‌کو، مجری تخصصی و بی‌واسطه صفر تا صد ساخت زمین پدل در ایران. تولید مستقیم شیشه، اجرای چمن مصنوعی، سازه و ارائه طرح توجیهی با استاندارد FIP.";
+    ViewData["OgImage"] = UrlBuilder.Absolute("H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp");
+    ViewData["OgImageWidth"] = "1920";
+    ViewData["OgImageHeight"] = "1080";
+    ViewData["OgImageAlt"] = "طراحی و ساخت زمین پدل استاندارد FIP - دارابی کو";
 }
 
 @section Head {
@@ -143,7 +147,6 @@
             overflow: hidden;
             display: flex;
             align-items: flex-end;
-            text-decoration: none;
             box-shadow: 0 4px 12px rgba(0,0,0,0.06);
             background: #000;
         }
@@ -298,10 +301,10 @@
             border: 3px solid #fff;
         }
 
-            .community-promo-card h3 {
+            .community-promo-card .promo-card-title {
                 font-size: 1.05rem;
                 font-weight: 800;
-                margin-bottom: 10px;
+                margin: 0 0 10px 0;
                 line-height: 1.4;
             }
 
@@ -380,11 +383,11 @@
             color: #fff;
         }
 
-        .feature-content h4 {
+        .feature-content h3 {
             font-size: 1rem;
             font-weight: 700;
             color: var(--text-dark);
-            margin-bottom: 5px;
+            margin: 0 0 5px 0;
         }
 
         .feature-content p {
@@ -623,7 +626,7 @@
                 align-items: center;
             }
 
-                .community-promo-card h3 br {
+                .community-promo-card .promo-card-title br {
                     display: none;
                 }
 
@@ -661,28 +664,6 @@
                 }
         }
     </style>
-}
-
-@section Hero {
-    <div class="hero">
-        <img src="@Url.Content("~/H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp")" alt="طراحی و ساخت زمین پدل استاندارد در ایران" class="hero-bg-img" fetchpriority="high" width="1920" height="1080">
-        <div class="hero-overlay"></div>
-        <div class="hero-content">
-            <h1 class="hero-title">
-                <span class="d-block">ساخت زمین پدل</span>
-                <span class="highlight">استاندارد FIP</span>
-                <span class="d-block">با کیفیت صادراتی بدون واسطه</span>
-            </h1>
-            <p class="hero-subtitle">دارابی‌کو؛ از تولید انحصاری شیشه تا اجرای کامل سازه، چمن و تجهیزات پدل.</p>
-
-            <div class="hero-actions" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                <a asp-controller="home" asp-action="contact" class="hero-consult-btn">استعلام هزینه ساخت زمین پدل</a>
-                <a asp-controller="Home" asp-action="Post" asp-route-slug="padel-court-construction-guide" class="hero-guide-btn">
-                    راهنمای ۰ تا ۱۰۰ ساخت زمین پدل
-                </a>
-            </div>
-        </div>
-    </div>
 }
 
 <section class="about" id="about1">
@@ -728,11 +709,11 @@
             <div class="header-left">
                 <h2 class="title">خدمات صفر تا صد دارابی‌کو</h2>
             </div>
-            <a asp-controller="home" asp-action="contact" class="view-all">استعلام قیمت و مشاوره <span>➜</span></a>
+            <a asp-controller="Home" asp-action="Contact" class="view-all">استعلام قیمت و مشاوره <span>➜</span></a>
         </div>
 
         <div class="services-grid">
-            <a asp-controller="home" asp-action="blog" class="service-card">
+            <div class="service-card">
                 <span class="service-number">01</span>
                 <img src="@Url.Content("~/H-IMG/naderi.webp")" alt="طراحی و احداث زمین پدل" class="service-img" loading="lazy" width="400" height="360" />
                 <div class="service-overlay"></div>
@@ -740,9 +721,9 @@
                     <h3>طراحی و احداث زمین پدل</h3>
                     <div class="service-description">زیرسازی اصولی، بتن‌ریزی و ساخت سازه زمین پدل (ثابت و پورتابل) منطبق بر استانداردهای جهانی FIP.</div>
                 </div>
-            </a>
+            </div>
 
-            <a asp-controller="home" asp-action="blog" class="service-card">
+            <div class="service-card">
                 <span class="service-number">02</span>
                 <img src="@Url.Content("~/H-IMG/shisheh.webp")" alt="دیواره شیشه‌ای و تجهیزات کورت پدل" class="service-img" loading="lazy" width="400" height="360" />
                 <div class="service-overlay"></div>
@@ -750,9 +731,9 @@
                     <h3>دیواره شیشه‌ای و تجهیزات</h3>
                     <div class="service-description">تولید مستقیم شیشه سکوریت توسط هلدینگ دارابی، اجرای فنس و نورپردازی تخصصی کورت پدل بدون خیرگی.</div>
                 </div>
-            </a>
+            </div>
 
-            <a asp-controller="home" asp-action="blog" class="service-card">
+            <div class="service-card">
                 <span class="service-number">03</span>
                 <img src="@Url.Content("~/H-IMG/chaman.webp")" alt="چمن مصنوعی زمین پدل" class="service-img" loading="lazy" width="400" height="360" />
                 <div class="service-overlay"></div>
@@ -760,9 +741,9 @@
                     <h3>کف‌پوش و چمن مصنوعی پدل</h3>
                     <div class="service-description">تامین و نصب چمن مصنوعی مخصوص زمین پدل (الیاف موندو) با شن‌پاشی دقیق برای بالاترین کیفیت و دوام بازی.</div>
                 </div>
-            </a>
+            </div>
 
-            <a asp-controller="home" asp-action="blog" class="service-card">
+            <div class="service-card">
                 <span class="service-number">04</span>
                 <img src="@Url.Content("~/H-IMG/04-compressed.webp")" alt="برآورد هزینه و طرح توجیهی ساخت پدل" class="service-img" loading="lazy" width="400" height="360" />
                 <div class="service-overlay"></div>
@@ -770,7 +751,7 @@
                     <h3>برآورد هزینه و طرح توجیهی</h3>
                     <div class="service-description">مشاوره سرمایه‌گذاری، برآورد شفاف قیمت ساخت زمین پدل و ارائه طرح توجیهی دقیق برای احداث باشگاه.</div>
                 </div>
-            </a>
+            </div>
         </div>
     </div>
 </section>
@@ -782,8 +763,8 @@
                 <img src="@Url.Content("~/H-IMG/tajhizzz.webp")" alt="درآمد زمین پدل و سرمایه گذاری" class="community-img" loading="lazy" width="600" height="450" />
             </div>
             <div class="community-promo-card">
-                <h3>سرمایه‌گذاری پرسود<br>در راه‌اندازی کورت پدل</h3>
-                <a asp-controller="home" asp-action="contact" class="promo-link">دریافت مشاوره تخصصی ➜</a>
+                <p class="promo-card-title">سرمایه‌گذاری پرسود<br>در راه‌اندازی کورت پدل</p>
+                <a asp-controller="Home" asp-action="Contact" class="promo-link">دریافت مشاوره تخصصی ➜</a>
             </div>
         </div>
         <div class="community-content">
@@ -791,16 +772,16 @@
             <h2 class="community-title">چرا دارابی‌کو تخصصی‌ترین<br>سازنده زمین پدل است؟</h2>
             <div class="features-list">
                 <div class="feature-item">
-                    <div class="feature-icon-box">🤝</div>
+                    <div class="feature-icon-box" aria-hidden="true">🤝</div>
                     <div class="feature-content">
-                        <h4>پیمانکار مستقیم و بی‌واسطه</h4>
+                        <h3>پیمانکار مستقیم و بی‌واسطه</h3>
                         <p>پشتوانه <strong>هلدینگ دارابی</strong> به ما اجازه می‌دهد تولید شیشه و تجهیزات را مستقیماً انجام دهیم. این یعنی کاهش چشمگیر <strong>هزینه ساخت زمین پدل</strong> برای کارفرما.</p>
                     </div>
                 </div>
                 <div class="feature-item">
-                    <div class="feature-icon-box">🛡️</div>
+                    <div class="feature-icon-box" aria-hidden="true">🛡️</div>
                     <div class="feature-content">
-                        <h4>اجرای تضمینی استاندارد FIP</h4>
+                        <h3>اجرای تضمینی استاندارد FIP</h3>
                         <p>از رعایت دقیق <strong>ابعاد زمین پدل</strong> تا نصب سیستم ارتعاش‌گیر (Shock Lock) و چمن مصنوعی، همه چیز برای یک بازی حرفه‌ای بهینه‌سازی شده است.</p>
                     </div>
                 </div>
@@ -820,15 +801,16 @@
         {
             @foreach (var post in Model)
             {
+                var cardAlt = !string.IsNullOrWhiteSpace(post.CoverImageAlt) ? post.CoverImageAlt : post.Title;
                 <a asp-controller="Home" asp-action="Post" asp-route-slug="@post.Slug" class="blog-card">
                     <div class="blog-img">
                         @if (!string.IsNullOrEmpty(post.CoverImagePath))
                         {
-                            <img src="@Url.Content(post.CoverImagePath)" alt="@post.Title" loading="lazy" width="400" height="250">
+                            <img src="@Url.Content(post.CoverImagePath)" alt="@cardAlt" loading="lazy" width="400" height="250">
                         }
                         else
                         {
-                            <img src="@Url.Content("~/H-IMG/133.webp")" alt="@post.Title" loading="lazy" width="400" height="250">
+                            <img src="@Url.Content("~/H-IMG/133.webp")" alt="@cardAlt" loading="lazy" width="400" height="250">
                         }
                     </div>
                     <div class="blog-info">
@@ -906,7 +888,7 @@
         const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
         function animateCounter(el) {
-            if(el.dataset.animated) return;
+            if (el.dataset.animated) return;
             el.dataset.animated = "true";
 
             const target = parseInt(el.getAttribute("data-value"), 10);

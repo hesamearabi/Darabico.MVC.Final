@@ -1,20 +1,30 @@
-﻿@{
+﻿@inject final_p_01.Services.ISiteUrlBuilder UrlBuilder
+@{
     Layout = "_Layout";
-    ViewData["Title"] = "درباره ما | ۵۰ سال افتخار";
+    ViewData["Title"] = "درباره دارابی کو؛ ۵۰ سال تجربه صنعت شیشه و ساخت زمین پدل";
     ViewData["MetaDescription"] = "آشنایی با هلدینگ توسعه سرمایه‌گذاری دارابی؛ بیش از ۵۰ سال تجربه در صنعت شیشه و سازه و مجری تخصصی طراحی و ساخت زمین پدل استاندارد در ایران.";
-    string absoluteUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}";
+    string currentUrl = UrlBuilder.Absolute("about-us");
+    string homeUrl = UrlBuilder.Absolute("");
+    string logoUrl = UrlBuilder.Absolute("siteLOGO/sitelogo.png");
+
+    ViewData["Canonical"] = currentUrl;
+    ViewData["OgImage"] = UrlBuilder.Absolute("H-IMG/15-3.webp");
+    ViewData["OgImageAlt"] = "درباره هلدینگ دارابی و دپارتمان ساخت زمین پدل دارابی کو";
+    ViewData["TwitterCard"] = "summary_large_image";
 }
 
 @section Head {
+    <link rel="preload" as="image" href="@Url.Content("~/H-IMG/15-3.webp")" fetchpriority="high" />
+
     <script type="application/ld+json">
         {
           "@@context": "https://schema.org",
           "@@graph": [
             {
               "@@type": "AboutPage",
-              "@@id": "@absoluteUrl",
-              "url": "@absoluteUrl",
-              "name": "درباره هلدینگ دارابی",
+              "@@id": "@currentUrl",
+              "url": "@currentUrl",
+              "name": "درباره هلدینگ دارابی و دارابی کو",
               "description": "گروه تولیدی هلدینگ دارابی با نیم قرن تجربه در صنعت شیشه و مجری تخصصی ساخت زمین پدل در ایران."
             },
             {
@@ -22,8 +32,8 @@
               "name": "هلدینگ توسعه سرمایه‌گذاری دارابی",
               "alternateName": "دارابی کو",
               "foundingDate": "1971",
-              "url": "@($"{Context.Request.Scheme}://{Context.Request.Host}")",
-              "logo": "@($"{Context.Request.Scheme}://{Context.Request.Host}/siteLOGO/sitelogo.png")",
+              "url": "@homeUrl",
+              "logo": "@logoUrl",
               "description": "گروه دارابی از سال ۱۳۵۰ فعالیت خود را در زمینه شیشه‌های ساختمانی آغاز نمود و اکنون در حوزه‌های ماشین‌سازی کارن، ساری پن و دپارتمان تخصصی پدل (دارابی کو) فعالیت دارد.",
               "subOrganization": [
                 {
@@ -59,9 +69,6 @@
             --bg-darker: #e9ecef;
         }
 
-        /* ========================================= */
-        /* Hero Section (Professional & UX Optimized)*/
-        /* ========================================= */
         .about-hero {
             position: relative;
             height: 65vh;
@@ -91,28 +98,41 @@
             position: relative;
             z-index: 2;
             padding: 0 20px;
-            max-width: 850px;
+            max-width: 900px;
             animation: fadeInUp 1s ease-out;
         }
 
+        .about-hero-tagline {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 8px 22px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0 0 20px 0;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(6px);
+        }
+
         .about-hero h1 {
-            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-size: clamp(1.9rem, 3.8vw, 3.1rem);
             font-weight: 900;
-            margin-bottom: 20px;
-            letter-spacing: -1px;
+            line-height: 1.4;
+            margin: 0 0 20px 0;
+            letter-spacing: -0.5px;
             text-shadow: 0 4px 15px rgba(0,0,0,0.4);
         }
 
-        .about-hero p {
-            font-size: 1.2rem;
+        .about-hero-desc {
+            font-size: 1.15rem;
             opacity: 0.95;
             line-height: 1.8;
-            max-width: 700px;
+            max-width: 720px;
             margin: 0 auto;
             text-shadow: 0 2px 10px rgba(0,0,0,0.4);
         }
 
-        /* نشانگر اسکرول */
         .scroll-indicator {
             position: absolute;
             bottom: 30px;
@@ -143,7 +163,6 @@
             animation: scroll 1.5s infinite;
         }
 
-        /* انیمیشن‌ها */
         @@keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -182,9 +201,6 @@
             }
         }
 
-        /* ========================================= */
-        /* Story Section                             */
-        /* ========================================= */
         .story-section {
             padding: 90px 0;
             background: #fff;
@@ -231,7 +247,6 @@
             text-align-last: center;
         }
 
-        /* شبکه شرکت‌ها */
         .subsidiaries-grid {
             display: flex;
             flex-wrap: wrap;
@@ -278,9 +293,6 @@
             opacity: 0.7;
         }
 
-        /* ========================================= */
-        /* Timeline Section                          */
-        /* ========================================= */
         .timeline-section {
             padding: 100px 0;
             background-color: var(--bg-darker);
@@ -471,9 +483,6 @@
                 border-color: var(--primary-blue);
             }
 
-        /* ========================================= */
-        /* Values Section                           */
-        /* ========================================= */
         .values-section {
             padding: 100px 0;
             background: var(--secondary-navy);
@@ -509,9 +518,6 @@
             color: #4da6ff;
         }
 
-        /* ========================================= */
-        /* CTA Section                              */
-        /* ========================================= */
         .cta-section {
             position: relative;
             padding: 80px 0;
@@ -687,11 +693,12 @@
 
     <div class="about-hero">
         <div class="about-hero-content">
-            <h1>ریشه در خاک، سر در ابرها</h1>
-            <p>از سال ۱۳۴۰ تا امروز؛ مسیری که از کوره‌های شیشه‌گری آغاز شد و به تکنولوژی ساخت مدرن‌ترین زمین‌های ورزشی رسید.</p>
+            <p class="about-hero-tagline">ریشه در خاک، سر در ابرها</p>
+            <h1>درباره دارابی‌کو و هلدینگ دارابی؛ پیشگام صنعت شیشه و ساخت زمین پدل</h1>
+            <p class="about-hero-desc">از سال ۱۳۴۰ تا امروز؛ مسیری که از کوره‌های شیشه‌گری آغاز شد و به تکنولوژی ساخت مدرن‌ترین زمین‌های ورزشی رسید.</p>
         </div>
 
-        <div class="scroll-indicator">
+        <div class="scroll-indicator" aria-hidden="true">
             <div class="mouse">
                 <div class="wheel"></div>
             </div>
@@ -713,9 +720,9 @@
                     <div class="subsidiaries-grid">
                         <div class="subsidiary-card">ساری پن</div>
 
-                        <a href="https://karen-machine.com/" target="_blank" class="subsidiary-card has-link" title="بازدید از وب‌سایت کارن ماشین">
+                        <a href="https://karen-machine.com/" target="_blank" rel="noopener noreferrer" class="subsidiary-card has-link" title="بازدید از وب‌سایت کارن ماشین">
                             ماشین‌سازی کارن
-                            <span class="link-icon">↗</span>
+                            <span class="link-icon" aria-hidden="true">↗</span>
                         </a>
 
                         <div class="subsidiary-card">کاسپین توری‌ساز</div>
@@ -738,7 +745,7 @@
 
                 <div class="timeline-item item-left" onclick="toggleTimeline(this)">
                     <div class="timeline-content">
-                        <span class="toggle-btn">+</span>
+                        <span class="toggle-btn" aria-hidden="true">+</span>
                         <span class="year-tag">۱۳۵۰</span>
                         <h3>تاسیس صنایع شیشه دارابی</h3>
                         <p>آغاز فعالیت در صنعت شیشه با تمرکز بر شیشه‌های ساختمانی، سکوریت و تزئینی.</p>
@@ -750,7 +757,7 @@
 
                 <div class="timeline-item item-right" onclick="toggleTimeline(this)">
                     <div class="timeline-content">
-                        <span class="toggle-btn">+</span>
+                        <span class="toggle-btn" aria-hidden="true">+</span>
                         <span class="year-tag">۱۳۸۲</span>
                         <h3>راه‌اندازی ساری پن</h3>
                         <p>گسترش فعالیت با خط تولید درب و پنجره UPVC و شیشه‌های دوجداره.</p>
@@ -762,14 +769,14 @@
 
                 <div class="timeline-item item-left" onclick="toggleTimeline(this)">
                     <div class="timeline-content">
-                        <span class="toggle-btn">+</span>
+                        <span class="toggle-btn" aria-hidden="true">+</span>
                         <span class="year-tag">۱۳۹۲</span>
                         <h3>تاسیس ماشین‌سازی کارن</h3>
                         <p>تولید و واردات انواع ماشین‌آلات شیشه دوجداره و درب و پنجره.</p>
                         <div class="hidden-details">
                             <p>مهندسان و متخصصان مجرب کارن ماشین با هدف تولید و عرضه مطلوب در جهت ارتقاء کیفیت صنعت ساختمان و با عنایت به اصل ۱۹ مقررات ملی ساختمان (کاهش اتلاف انرژی)، آمادگی خود را جهت همکاری در زمینه تولید و نصب جدیدترین ماشین‌آلات شیشه‌های دوجداره و چند جداره اعلام می‌دارند.</p>
 
-                            <a href="https://karen-machine.com/" target="_blank" class="timeline-link-btn" onclick="event.stopPropagation()">
+                            <a href="https://karen-machine.com/" target="_blank" rel="noopener noreferrer" class="timeline-link-btn" onclick="event.stopPropagation()">
                                 بازدید از وب‌سایت کارن ماشین ↗
                             </a>
                         </div>
@@ -778,7 +785,7 @@
 
                 <div class="timeline-item item-right" onclick="toggleTimeline(this)">
                     <div class="timeline-content">
-                        <span class="toggle-btn">+</span>
+                        <span class="toggle-btn" aria-hidden="true">+</span>
                         <span class="year-tag">۱۴۰۳</span>
                         <h3>دپارتمان پدل دارابی</h3>
                         <p>تخصصی‌ترین مرجع ساخت زمین پدل با شیشه‌های استاندارد.</p>
@@ -800,17 +807,17 @@
             </div>
             <div class="values-grid">
                 <div class="value-card">
-                    <div class="value-icon">🏭</div>
+                    <div class="value-icon" aria-hidden="true">🏭</div>
                     <h3>تولیدکننده واقعی</h3>
                     <p style="color:#ccc; line-height:1.7">ما واسطه نیستیم؛ از ماشین‌آلات تا شیشه و سازه، در کارخانجات هلدینگ تولید می‌شود.</p>
                 </div>
                 <div class="value-card">
-                    <div class="value-icon">📐</div>
+                    <div class="value-icon" aria-hidden="true">📐</div>
                     <h3>تکنولوژی روز</h3>
                     <p style="color:#ccc; line-height:1.7">بهره‌گیری از ماشین‌آلات پیشرفته کارن ماشین برای تضمین دقت و کیفیت محصولات.</p>
                 </div>
                 <div class="value-card">
-                    <div class="value-icon">🛡️</div>
+                    <div class="value-icon" aria-hidden="true">🛡️</div>
                     <h3>تنوع خدمات</h3>
                     <p style="color:#ccc; line-height:1.7">از شیشه ساختمانی تا زمین ورزشی و صنعت گردشگری؛ ما در تمام مراحل کنار شما هستیم.</p>
                 </div>
@@ -826,49 +833,51 @@
             </p>
 
             <div class="cta-benefits">
-                <div class="benefit-item"><span class="benefit-icon">✓</span> مشاوره رایگان تخصصی</div>
-                <div class="benefit-item"><span class="benefit-icon">✓</span> بازدید حضوری از محل</div>
-                <div class="benefit-item"><span class="benefit-icon">✓</span> گارانتی ۱۰ ساله کتبی</div>
+                <div class="benefit-item"><span class="benefit-icon" aria-hidden="true">✓</span> مشاوره رایگان تخصصی</div>
+                <div class="benefit-item"><span class="benefit-icon" aria-hidden="true">✓</span> بازدید حضوری از محل</div>
+                <div class="benefit-item"><span class="benefit-icon" aria-hidden="true">✓</span> گارانتی ۱۰ ساله کتبی</div>
             </div>
 
             <div class="cta-actions">
-                <a asp-controller="home" asp-action="contact" class="btn-primary-glow">
+                <a asp-controller="Home" asp-action="Contact" class="btn-primary-glow">
                     دریافت مشاوره و استعلام قیمت
                 </a>
-                <a asp-controller="home" asp-action="contact" class="btn-secondary-outline">
-                    <span>📞</span> تماس مستقیم با مهندسین
+                <a href="tel:09111515971" class="btn-secondary-outline">
+                    <span aria-hidden="true">📞</span> تماس مستقیم با مهندسین
                 </a>
             </div>
         </div>
     </section>
 
-    <script>
-        function toggleTimeline(element) {
-            const content = element.querySelector('.timeline-content');
-            const isActive = content.classList.contains('active');
+    @section Scripts {
+        <script>
+            function toggleTimeline(element) {
+                const content = element.querySelector('.timeline-content');
+                const isActive = content.classList.contains('active');
 
-            document.querySelectorAll('.timeline-content').forEach(c => c.classList.remove('active'));
-            if (!isActive) content.classList.add('active');
-        }
-
-        document.addEventListener("DOMContentLoaded", function() {
-            const items = document.querySelectorAll('.timeline-content');
-            if ('IntersectionObserver' in window) {
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            entry.target.style.opacity = 1;
-                            entry.target.style.transform = 'translateY(0)';
-                        }
-                    });
-                }, { threshold: 0.1 });
-
-                items.forEach(item => {
-                    item.style.opacity = 0;
-                    item.style.transform = 'translateY(20px)';
-                    item.style.transition = 'all 0.6s ease-out';
-                    observer.observe(item);
-                });
+                document.querySelectorAll('.timeline-content').forEach(c => c.classList.remove('active'));
+                if (!isActive) content.classList.add('active');
             }
-        });
-    </script>
+
+            document.addEventListener("DOMContentLoaded", function () {
+                const items = document.querySelectorAll('.timeline-content');
+                if ('IntersectionObserver' in window) {
+                    const observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                entry.target.style.opacity = 1;
+                                entry.target.style.transform = 'translateY(0)';
+                            }
+                        });
+                    }, { threshold: 0.1 });
+
+                    items.forEach(item => {
+                        item.style.opacity = 0;
+                        item.style.transform = 'translateY(20px)';
+                        item.style.transition = 'all 0.6s ease-out';
+                        observer.observe(item);
+                    });
+                }
+            });
+        </script>
+    }
