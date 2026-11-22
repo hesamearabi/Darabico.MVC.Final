@@ -3,11 +3,11 @@ using final_p_01.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace final_p_01.Infrastructure;
+namespace final_p_01.Infrastructure.Data;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
-    // جداول قبلی سایت دارابی‌کو
+    // جداول قبلی سایت دارابیکو
     public DbSet<AdminUser> AdminUsers => Set<AdminUser>();
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<Category> Categories => Set<Category>();

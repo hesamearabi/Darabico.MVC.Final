@@ -7,13 +7,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Helpers\**" />
-	  <Content Remove="Helpers\**" />
-	  <EmbeddedResource Remove="Helpers\**" />
-	  <None Remove="Helpers\**" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="HtmlSanitizer" Version="9.2.995" />
 		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.11">
