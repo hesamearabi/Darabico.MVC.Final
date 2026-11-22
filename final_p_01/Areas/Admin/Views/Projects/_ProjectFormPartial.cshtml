@@ -1,0 +1,156 @@
+﻿@using Darabico.Domain.Enums
+@model Darabico.Web.Areas.Admin.ViewModels.ProjectFormViewModel
+
+<div asp-validation-summary="ModelOnly" class="validation-box"></div>
+
+<div class="form-grid">
+    <div class="form-field">
+        <label asp-for="Title"></label>
+        <input asp-for="Title" class="form-input" />
+        <span asp-validation-for="Title" class="field-error"></span>
+    </div>
+
+    <div class="form-field">
+        <label asp-for="Slug"></label>
+        <input asp-for="Slug" class="form-input" placeholder="در صورت خالی بودن از عنوان ساخته می‌شود" />
+        <span asp-validation-for="Slug" class="field-error"></span>
+    </div>
+
+    <div class="form-field">
+        <label asp-for="City"></label>
+        <input asp-for="City" class="form-input" />
+        <span asp-validation-for="City" class="field-error"></span>
+    </div>
+
+    <div class="form-field">
+        <label asp-for="CourtCount"></label>
+        <input asp-for="CourtCount" type="number" min="1" class="form-input" />
+        <span asp-validation-for="CourtCount" class="field-error"></span>
+    </div>
+
+    <div class="form-field">
+        <label asp-for="CourtType"></label>
+        <select asp-for="CourtType" asp-items="Html.GetEnumSelectList<CourtType>()" class="form-input"></select>
+        <span asp-validation-for="CourtType" class="field-error"></span>
+    </div>
+
+    <div class="form-field">
+        <label asp-for="ExecutionYear"></label>
+        <input asp-for="ExecutionYear" type="number" class="form-input" />
+        <span asp-validation-for="ExecutionYear" class="field-error"></span>
+    </div>
+
+    <div class="form-field">
+        <label asp-for="ExecutionDurationMonths"></label>
+        <input asp-for="ExecutionDurationMonths" type="number" min="1" class="form-input" />
+        <span asp-validation-for="ExecutionDurationMonths" class="field-error"></span>
+    </div>
+
+    <div class="form-field">
+        <label asp-for="DisplayOrder"></label>
+        <input asp-for="DisplayOrder" type="number" class="form-input" />
+    </div>
+</div>
+
+<div class="form-field full-width">
+    <label asp-for="Description"></label>
+    <textarea asp-for="Description" id="richDescription" rows="10" class="form-input"></textarea>
+    <span asp-validation-for="Description" class="field-error"></span>
+</div>
+
+<fieldset class="media-fieldset">
+    <legend>رسانه‌ها و تصاویر پروژه (تبدیل خودکار به WebP)</legend>
+
+    <div class="form-grid">
+        <div class="form-field">
+            <label asp-for="FeaturedImageFile"></label>
+            <input asp-for="FeaturedImageFile" type="file" accept="image/*" class="form-input" />
+            <span asp-validation-for="FeaturedImageFile" class="field-error"></span>
+            @if (!string.IsNullOrEmpty(Model.ExistingThumbnailUrl))
+            {
+                <img src="@Model.ExistingThumbnailUrl" alt="تصویر شاخص فعلی" width="150" height="100" loading="lazy" class="preview-img" />
+            }
+        </div>
+
+        <div class="form-field">
+            <label asp-for="VideoFile"></label>
+            <input asp-for="VideoFile" type="file" accept="video/mp4,video/webm" class="form-input" />
+            <label asp-for="VideoUrl" class="sub-label"></label>
+            <input asp-for="VideoUrl" class="form-input" placeholder="/uploads/projects/videos/... یا لینک مستقیم" />
+            @if (!string.IsNullOrEmpty(Model.VideoUrl))
+            {
+                <label class="checkbox-label">
+                    <input asp-for="RemoveVideo" /> حذف ویدیو فعلی
+                </label>
+            }
+        </div>
+
+        <div class="form-field">
+            <label asp-for="BeforeImageFile"></label>
+            <input asp-for="BeforeImageFile" type="file" accept="image/*" class="form-input" />
+            @if (!string.IsNullOrEmpty(Model.ExistingBeforeImageUrl))
+            {
+                <img src="@Model.ExistingBeforeImageUrl" alt="تصویر قبل" width="150" height="100" loading="lazy" class="preview-img" />
+                <label class="checkbox-label">
+                    <input asp-for="RemoveBeforeImage" /> حذف تصویر قبل
+                </label>
+            }
+        </div>
+
+        <div class="form-field">
+            <label asp-for="AfterImageFile"></label>
+            <input asp-for="AfterImageFile" type="file" accept="image/*" class="form-input" />
+            @if (!string.IsNullOrEmpty(Model.ExistingAfterImageUrl))
+            {
+                <img src="@Model.ExistingAfterImageUrl" alt="تصویر بعد" width="150" height="100" loading="lazy" class="preview-img" />
+                <label class="checkbox-label">
+                    <input asp-for="RemoveAfterImage" /> حذف تصویر بعد
+                </label>
+            }
+        </div>
+    </div>
+</fieldset>
+
+<fieldset class="media-fieldset">
+    <legend>گالری تصاویر پروژه (متن جایگزین Alt برای هر تصویر اجباری است)</legend>
+
+    @if (Model.ExistingGalleryImages.Any())
+    {
+        <div class="existing-gallery-list">
+            @for (int i = 0; i < Model.ExistingGalleryImages.Count; i++)
+            {
+                var img = Model.ExistingGalleryImages[i];
+                <div class="gallery-admin-row" id="existing-img-@img.Id">
+                    <input type="hidden" name="ExistingGalleryImages[@i].Id" value="@img.Id" />
+                    <input type="hidden" name="ExistingGalleryImages[@i].ImageUrl" value="@img.ImageUrl" />
+                    <img src="@img.ImageUrl" alt="@img.AltText" width="120" height="80" loading="lazy" class="preview-img" />
+                    <div class="gallery-row-inputs">
+                        <input type="text" name="ExistingGalleryImages[@i].AltText" value="@img.AltText" required placeholder="متن جایگزین (Alt)" class="form-input" />
+                        <input type="number" name="ExistingGalleryImages[@i].SortOrder" value="@img.SortOrder" placeholder="ترتیب" class="form-input order-sm" />
+                        <button type="button" class="btn-remove-gallery" onclick="deleteExistingGalleryImage(@img.Id)">حذف عکس</button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <div id="newGalleryContainer"></div>
+    <button type="button" id="btnAddGalleryRow" class="btn-secondary">+ افزودن تصویر جدید به گالری</button>
+</fieldset>
+
+<fieldset class="media-fieldset">
+    <legend>تنظیمات سئو و انتشار</legend>
+    <div class="form-grid">
+        <div class="form-field">
+            <label asp-for="MetaTitle"></label>
+            <input asp-for="MetaTitle" class="form-input" />
+        </div>
+        <div class="form-field">
+            <label asp-for="MetaDescription"></label>
+            <input asp-for="MetaDescription" class="form-input" />
+        </div>
+    </div>
+    <label class="checkbox-label">
+        <input asp-for="IsPublished" /> انتشار عمومی در سایت
+    </label>
+</fieldset>

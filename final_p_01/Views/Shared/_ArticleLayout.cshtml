@@ -27,7 +27,10 @@
     string absoluteCoverImage = UrlBuilder.Absolute(coverImage);
 
     string rawPath = Context.Request.Path.Value ?? "";
-    string fallbackCurrentUrl = UrlBuilder.Absolute(rawPath == "/" ? "" : rawPath.ToLowerInvariant().TrimEnd('/'));
+    string normalizedPath = string.IsNullOrEmpty(rawPath) || rawPath == "/"
+        ? "/"
+        : rawPath.ToLowerInvariant().TrimEnd('/');
+    string fallbackCurrentUrl = UrlBuilder.Absolute(normalizedPath);
     string currentUrl = ViewData["ArticleCanonicalUrl"] as string ?? fallbackCurrentUrl;
 
     string ExtractMetaExcerpt(string? rawHtml, string fallback)
@@ -250,7 +253,7 @@
         };
         graph.Add(articleNode);
 
-        var item1 = new Hashtable { ["\u0040type"] = "ListItem", ["position"] = 1, ["name"] = "خانه", ["item"] = UrlBuilder.Absolute("") };
+        var item1 = new Hashtable { ["\u0040type"] = "ListItem", ["position"] = 1, ["name"] = "خانه", ["item"] = UrlBuilder.Absolute("/") };
         var item2 = new Hashtable { ["\u0040type"] = "ListItem", ["position"] = 2, ["name"] = "مقالات", ["item"] = UrlBuilder.Absolute("blog") };
         var item3 = new Hashtable { ["\u0040type"] = "ListItem", ["position"] = 3, ["name"] = Model.Post.Title, ["item"] = currentUrl };
         var breadcrumbNode = new Hashtable { ["\u0040type"] = "BreadcrumbList", ["itemListElement"] = new[] { item1, item2, item3 } };

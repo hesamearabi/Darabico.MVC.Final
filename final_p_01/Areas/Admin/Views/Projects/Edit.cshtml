@@ -1,0 +1,20 @@
+﻿@* Areas/Admin/Views/Projects/Edit.cshtml *@
+@model Darabico.Web.Areas.Admin.ViewModels.ProjectFormViewModel
+@{
+    ViewData["Title"] = "ویرایش پروژه";
+}
+
+<div class="admin-form-wrap" dir="rtl">
+    <h1>ویرایش پروژه: @Model.Title</h1>
+    <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <partial name="_ProjectFormPartial" model="Model" />
+        <div class="form-actions">
+            <button type="submit" class="btn-save">ذخیره تغییرات</button>
+            <a asp-action="Index" class="btn-cancel">بازگشت</a>
+        </div>
+    </form>
+</div>
+
+<partial name="_ProjectFormScriptsPartial" />

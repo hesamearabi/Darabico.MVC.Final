@@ -1,0 +1,225 @@
+﻿@using Darabico.Domain.Enums
+@using Darabico.Web.Helpers
+@model IEnumerable<Darabico.Web.Areas.Admin.ViewModels.AdminProjectListItemViewModel>
+@{
+    ViewData["Title"] = "مدیریت پروژه‌ها";
+}
+
+<div class="admin-container" dir="rtl">
+    <div class="admin-topbar">
+        <h1>مدیریت پروژه‌های زمین پدل</h1>
+        <a asp-action="Create" class="btn-admin-primary">+ افزودن پروژه جدید</a>
+    </div>
+
+    @if (TempData["SuccessMessage"] is string msg)
+    {
+        <div class="alert-success">@msg</div>
+    }
+
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>تصویر</th>
+                    <th>عنوان پروژه</th>
+                    <th>شهر / مشخصات</th>
+                    <th>سال اجرا</th>
+                    <th>ترتیب نمایش</th>
+                    <th>وضعیت</th>
+                    <th>تاریخ ثبت (شمسی)</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-center">هیچ پروژه‌ای ثبت نشده است.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <img src="@item.ThumbnailUrl"
+                                     alt="@item.Title"
+                                     width="90"
+                                     height="60"
+                                     loading="lazy"
+                                     class="admin-thumb" />
+                            </td>
+                            <td>
+                                <strong>@item.Title</strong>
+                                <div class="slug-hint">/@item.Slug</div>
+                            </td>
+                            <td>
+                                @item.City — @item.CourtCount زمین
+                                (@(item.CourtType == CourtType.Outdoor ? "روباز" : "سرپوشیده"))
+                            </td>
+                            <td>@item.ExecutionYear</td>
+                            <td>
+                                <form asp-action="UpdateOrder" asp-route-id="@item.Id" method="post" class="inline-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="number" name="displayOrder" value="@item.DisplayOrder" class="order-input" />
+                                    <button type="submit" class="btn-sm">ثبت</button>
+                                </form>
+                            </td>
+                            <td>
+                                <form asp-action="TogglePublish" asp-route-id="@item.Id" method="post" class="inline-form">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="status-badge @(item.IsPublished ? "is-published" : "is-draft")">
+                                        @(item.IsPublished ? "منتشر شده" : "پیش‌نویس")
+                                    </button>
+                                </form>
+                            </td>
+                            <td>@item.CreatedAtUtc.ToPersianDate()</td>
+                            <td class="actions-cell">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn-edit">ویرایش</a>
+                                <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="inline-form"
+                                      onsubmit="return confirm('آیا از حذف کامل این پروژه و تمام تصاویر آن اطمینان دارید؟');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-delete">حذف</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .admin-container {
+        max-width: 1240px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .admin-topbar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .btn-admin-primary {
+        background: #0f766e;
+        color: #fff;
+        padding: .65rem 1.25rem;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 700;
+    }
+
+    .alert-success {
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        color: #065f46;
+        padding: .85rem 1rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        background: #fff;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: .9rem;
+    }
+
+        .admin-table th, .admin-table td {
+            padding: .85rem;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: right;
+            vertical-align: middle;
+        }
+
+        .admin-table th {
+            background: #f8fafc;
+            font-weight: 700;
+        }
+
+    .admin-thumb {
+        border-radius: 8px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .slug-hint {
+        font-size: .78rem;
+        color: #64748b;
+        direction: ltr;
+        text-align: right;
+    }
+
+    .inline-form {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+    }
+
+    .order-input {
+        width: 64px;
+        padding: .35rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        text-align: center;
+    }
+
+    .btn-sm {
+        padding: .35rem .6rem;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        cursor: pointer;
+    }
+
+    .status-badge {
+        border: none;
+        padding: .35rem .75rem;
+        border-radius: 999px;
+        font-size: .8rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .is-published {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .is-draft {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .actions-cell {
+        white-space: nowrap;
+    }
+
+    .btn-edit {
+        color: #0284c7;
+        text-decoration: none;
+        font-weight: 600;
+        margin-left: .75rem;
+    }
+
+    .btn-delete {
+        background: none;
+        border: none;
+        color: #dc2626;
+        font-weight: 600;
+        cursor: pointer;
+    }
+</style>

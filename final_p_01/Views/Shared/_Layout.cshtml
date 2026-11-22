@@ -13,15 +13,18 @@
 
         string robots = ViewData["Robots"] as string
         ?? "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1";
+        bool isNoIndex = robots.Contains("noindex", StringComparison.OrdinalIgnoreCase);
 
         string rawTitle = ViewData["Title"] as string ?? "ساخت زمین پدل و تجهیزات استاندارد FIP";
-        bool hasBrandInTitle = rawTitle.Contains("دارابی کو") || rawTitle.Contains("دارابی‌کو");
+        bool hasBrandInTitle = rawTitle.Contains("دارابی کو") || rawTitle.Contains("دارابی‌کو") || rawTitle.Contains("دارابیکو");
         string pageTitle = (hasBrandInTitle || rawTitle.Length > 55)
         ? rawTitle
         : $"{rawTitle} | دارابی کو";
 
         string canonicalRaw = Context.Request.Path.Value ?? "";
-        string canonicalPath = canonicalRaw == "/" ? "" : canonicalRaw.ToLowerInvariant().TrimEnd('/');
+        string canonicalPath = string.IsNullOrEmpty(canonicalRaw) || canonicalRaw == "/"
+        ? "/"
+        : canonicalRaw.ToLowerInvariant().TrimEnd('/');
         string defaultCanonicalUrl = UrlBuilder.Absolute(canonicalPath);
 
         string canonicalUrl = ViewData["Canonical"] as string ?? defaultCanonicalUrl;
@@ -36,7 +39,7 @@
         string? customOgImage = ViewData["OgImage"] as string;
         bool hasCustomOgImage = !string.IsNullOrWhiteSpace(customOgImage);
         string ogImage = hasCustomOgImage
-        ? customOgImage!
+        ? UrlBuilder.Absolute(customOgImage!)
         : UrlBuilder.Absolute("siteLOGO/sitelogo.png");
 
         string? ogImageWidth = ViewData["OgImageWidth"] as string ?? (hasCustomOgImage ? null : "500");
@@ -53,7 +56,10 @@
 
     <meta name="description" content="@metaDescription">
     <meta name="robots" content="@robots">
-    <link rel="canonical" href="@canonicalUrl" />
+    @if (!isNoIndex)
+    {
+        <link rel="canonical" href="@canonicalUrl" />
+    }
 
     <meta property="og:locale" content="fa_IR">
     <meta property="og:site_name" content="دارابی کو | مجری ساخت زمین پدل">
@@ -94,6 +100,18 @@
     <link rel="apple-touch-icon" sizes="180x180" href="@UrlBuilder.Absolute("apple-touch-icon.png")">
 
     <link rel="stylesheet" href="@Url.Content("~/CSS-SOURCE/layouts.css")" asp-append-version="true">
+
+    <noscript>
+        <style>
+            #brand-loader {
+                display: none !important;
+            }
+
+            body.loading-state {
+                overflow: auto !important;
+            }
+        </style>
+    </noscript>
 
     <style>
         html {
@@ -283,7 +301,7 @@
           "@@context": "https://schema.org",
           "@@type": "GeneralContractor",
           "name": "دارابی کو - Darabico",
-          "url": "@UrlBuilder.Absolute("")",
+          "url": "@UrlBuilder.Absolute("/")",
           "logo": "@UrlBuilder.Absolute("siteLOGO/sitelogo.png")",
           "description": "پیمانکار تخصصی طراحی، زیرسازی، ساخت سازه و تجهیز زمین های پدل در ایران با تولید مستقیم شیشه.",
           "priceRange": "$$",
@@ -384,7 +402,7 @@
                 <ul>
                     <li><a asp-controller="Home" asp-action="About" class="nav-link">درباره ما</a></li>
                     <li><a href="/#services-section" class="nav-link">خدمات</a></li>
-                    <li><a href="/#projects-section" class="nav-link">پروژه‌ها</a></li>
+                    <li><a asp-controller="Projects" asp-action="Index" class="nav-link">پروژه‌ها</a></li>
                     <li><a asp-controller="Home" asp-action="Blog" class="nav-link">مقالات</a></li>
                     <li><a asp-controller="Home" asp-action="PadelGuide" class="nav-link">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
                 </ul>
@@ -407,7 +425,7 @@
                 <ul>
                     <li><a asp-controller="Home" asp-action="About" class="mobile-link">درباره ما</a></li>
                     <li><a href="/#services-section" class="mobile-link">خدمات ما</a></li>
-                    <li><a href="/#projects-section" class="mobile-link">نمونه کارها</a></li>
+                    <li><a asp-controller="Projects" asp-action="Index" class="mobile-link">پروژه‌ها</a></li>
                     <li><a asp-controller="Home" asp-action="Blog" class="mobile-link">وبلاگ آموزشی</a></li>
                     <li><a asp-controller="Home" asp-action="PadelGuide" class="mobile-link">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
                 </ul>
@@ -478,6 +496,7 @@
                     <h3 class="footer-title">دسترسی سریع</h3>
                     <ul class="quick-links">
                         <li><a asp-controller="Home" asp-action="Index">صفحه اصلی</a></li>
+                        <li><a asp-controller="Projects" asp-action="Index">پروژه‌های اجرا شده</a></li>
                         <li><a asp-controller="Home" asp-action="Blog">مجله آموزشی پدل</a></li>
                         <li><a asp-controller="Home" asp-action="About">درباره ما</a></li>
                         <li><a asp-controller="Home" asp-action="Contact">ارتباط با ما</a></li>

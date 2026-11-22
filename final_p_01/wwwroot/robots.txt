@@ -1,6 +1,5 @@
 ﻿User-agent: *
 Disallow: /Admin/
-Disallow: /Home/PageNotFound
-Disallow: /Home/Error
+Disallow: /admin/
 
 Sitemap: https://darabico.com/sitemap.xml

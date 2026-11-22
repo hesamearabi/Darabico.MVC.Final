@@ -1,0 +1,141 @@
+﻿using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Webp;
+using SixLabors.ImageSharp.Processing;
+
+namespace Darabico.Web.Services;
+
+public class ImageService(IWebHostEnvironment environment) : IImageService
+{
+    private static readonly HashSet<string> AllowedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".jpg", ".jpeg", ".png", ".webp", ".bmp"
+    };
+
+    private static readonly HashSet<string> AllowedVideoExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".mp4", ".webm"
+    };
+
+    private const long MaxImageSizeBytes = 10 * 1024 * 1024; // 10 MB
+    private const long MaxVideoSizeBytes = 80 * 1024 * 1024; // 80 MB
+
+    // ابعاد ثابت کارت‌ها برای حذف کامل CLS (نسبت 3:2)
+    private const int ThumbnailWidth = 600;
+    private const int ThumbnailHeight = 400;
+
+    public async Task<ProcessedImageResult> SaveProjectImageAsync(
+        IFormFile file,
+        string subFolder,
+        bool generateThumbnail = false,
+        int maxWidth = 1200,
+        CancellationToken cancellationToken = default)
+    {
+        if (file is null || file.Length == 0)
+            throw new InvalidOperationException("فایل تصویر ارسال نشده است.");
+
+        if (file.Length > MaxImageSizeBytes)
+            throw new InvalidOperationException("حجم تصویر نباید بیشتر از ۱۰ مگابایت باشد.");
+
+        var ext = Path.GetExtension(file.FileName);
+        if (!AllowedImageExtensions.Contains(ext))
+            throw new InvalidOperationException("فرمت تصویر مجاز نیست. فرمت‌های مجاز: JPG, PNG, WebP.");
+
+        var targetDir = EnsureUploadDirectory(subFolder);
+        var uniqueId = Guid.NewGuid().ToString("N");
+        var webpFileName = $"{uniqueId}.webp";
+        var webpFullPath = Path.Combine(targetDir, webpFileName);
+
+        await using var inputStream = file.OpenReadStream();
+        using var image = await Image.LoadAsync(inputStream, cancellationToken);
+
+        image.Mutate(ctx =>
+        {
+            ctx.AutoOrient();
+            if (image.Width > maxWidth)
+            {
+                ctx.Resize(new ResizeOptions
+                {
+                    Size = new Size(maxWidth, 0),
+                    Mode = ResizeMode.Max
+                });
+            }
+        });
+
+        var encoder = new WebpEncoder { Quality = 82 };
+        await image.SaveAsWebpAsync(webpFullPath, encoder, cancellationToken);
+
+        int finalWidth = image.Width;
+        int finalHeight = image.Height;
+        string mainUrl = $"/uploads/{subFolder}/{webpFileName}";
+        string? thumbUrl = null;
+
+        if (generateThumbnail)
+        {
+            var thumbFileName = $"{uniqueId}_thumb.webp";
+            var thumbFullPath = Path.Combine(targetDir, thumbFileName);
+
+            using var thumbImage = image.Clone(ctx => ctx.Resize(new ResizeOptions
+            {
+                Size = new Size(ThumbnailWidth, ThumbnailHeight),
+                Mode = ResizeMode.Crop,
+                Position = AnchorPositionMode.Center
+            }));
+
+            await thumbImage.SaveAsWebpAsync(thumbFullPath, new WebpEncoder { Quality = 78 }, cancellationToken);
+            thumbUrl = $"/uploads/{subFolder}/{thumbFileName}";
+        }
+
+        return new ProcessedImageResult(mainUrl, thumbUrl, finalWidth, finalHeight);
+    }
+
+    public async Task<string> SaveVideoAsync(
+        IFormFile file,
+        string subFolder,
+        CancellationToken cancellationToken = default)
+    {
+        if (file is null || file.Length == 0)
+            throw new InvalidOperationException("فایل ویدیو ارسال نشده است.");
+
+        if (file.Length > MaxVideoSizeBytes)
+            throw new InvalidOperationException("حجم ویدیو نباید بیشتر از ۸۰ مگابایت باشد.");
+
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!AllowedVideoExtensions.Contains(ext))
+            throw new InvalidOperationException("فقط فرمت‌های MP4 و WebM مجاز هستند.");
+
+        var targetDir = EnsureUploadDirectory(subFolder);
+        var fileName = $"{Guid.NewGuid():N}{ext}";
+        var fullPath = Path.Combine(targetDir, fileName);
+
+        await using var stream = new FileStream(fullPath, FileMode.Create);
+        await file.CopyToAsync(stream, cancellationToken);
+
+        return $"/uploads/{subFolder}/{fileName}";
+    }
+
+    public void DeleteFile(string? relativeUrl)
+    {
+        if (string.IsNullOrWhiteSpace(relativeUrl) || !relativeUrl.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var normalizedPath = relativeUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+        var fullPath = Path.GetFullPath(Path.Combine(environment.WebRootPath, normalizedPath));
+        var uploadsRoot = Path.GetFullPath(Path.Combine(environment.WebRootPath, "uploads"));
+
+        // جلوگیری از Path Traversal
+        if (fullPath.StartsWith(uploadsRoot, StringComparison.OrdinalIgnoreCase) && File.Exists(fullPath))
+        {
+            File.Delete(fullPath);
+        }
+    }
+
+    private string EnsureUploadDirectory(string subFolder)
+    {
+        var safeSubFolder = subFolder.Trim('/').Replace("..", string.Empty);
+        var fullDir = Path.Combine(environment.WebRootPath, "uploads", safeSubFolder);
+        if (!Directory.Exists(fullDir))
+            Directory.CreateDirectory(fullDir);
+
+        return fullDir;
+    }
+}

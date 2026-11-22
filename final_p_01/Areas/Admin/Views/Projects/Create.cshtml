@@ -1,0 +1,19 @@
+﻿@* Areas/Admin/Views/Projects/Create.cshtml *@
+@model Darabico.Web.Areas.Admin.ViewModels.ProjectFormViewModel
+@{
+    ViewData["Title"] = "ایجاد پروژه جدید";
+}
+
+<div class="admin-form-wrap" dir="rtl">
+    <h1>ایجاد پروژه جدید</h1>
+    <form asp-action="Create" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <partial name="_ProjectFormPartial" model="Model" />
+        <div class="form-actions">
+            <button type="submit" class="btn-save">ذخیره پروژه</button>
+            <a asp-action="Index" class="btn-cancel">انصراف</a>
+        </div>
+    </form>
+</div>
+
+<partial name="_ProjectFormScriptsPartial" />

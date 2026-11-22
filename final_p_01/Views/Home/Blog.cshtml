@@ -18,8 +18,6 @@
 }
 
 @section Head {
-    <link rel="stylesheet" href="~/CSS-SOURCE/index.css" asp-append-version="true" />
-
     <script type="application/ld+json">
         {
             "@@context": "https://schema.org",
@@ -27,22 +25,23 @@
             "itemListElement": [
                 @if (Model.Posts != null && Model.Posts.Any())
                 {
-                        int index = 1;
-                        var postList = Model.Posts.ToList();
-                        for (int i = 0; i < postList.Count; i++)
-                        {
-                                var post = postList[i];
-                                <text>
-                                {
-                                    "@@type": "ListItem",
-                                    "position": @index,
-                                    "url": "@UrlBuilder.Absolute($"blog/{post.Slug}")",
-                                    "name": @Html.Raw(JsonSerializer.Serialize(post.Title))
-                                }
-                                @(i < postList.Count - 1 ? "," : "")
-                                </text>
-                                index++;
-                        }
+                            int index = 1;
+                            var postList = Model.Posts.ToList();
+                            for (int i = 0; i < postList.Count; i++)
+                            {
+                                        var post = postList[i];
+                                        string normalizedPostSlug = (post.Slug ?? string.Empty).Trim().ToLowerInvariant();
+                                        <text>
+                                        {
+                                            "@@type": "ListItem",
+                                            "position": @index,
+                                            "url": "@UrlBuilder.Absolute($"blog/{normalizedPostSlug}")",
+                                            "name": @Html.Raw(JsonSerializer.Serialize(post.Title))
+                                        }
+                                        @(i < postList.Count - 1 ? "," : "")
+                                        </text>
+                                        index++;
+                            }
                 }
             ]
         }

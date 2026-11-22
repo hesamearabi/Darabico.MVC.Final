@@ -9,13 +9,13 @@ public class Post
     public int Id { get; set; }
 
     [Required, MaxLength(200)]
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
     [Required, MaxLength(200)]
     public string Slug { get; set; }
 
     [Required]
-    public string Content { get; set; }
+    public string Content { get; set; } = null!;
 
     [MaxLength(500)]
     public string? MetaDescription { get; set; }
@@ -49,4 +49,5 @@ public class Post
     public int TotalVotes { get; set; } = 0;
 
     public ICollection<Faq> Faqs { get; set; } = new List<Faq>();
+    public ICollection<PostSlugHistory> SlugHistories { get; set; } = new List<PostSlugHistory>();
 }

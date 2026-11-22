@@ -1,13 +1,7 @@
-﻿using System.IO.Compression;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Text.Unicode;
-using System.Threading.RateLimiting;
+﻿using final_p_01.Infrastructure;
 using final_p_01.Areas.Admin.Controllers;
 using final_p_01.Domain.Entities;
-using final_p_01.Infrastructure.Data;
+using final_p_01.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http.Features;
@@ -15,19 +9,28 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
+using System.IO.Compression;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
+using System.Threading.RateLimiting;
+using Darabico.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Limits.MaxRequestBodySize = 104857600;
+    options.Limits.MaxRequestBodySize = 104857600; // 100 MB
 });
 builder.Services.Configure<FormOptions>(options =>
 {
-    options.MultipartBodyLengthLimit = 104857600;
+    options.MultipartBodyLengthLimit = 104857600; // 100 MB
 });
 
-builder.Services.AddSingleton<final_p_01.Services.ISiteUrlBuilder, final_p_01.Services.SiteUrlBuilder>();
+builder.Services.AddSingleton<ISiteUrlBuilder, SiteUrlBuilder>();
+builder.Services.AddScoped<IImageService, ImageService>();
 
 builder.Services.AddWebEncoders(options =>
 {
@@ -46,6 +49,15 @@ builder.Services.AddRouting(options =>
     options.LowercaseUrls = true;
     options.AppendTrailingSlash = false;
 });
+
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.AddHttpsRedirection(options =>
+    {
+        options.RedirectStatusCode = StatusCodes.Status301MovedPermanently;
+        options.HttpsPort = 443;
+    });
+}
 
 builder.Services.AddResponseCompression(options =>
 {
@@ -75,8 +87,8 @@ builder.Services.AddHsts(options =>
 
 builder.Services.AddOutputCache(options =>
 {
-    options.AddBasePolicy(builder =>
-        builder.With(c => c.HttpContext.User?.Identity?.IsAuthenticated != true));
+    options.AddBasePolicy(policyBuilder =>
+        policyBuilder.With(c => c.HttpContext.User?.Identity?.IsAuthenticated != true));
 });
 
 builder.Services.AddMemoryCache();
@@ -114,6 +126,7 @@ builder.Services.AddRateLimiter(options =>
 
 builder.Services.AddControllersWithViews();
 
+// ثبت یکتای ApplicationDbContext همراه با اسمبلی مایگریشن‌ها
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -237,11 +250,18 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+var canonicalBaseUrl = builder.Configuration["SiteSettings:BaseUrl"]?.Trim().TrimEnd('/') ?? "https://darabico.com";
+var canonicalUri = Uri.TryCreate(canonicalBaseUrl, UriKind.Absolute, out var parsedCanonicalUri)
+    ? parsedCanonicalUri
+    : new Uri("https://darabico.com");
+var canonicalHost = canonicalUri.Host;
+var wwwCanonicalHost = $"www.{canonicalHost}";
+
 app.UseForwardedHeaders();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/home/error");
     app.UseHsts();
 }
 else
@@ -249,74 +269,103 @@ else
     app.UseDeveloperExceptionPage();
 }
 
-app.UseHttpsRedirection();
-
 app.Use(async (context, next) =>
 {
     if (context.Request.Method == HttpMethods.Get || context.Request.Method == HttpMethods.Head)
     {
         var originalPath = context.Request.Path.Value ?? string.Empty;
 
-        if (!originalPath.StartsWith("/Admin", StringComparison.OrdinalIgnoreCase) &&
-            !originalPath.StartsWith("/uploads", StringComparison.OrdinalIgnoreCase) &&
-            !originalPath.StartsWith("/CSS-SOURCE", StringComparison.OrdinalIgnoreCase) &&
-            !originalPath.StartsWith("/JS-SOURCE", StringComparison.OrdinalIgnoreCase) &&
-            !originalPath.StartsWith("/fonts", StringComparison.OrdinalIgnoreCase) &&
-            !originalPath.StartsWith("/H-IMG", StringComparison.OrdinalIgnoreCase) &&
-            !originalPath.StartsWith("/footerimg", StringComparison.OrdinalIgnoreCase) &&
-            !originalPath.StartsWith("/siteLOGO", StringComparison.OrdinalIgnoreCase) &&
-            !originalPath.Equals("/sitemap.xml", StringComparison.OrdinalIgnoreCase))
+        if (originalPath.Equals("/home/error", StringComparison.OrdinalIgnoreCase) ||
+            originalPath.Equals("/home/pagenotfound", StringComparison.OrdinalIgnoreCase))
         {
-            var hasUpperCase = originalPath.Any(char.IsUpper);
-            var hasTrailingSlash = originalPath.Length > 1 && originalPath.EndsWith('/');
+            await next();
+            return;
+        }
 
-            bool isLegacyHome = originalPath.Equals("/home", StringComparison.OrdinalIgnoreCase) ||
-                                originalPath.Equals("/home/index", StringComparison.OrdinalIgnoreCase) ||
-                                originalPath.Equals("/home/", StringComparison.OrdinalIgnoreCase) ||
-                                originalPath.Equals("/home/index/", StringComparison.OrdinalIgnoreCase);
+        var currentHost = context.Request.Host.Host;
+        bool isWwwHost = !app.Environment.IsDevelopment() &&
+                         currentHost.Equals(wwwCanonicalHost, StringComparison.OrdinalIgnoreCase);
+        bool isHttpOnCanonicalHost = !app.Environment.IsDevelopment() &&
+                                     !context.Request.IsHttps &&
+                                     (currentHost.Equals(canonicalHost, StringComparison.OrdinalIgnoreCase) || isWwwHost);
 
-            if (isLegacyHome || hasUpperCase || hasTrailingSlash)
+        bool isExcludedPath =
+            originalPath.StartsWith("/admin", StringComparison.OrdinalIgnoreCase) ||
+            originalPath.StartsWith("/uploads", StringComparison.OrdinalIgnoreCase) ||
+            originalPath.StartsWith("/lib", StringComparison.OrdinalIgnoreCase) ||
+            originalPath.StartsWith("/css-source", StringComparison.OrdinalIgnoreCase) ||
+            originalPath.StartsWith("/js-source", StringComparison.OrdinalIgnoreCase) ||
+            originalPath.StartsWith("/fonts", StringComparison.OrdinalIgnoreCase) ||
+            originalPath.StartsWith("/h-img", StringComparison.OrdinalIgnoreCase) ||
+            originalPath.StartsWith("/footerimg", StringComparison.OrdinalIgnoreCase) ||
+            originalPath.StartsWith("/sitelogo", StringComparison.OrdinalIgnoreCase) ||
+            originalPath.StartsWith("/sliderimg", StringComparison.OrdinalIgnoreCase) ||
+            originalPath.Equals("/sitemap.xml", StringComparison.OrdinalIgnoreCase) ||
+            originalPath.Equals("/robots.txt", StringComparison.OrdinalIgnoreCase) ||
+            originalPath.Equals("/favicon.ico", StringComparison.OrdinalIgnoreCase);
+
+        bool isLegacyHome =
+            originalPath.Equals("/home", StringComparison.OrdinalIgnoreCase) ||
+            originalPath.Equals("/home/index", StringComparison.OrdinalIgnoreCase) ||
+            originalPath.Equals("/home/", StringComparison.OrdinalIgnoreCase) ||
+            originalPath.Equals("/home/index/", StringComparison.OrdinalIgnoreCase);
+
+        bool isLegacyHomeSubRoute = !isLegacyHome &&
+                                    originalPath.StartsWith("/home/", StringComparison.OrdinalIgnoreCase);
+
+        bool hasUpperCase = !isExcludedPath && !isLegacyHomeSubRoute && originalPath.Any(char.IsUpper);
+        bool hasTrailingSlash = !isExcludedPath && !isLegacyHomeSubRoute && originalPath.Length > 1 && originalPath.EndsWith('/');
+        bool needsPathRedirect = isLegacyHome || hasUpperCase || hasTrailingSlash;
+
+        if (isHttpOnCanonicalHost || isWwwHost || needsPathRedirect)
+        {
+            string normalizedPath;
+
+            if (isLegacyHome)
             {
-                string targetPath = originalPath;
-
-                if (isLegacyHome)
-                {
-                    targetPath = "/";
-                }
-                else
-                {
-                    if (hasUpperCase)
-                    {
-                        var decodedPath = Uri.UnescapeDataString(originalPath);
-                        var lowerPath = decodedPath.ToLowerInvariant();
-                        targetPath = string.Join("/", lowerPath.Split('/').Select(Uri.EscapeDataString));
-                    }
-
-                    if (targetPath.Length > 1 && targetPath.EndsWith('/'))
-                    {
-                        targetPath = targetPath.TrimEnd('/');
-                    }
-                }
-
-                var queryString = context.Request.QueryString.Value;
-                var newUrl = $"{targetPath}{queryString}";
-
-                context.Response.Redirect(newUrl, permanent: true);
-                return;
+                normalizedPath = "/";
             }
+            else if (needsPathRedirect)
+            {
+                normalizedPath = hasUpperCase ? originalPath.ToLowerInvariant() : originalPath;
+                if (normalizedPath.Length > 1 && normalizedPath.EndsWith('/'))
+                {
+                    normalizedPath = normalizedPath.TrimEnd('/');
+                    if (string.IsNullOrEmpty(normalizedPath))
+                    {
+                        normalizedPath = "/";
+                    }
+                }
+            }
+            else
+            {
+                normalizedPath = string.IsNullOrEmpty(originalPath) ? "/" : originalPath;
+            }
+
+            string encodedPath = new PathString(normalizedPath).ToUriComponent();
+            string queryString = context.Request.QueryString.Value ?? string.Empty;
+
+            string destination = (isHttpOnCanonicalHost || isWwwHost)
+                ? $"https://{canonicalHost}{encodedPath}{queryString}"
+                : $"{encodedPath}{queryString}";
+
+            context.Response.Redirect(destination, permanent: true);
+            return;
         }
     }
+
     await next();
 });
 
-// Temporary 'unsafe-inline' is allowed in Report-Only mode while inline <script>/<style> blocks
-// in _Layout.cshtml, Post.cshtml, and Admin views are migrated to per-request nonces before enforcement.
+app.UseHttpsRedirection();
+
+// CSP کاملاً لوکال و بدون وابستگی به CDN خارجی
 const string contentSecurityPolicyReportOnly =
     "default-src 'self'; " +
-    "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; " +
-    "style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; " +
+    "script-src 'self' 'unsafe-inline'; " +
+    "style-src 'self' 'unsafe-inline'; " +
     "img-src 'self' data:; " +
-    "font-src 'self' https://cdn.jsdelivr.net data:; " +
+    "font-src 'self' data:; " +
     "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://www.aparat.com; " +
     "media-src 'self'; " +
     "connect-src 'self'; " +
@@ -333,10 +382,16 @@ app.Use(async (context, next) =>
     headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
     headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
     headers["Content-Security-Policy-Report-Only"] = contentSecurityPolicyReportOnly;
+
+    if (context.Request.Path.StartsWithSegments("/admin", StringComparison.OrdinalIgnoreCase))
+    {
+        headers["X-Robots-Tag"] = "noindex, nofollow, noarchive";
+    }
+
     await next();
 });
 
-app.UseStatusCodePagesWithReExecute("/Home/PageNotFound", "?statusCode={0}");
+app.UseStatusCodePagesWithReExecute("/home/pagenotfound", "?statusCode={0}");
 
 app.UseResponseCompression();
 
@@ -349,6 +404,12 @@ app.UseStaticFiles(new StaticFileOptions
         if (app.Environment.IsDevelopment())
         {
             headers["Cache-Control"] = "no-cache";
+            return;
+        }
+
+        if (ctx.Context.Request.Path.Equals("/robots.txt", StringComparison.OrdinalIgnoreCase))
+        {
+            headers["Cache-Control"] = "public,max-age=3600";
             return;
         }
 
@@ -388,16 +449,31 @@ namespace final_p_01.Services
     public class SiteUrlBuilder : ISiteUrlBuilder
     {
         private readonly string _baseUrl;
+        private readonly Uri _baseUri;
 
         public SiteUrlBuilder(IConfiguration configuration)
         {
-            _baseUrl = configuration.GetValue<string>("SiteSettings:BaseUrl")?.TrimEnd('/') ?? "https://darabico.com";
+            _baseUrl = configuration.GetValue<string>("SiteSettings:BaseUrl")?.Trim().TrimEnd('/') ?? "https://darabico.com";
+            _baseUri = new Uri($"{_baseUrl}/");
         }
 
         public string Absolute(string path)
         {
-            if (string.IsNullOrEmpty(path)) return _baseUrl;
-            return $"{_baseUrl}/{path.TrimStart('/')}";
+            if (string.IsNullOrWhiteSpace(path) || path == "/")
+            {
+                return _baseUri.AbsoluteUri;
+            }
+
+            if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                path.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                return Uri.TryCreate(path, UriKind.Absolute, out var externalUri)
+                    ? externalUri.AbsoluteUri
+                    : path;
+            }
+
+            string relativePath = "/" + path.TrimStart('/');
+            return new Uri(_baseUri, relativePath).AbsoluteUri;
         }
     }
 }

@@ -181,6 +181,35 @@ namespace final_p_01.Infrastructure.Migrations
                     b.ToTable("Posts");
                 });
 
+            modelBuilder.Entity("final_p_01.Domain.Entities.PostSlugHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PostId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("PostSlugHistories");
+                });
+
             modelBuilder.Entity("final_p_01.Domain.Entities.Faq", b =>
                 {
                     b.HasOne("final_p_01.Domain.Entities.Post", "Post")
@@ -203,6 +232,17 @@ namespace final_p_01.Infrastructure.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("final_p_01.Domain.Entities.PostSlugHistory", b =>
+                {
+                    b.HasOne("final_p_01.Domain.Entities.Post", "Post")
+                        .WithMany("SlugHistories")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+                });
+
             modelBuilder.Entity("final_p_01.Domain.Entities.Category", b =>
                 {
                     b.Navigation("Posts");
@@ -211,6 +251,8 @@ namespace final_p_01.Infrastructure.Migrations
             modelBuilder.Entity("final_p_01.Domain.Entities.Post", b =>
                 {
                     b.Navigation("Faqs");
+
+                    b.Navigation("SlugHistories");
                 });
 #pragma warning restore 612, 618
         }

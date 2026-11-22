@@ -1,22 +1,13 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using final_p_01.Domain.Entities;
-using final_p_01.Infrastructure.Data;
-using Microsoft.AspNetCore.Http;
+using final_p_01.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Webp;
 using Microsoft.AspNetCore.OutputCaching;
-using Microsoft.AspNetCore.Hosting;
 
 namespace final_p_01.Areas.Admin.Controllers;
 
@@ -26,6 +17,8 @@ namespace final_p_01.Areas.Admin.Controllers;
 [OutputCache(NoStore = true)]
 public class PostsController : Controller
 {
+    private const string GuideSlug = "padel-court-construction-guide";
+
     private readonly ApplicationDbContext _context;
     private readonly ILogger<PostsController> _logger;
     private readonly IConfiguration _configuration;
@@ -243,16 +236,23 @@ public class PostsController : Controller
         ModelState.Remove("AudioFilePath");
         ModelState.Remove("AttachmentFilePath");
         ModelState.Remove("Faqs");
+        ModelState.Remove("SlugHistories");
         ModelState.Remove("Slug");
 
         post.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(post.Slug) ? post.Title : post.Slug);
 
+        if (string.IsNullOrWhiteSpace(post.Slug))
+        {
+            ModelState.AddModelError("Slug", "اسلاگ معتبر نیست. لطفاً یک آدرس معتبر وارد کنید.");
+        }
+
         if (ModelState.IsValid)
         {
-            bool isSlugExist = await _context.Posts.AnyAsync(p => p.Slug == post.Slug);
+            bool isSlugExist = await _context.Posts.AnyAsync(p => p.Slug == post.Slug) ||
+                               await _context.PostSlugHistories.AnyAsync(h => h.Slug == post.Slug);
             if (isSlugExist)
             {
-                ModelState.AddModelError("Slug", "این آدرس (URL) قبلاً ثبت شده یا مشابه آدرس دیگری است.");
+                ModelState.AddModelError("Slug", "این آدرس (URL) قبلاً ثبت شده یا در تاریخچه ریدایرکت‌ها استفاده شده است.");
                 ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
                 ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
                 return View(post);
@@ -347,32 +347,66 @@ public class PostsController : Controller
     {
         if (id != post.Id) return NotFound();
 
+        var existingPost = await _context.Posts
+            .Include(p => p.Faqs)
+            .Include(p => p.SlugHistories)
+            .FirstOrDefaultAsync(p => p.Id == id);
+        if (existingPost == null) return NotFound();
+
         ModelState.Remove("Category");
         ModelState.Remove("CoverImagePath");
         ModelState.Remove("AudioFilePath");
         ModelState.Remove("AttachmentFilePath");
         ModelState.Remove("Faqs");
+        ModelState.Remove("SlugHistories");
         ModelState.Remove("Slug");
 
-        post.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(post.Slug) ? post.Title : post.Slug);
+        bool isGuidePost = string.Equals(existingPost.Slug, GuideSlug, StringComparison.OrdinalIgnoreCase);
+
+        string normalizedIncomingSlug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(post.Slug) ? post.Title : post.Slug);
+
+        if (isGuidePost)
+        {
+            if (!string.Equals(normalizedIncomingSlug, GuideSlug, StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("Slug", "اسلاگ صفحه راهنمای جامع ساخت زمین پدل محافظت‌شده است و قابل تغییر نیست.");
+            }
+            post.Slug = GuideSlug;
+        }
+        else
+        {
+            post.Slug = normalizedIncomingSlug;
+
+            if (string.IsNullOrWhiteSpace(post.Slug))
+            {
+                ModelState.AddModelError("Slug", "اسلاگ معتبر نیست. لطفاً یک آدرس معتبر وارد کنید.");
+            }
+            else if (string.Equals(post.Slug, GuideSlug, StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("Slug", "این اسلاگ برای صفحه راهنمای جامع رزرو شده است.");
+            }
+        }
 
         if (ModelState.IsValid)
         {
-            bool isSlugExist = await _context.Posts.AnyAsync(p => p.Slug == post.Slug && p.Id != post.Id);
+            bool isSlugExist = await _context.Posts.AnyAsync(p => p.Slug == post.Slug && p.Id != post.Id) ||
+                               await _context.PostSlugHistories.AnyAsync(h => h.Slug == post.Slug && h.PostId != post.Id);
             if (isSlugExist)
             {
-                ModelState.AddModelError("Slug", "این آدرس (URL) قبلاً ثبت شده یا مشابه آدرس دیگری است.");
+                ModelState.AddModelError("Slug", "این آدرس (URL) قبلاً ثبت شده یا در تاریخچه ریدایرکت مقاله دیگری استفاده شده است.");
                 ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
                 ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
                 return View(post);
             }
 
-            var existingPost = await _context.Posts.Include(p => p.Faqs).FirstOrDefaultAsync(p => p.Id == id);
-            if (existingPost == null) return NotFound();
+            string previousSlug = existingPost.Slug.Trim().ToLowerInvariant();
+            string nextSlug = post.Slug.Trim().ToLowerInvariant();
+            bool slugChanged = !string.Equals(previousSlug, nextSlug, StringComparison.OrdinalIgnoreCase);
+            bool wasPublished = existingPost.IsPublished;
 
             bool hasMetadataOrContentChanges =
                 existingPost.Title != post.Title ||
-                existingPost.Slug != post.Slug ||
+                slugChanged ||
                 existingPost.Content != post.Content ||
                 existingPost.CategoryId != post.CategoryId ||
                 (existingPost.MetaDescription ?? string.Empty) != (post.MetaDescription ?? string.Empty) ||
@@ -392,8 +426,33 @@ public class PostsController : Controller
 
             bool hasFaqChanges = !existingFaqs.SequenceEqual(incomingFaqs);
 
+            if (slugChanged)
+            {
+                var matchingOldHistory = existingPost.SlugHistories
+                    .FirstOrDefault(h => string.Equals(h.Slug, nextSlug, StringComparison.OrdinalIgnoreCase));
+                if (matchingOldHistory != null)
+                {
+                    _context.PostSlugHistories.Remove(matchingOldHistory);
+                }
+
+                if (wasPublished && !string.IsNullOrWhiteSpace(previousSlug))
+                {
+                    bool alreadyInHistory = existingPost.SlugHistories
+                        .Any(h => string.Equals(h.Slug, previousSlug, StringComparison.OrdinalIgnoreCase));
+                    if (!alreadyInHistory)
+                    {
+                        existingPost.SlugHistories.Add(new PostSlugHistory
+                        {
+                            PostId = existingPost.Id,
+                            Slug = previousSlug,
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+                }
+            }
+
             existingPost.Title = post.Title;
-            existingPost.Slug = post.Slug;
+            existingPost.Slug = nextSlug;
             existingPost.Content = post.Content;
             existingPost.CategoryId = post.CategoryId;
             existingPost.MetaDescription = post.MetaDescription;
@@ -472,7 +531,9 @@ public class PostsController : Controller
                     TempData["MetaDescriptionWarning"] = metaWarning;
                 }
 
-                TempData["SuccessMessage"] = "تغییرات مقاله با موفقیت ذخیره شد.";
+                TempData["SuccessMessage"] = slugChanged && wasPublished
+                    ? "تغییرات مقاله ذخیره شد و ریدایرکت 301 از آدرس قبلی به آدرس جدید به صورت خودکار ثبت گردید."
+                    : "تغییرات مقاله با موفقیت ذخیره شد.";
                 return RedirectToAction("Index", new { t = DateTime.UtcNow.Ticks });
             }
             catch (InvalidOperationException ex)

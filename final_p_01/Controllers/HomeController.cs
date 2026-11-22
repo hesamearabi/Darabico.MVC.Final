@@ -16,6 +16,8 @@ namespace final_p_01.Controllers
 {
     public class HomeController : Controller
     {
+        private const string GuideSlug = "padel-court-construction-guide";
+
         private readonly ILogger<HomeController> _logger;
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
@@ -49,7 +51,7 @@ namespace final_p_01.Controllers
 
             var latestPosts = await _context.Posts
                 .AsNoTracking()
-                .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide")
+                .Where(p => p.IsPublished && p.Slug != GuideSlug)
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(homePagePostsCount)
                 .Select(p => new PostCardViewModel
@@ -72,10 +74,10 @@ namespace final_p_01.Controllers
         [OutputCache(Duration = 3600, Tags = new[] { "BlogCache" })]
         public async Task<IActionResult> Post([FromRoute] string? slug, [FromQuery(Name = "slug")] string? querySlug)
         {
-            var actualSlug = slug ?? querySlug;
+            var actualSlug = (slug ?? querySlug)?.Trim().ToLowerInvariant();
             if (string.IsNullOrEmpty(actualSlug)) return base.NotFound();
 
-            if (actualSlug.Equals("padel-court-construction-guide", StringComparison.OrdinalIgnoreCase))
+            if (actualSlug.Equals(GuideSlug, StringComparison.OrdinalIgnoreCase))
             {
                 return RedirectPermanent("/padel-court-construction-guide");
             }
@@ -86,7 +88,27 @@ namespace final_p_01.Controllers
                 .Include(p => p.Faqs)
                 .FirstOrDefaultAsync(p => p.Slug == actualSlug && p.IsPublished);
 
-            if (post == null) return base.NotFound();
+            if (post == null)
+            {
+                var redirectedSlug = await _context.PostSlugHistories
+                    .AsNoTracking()
+                    .Where(h => h.Slug == actualSlug && h.Post.IsPublished)
+                    .Select(h => h.Post.Slug)
+                    .FirstOrDefaultAsync();
+
+                if (!string.IsNullOrWhiteSpace(redirectedSlug))
+                {
+                    if (redirectedSlug.Equals(GuideSlug, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return RedirectPermanent("/padel-court-construction-guide");
+                    }
+
+                    string encodedTargetSlug = EncodePathSegments(redirectedSlug.Trim().ToLowerInvariant());
+                    return RedirectPermanent($"/blog/{encodedTargetSlug}");
+                }
+
+                return base.NotFound();
+            }
 
             var relatedPosts = await GetRelatedPostsAsync(post.Id, post.CategoryId);
 
@@ -120,7 +142,7 @@ namespace final_p_01.Controllers
 
             var query = _context.Posts
                 .AsNoTracking()
-                .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide");
+                .Where(p => p.IsPublished && p.Slug != GuideSlug);
 
             int totalPosts = await query.CountAsync();
             int totalPages = (int)Math.Ceiling(totalPosts / (double)pageSize);
@@ -165,7 +187,7 @@ namespace final_p_01.Controllers
                 .AsNoTracking()
                 .Include(p => p.Category)
                 .Include(p => p.Faqs)
-                .FirstOrDefaultAsync(p => p.Slug == "padel-court-construction-guide" && p.IsPublished);
+                .FirstOrDefaultAsync(p => p.Slug == GuideSlug && p.IsPublished);
 
             if (guidePost == null)
             {
@@ -222,9 +244,9 @@ namespace final_p_01.Controllers
         [OutputCache(Duration = 3600, Tags = new[] { "BlogCache" })]
         public async Task<IActionResult> Sitemap()
         {
-            var posts = await _context.Posts
+            var allPublishedPosts = await _context.Posts
                 .AsNoTracking()
-                .Where(p => p.IsPublished && p.Slug != "padel-court-construction-guide")
+                .Where(p => p.IsPublished)
                 .OrderByDescending(p => p.CreatedAt)
                 .Select(p => new
                 {
@@ -235,9 +257,19 @@ namespace final_p_01.Controllers
                 })
                 .ToListAsync();
 
+            var guidePost = allPublishedPosts.FirstOrDefault(p => string.Equals(p.Slug, GuideSlug, StringComparison.OrdinalIgnoreCase));
+            var blogPosts = allPublishedPosts
+                .Where(p => !string.Equals(p.Slug, GuideSlug, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
             string baseUrl = ResolveBaseUrl();
-            DateTime? newestPostDate = posts.Count > 0
-                ? posts.Max(p => p.UpdatedAt ?? p.CreatedAt)
+
+            DateTime? newestSiteDate = allPublishedPosts.Count > 0
+                ? allPublishedPosts.Max(p => p.UpdatedAt ?? p.CreatedAt)
+                : null;
+
+            DateTime? newestBlogDate = blogPosts.Count > 0
+                ? blogPosts.Max(p => p.UpdatedAt ?? p.CreatedAt)
                 : null;
 
             XNamespace sitemapNs = "http://www.sitemaps.org/schemas/sitemap/0.9";
@@ -247,37 +279,60 @@ namespace final_p_01.Controllers
                 sitemapNs + "urlset",
                 new XAttribute(XNamespace.Xmlns + "image", imageNs.NamespaceName));
 
-            var staticPaths = new[]
+            var homeElement = new XElement(
+                sitemapNs + "url",
+                new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, "/")));
+            if (newestSiteDate.HasValue)
             {
-                "/",
-                "/about-us",
-                "/contact-us",
-                "/blog",
-                "/padel-court-construction-guide"
-            };
+                homeElement.Add(new XElement(sitemapNs + "lastmod", newestSiteDate.Value.ToString("yyyy-MM-dd")));
+            }
+            urlset.Add(homeElement);
 
-            foreach (var path in staticPaths)
+            urlset.Add(new XElement(
+                sitemapNs + "url",
+                new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, "/about-us"))));
+
+            urlset.Add(new XElement(
+                sitemapNs + "url",
+                new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, "/contact-us"))));
+
+            var blogElement = new XElement(
+                sitemapNs + "url",
+                new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, "/blog")));
+            if (newestBlogDate.HasValue)
             {
-                var urlElement = new XElement(
+                blogElement.Add(new XElement(sitemapNs + "lastmod", newestBlogDate.Value.ToString("yyyy-MM-dd")));
+            }
+            urlset.Add(blogElement);
+
+            if (guidePost != null)
+            {
+                DateTime guideLastModified = guidePost.UpdatedAt ?? guidePost.CreatedAt;
+                var guideElement = new XElement(
                     sitemapNs + "url",
-                    new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, path)));
+                    new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, "/padel-court-construction-guide")),
+                    new XElement(sitemapNs + "lastmod", guideLastModified.ToString("yyyy-MM-dd")));
 
-                if ((path == "/" || path == "/blog") && newestPostDate.HasValue)
+                if (!string.IsNullOrWhiteSpace(guidePost.CoverImagePath))
                 {
-                    urlElement.Add(new XElement(sitemapNs + "lastmod", newestPostDate.Value.ToString("yyyy-MM-dd")));
+                    guideElement.Add(
+                        new XElement(
+                            imageNs + "image",
+                            new XElement(imageNs + "loc", BuildAbsoluteUrl(baseUrl, guidePost.CoverImagePath))));
                 }
 
-                urlset.Add(urlElement);
+                urlset.Add(guideElement);
             }
 
-            foreach (var post in posts)
+            foreach (var post in blogPosts)
             {
                 if (string.IsNullOrWhiteSpace(post.Slug))
                 {
                     continue;
                 }
 
-                string encodedSlug = EncodePathSegments(post.Slug);
+                string normalizedSlug = post.Slug.Trim().ToLowerInvariant();
+                string encodedSlug = EncodePathSegments(normalizedSlug);
                 string postUrl = BuildAbsoluteUrl(baseUrl, $"/blog/{encodedSlug}");
                 DateTime lastModified = post.UpdatedAt ?? post.CreatedAt;
 
@@ -288,15 +343,10 @@ namespace final_p_01.Controllers
 
                 if (!string.IsNullOrWhiteSpace(post.CoverImagePath))
                 {
-                    string absoluteImageUrl = post.CoverImagePath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-                                              post.CoverImagePath.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-                        ? post.CoverImagePath
-                        : BuildAbsoluteUrl(baseUrl, $"/{EncodePathSegments(post.CoverImagePath)}");
-
                     urlElement.Add(
                         new XElement(
                             imageNs + "image",
-                            new XElement(imageNs + "loc", absoluteImageUrl)));
+                            new XElement(imageNs + "loc", BuildAbsoluteUrl(baseUrl, post.CoverImagePath))));
                 }
 
                 urlset.Add(urlElement);
@@ -325,7 +375,7 @@ namespace final_p_01.Controllers
         {
             var query = _context.Posts
                 .AsNoTracking()
-                .Where(p => p.IsPublished && p.Id != currentPostId && p.Slug != "padel-court-construction-guide");
+                .Where(p => p.IsPublished && p.Id != currentPostId && p.Slug != GuideSlug);
 
             if (categoryId.HasValue && categoryId.Value > 0)
             {
@@ -402,18 +452,23 @@ namespace final_p_01.Controllers
 
         private static string BuildAbsoluteUrl(string baseUrl, string path)
         {
-            if (string.IsNullOrEmpty(path))
+            var baseUri = new Uri($"{baseUrl.TrimEnd('/')}/");
+
+            if (string.IsNullOrWhiteSpace(path) || path == "/")
             {
-                return baseUrl;
+                return baseUri.AbsoluteUri;
             }
 
             if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
                 path.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
-                return path;
+                return Uri.TryCreate(path, UriKind.Absolute, out var externalUri)
+                    ? externalUri.AbsoluteUri
+                    : path;
             }
 
-            return $"{baseUrl}/{path.TrimStart('/')}";
+            string relativePath = "/" + path.TrimStart('/');
+            return new Uri(baseUri, relativePath).AbsoluteUri;
         }
 
         private static string EncodePathSegments(string path)
@@ -494,18 +549,25 @@ namespace final_p_01.Controllers
             }
         }
 
-        [Route("Home/PageNotFound")]
+        [Route("home/pagenotfound")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult PageNotFound(int statusCode)
+        public IActionResult PageNotFound(int statusCode = 404)
         {
-            Response.StatusCode = 404;
-            ViewBag.StatusCode = statusCode;
+            int resolvedStatusCode = statusCode >= 400 && statusCode <= 599 ? statusCode : 404;
+            Response.StatusCode = resolvedStatusCode;
+            Response.Headers["X-Robots-Tag"] = "noindex, follow";
+            ViewData["Robots"] = "noindex, follow";
+            ViewBag.StatusCode = resolvedStatusCode;
             return View("NotFound");
         }
 
+        [Route("home/error")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
+            Response.StatusCode = StatusCodes.Status500InternalServerError;
+            Response.Headers["X-Robots-Tag"] = "noindex, nofollow";
+            ViewData["Robots"] = "noindex, nofollow";
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }

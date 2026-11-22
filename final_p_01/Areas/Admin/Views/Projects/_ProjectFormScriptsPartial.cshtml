@@ -1,0 +1,183 @@
+﻿<style>
+    .admin-form-wrap {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 1.5rem;
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: .4rem;
+    }
+
+    .full-width {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-input {
+        padding: .6rem .85rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        font-family: inherit;
+        font-size: .92rem;
+    }
+
+    .field-error, .validation-box {
+        color: #dc2626;
+        font-size: .84rem;
+    }
+
+    .media-fieldset {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+
+        .media-fieldset legend {
+            font-weight: 700;
+            padding: 0 .5rem;
+            color: #0f766e;
+        }
+
+    .preview-img {
+        margin-top: .5rem;
+        border-radius: 8px;
+        object-fit: cover;
+        border: 1px solid #cbd5e1;
+    }
+
+    .checkbox-label {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        margin-top: .5rem;
+        font-size: .9rem;
+        cursor: pointer;
+    }
+
+    .gallery-admin-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .75rem;
+        padding: .75rem;
+        background: #f8fafc;
+        border-radius: 10px;
+        margin-bottom: .75rem;
+    }
+
+    .gallery-row-inputs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        flex: 1;
+    }
+
+    .order-sm {
+        width: 90px;
+    }
+
+    .btn-secondary {
+        background: #e2e8f0;
+        border: none;
+        padding: .6rem 1rem;
+        border-radius: 8px;
+        font-family: inherit;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-remove-gallery {
+        background: #fee2e2;
+        color: #b91c1c;
+        border: none;
+        padding: .5rem .85rem;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: .75rem;
+        margin-top: 1.5rem;
+    }
+
+    .btn-save {
+        background: #0f766e;
+        color: #fff;
+        border: none;
+        padding: .75rem 1.75rem;
+        border-radius: 10px;
+        font-family: inherit;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .btn-cancel {
+        background: #f1f5f9;
+        color: #334155;
+        padding: .75rem 1.4rem;
+        border-radius: 10px;
+        text-decoration: none;
+    }
+</style>
+
+<!-- فایل لوکال TinyMCE در wwwroot/lib/tinymce/tinymce.min.js -->
+<script src="~/lib/tinymce/tinymce.min.js"></script>
+<script>
+    if (window.tinymce) {
+        tinymce.init({
+            selector: '#richDescription',
+            directionality: 'rtl',
+            language: 'fa',
+            height: 360,
+            menubar: false,
+            plugins: 'lists link table code',
+            toolbar: 'undo redo | blocks | bold italic | alignright aligncenter alignleft | bullist numlist | link table | code',
+            base_url: '/lib/tinymce',
+            suffix: '.min'
+        });
+    }
+
+    (function () {
+        const container = document.getElementById('newGalleryContainer');
+        const addBtn = document.getElementById('btnAddGalleryRow');
+        if (!container || !addBtn) return;
+
+        addBtn.addEventListener('click', function () {
+            const row = document.createElement('div');
+            row.className = 'gallery-admin-row';
+            row.innerHTML = `
+                <input type="file" name="NewGalleryFiles" accept="image/*" required class="form-input" />
+                <input type="text" name="NewGalleryAltTexts" required placeholder="متن جایگزین تصویر (Alt) - اجباری" class="form-input" style="flex:1; min-width:200px;" />
+                <input type="number" name="NewGallerySortOrders" value="1" placeholder="ترتیب" class="form-input order-sm" />
+                <button type="button" class="btn-remove-gallery" onclick="this.parentElement.remove()">حذف</button>
+            `;
+            container.appendChild(row);
+        });
+    })();
+
+    async function deleteExistingGalleryImage(imageId) {
+        if (!confirm('این تصویر از گالری و سرور حذف شود؟')) return;
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const res = await fetch(`/admin/projects/delete-gallery-image/${imageId}`, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': token }
+        });
+        if (res.ok) {
+            document.getElementById(`existing-img-${imageId}`)?.remove();
+        }
+    }
+</script>
