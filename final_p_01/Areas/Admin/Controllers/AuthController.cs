@@ -109,19 +109,7 @@ public class AuthController : Controller
             }
             catch (FormatException)
             {
-                // Handled below by legacy plaintext compatibility check
-            }
-
-            // TODO: Delete this legacy plaintext compatibility path once all existing AdminUser rows are migrated to Identity v3 hashes.
-            if (!isPasswordValid && !IsIdentityPasswordHash(user.Password))
-            {
-                if (CryptographicOperations.FixedTimeEquals(
-                    Encoding.UTF8.GetBytes(user.Password),
-                    Encoding.UTF8.GetBytes(model.Password)))
-                {
-                    isPasswordValid = true;
-                    needsUpgrade = true;
-                }
+                // Not a valid Identity hash: password is treated as invalid.
             }
 
             if (isPasswordValid)
@@ -274,20 +262,5 @@ public class AuthController : Controller
     {
         public int FailedCount { get; set; }
         public DateTimeOffset? LockoutEndUtc { get; set; }
-    }
-
-    // TODO: Delete this helper together with the legacy plaintext compatibility path once all rows are migrated.
-    private static bool IsIdentityPasswordHash(string value)
-    {
-        if (string.IsNullOrEmpty(value)) return false;
-        try
-        {
-            var decoded = Convert.FromBase64String(value);
-            return decoded.Length >= 49 && (decoded[0] == 0x00 || decoded[0] == 0x01);
-        }
-        catch (FormatException)
-        {
-            return false;
-        }
     }
 }

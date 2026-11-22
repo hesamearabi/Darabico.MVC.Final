@@ -95,19 +95,7 @@ public class SettingsController : AdminBaseController
             }
             catch (FormatException)
             {
-                // Handled below by legacy plaintext compatibility check
-            }
-
-            // TODO: Delete this legacy plaintext compatibility path once all existing AdminUser rows are migrated to Identity v3 hashes.
-            if (!isCurrentPasswordValid && !IsIdentityPasswordHash(admin.Password))
-            {
-                if (CryptographicOperations.FixedTimeEquals(
-                    Encoding.UTF8.GetBytes(admin.Password),
-                    Encoding.UTF8.GetBytes(model.CurrentPassword)))
-                {
-                    isCurrentPasswordValid = true;
-                    needsUpgrade = true;
-                }
+                // Not a valid Identity hash: current password is treated as invalid.
             }
         }
 
@@ -180,20 +168,5 @@ public class SettingsController : AdminBaseController
         ModelState.Remove(nameof(model.CurrentPassword));
         ModelState.Remove(nameof(model.NewPassword));
         ModelState.Remove(nameof(model.ConfirmNewPassword));
-    }
-
-    // TODO: Delete this helper together with the legacy plaintext compatibility path once all rows are migrated.
-    private static bool IsIdentityPasswordHash(string value)
-    {
-        if (string.IsNullOrEmpty(value)) return false;
-        try
-        {
-            var decoded = Convert.FromBase64String(value);
-            return decoded.Length >= 49 && (decoded[0] == 0x00 || decoded[0] == 0x01);
-        }
-        catch (FormatException)
-        {
-            return false;
-        }
     }
 }

@@ -29,7 +29,7 @@ public class EstimatorFormViewModel
     public string? MaterialTier { get; set; }
 
     /// <summary>تله ضداسپم: باید خالی بماند</summary>
-    [MaxLength(0)]
+    [StringLength(0)]
     public string? Website { get; set; }
 
     public List<EstimatorMaterialTier> MaterialTiers { get; set; } = new();

@@ -18,7 +18,7 @@ public class FeasibilityLeadViewModel
     public string Mobile { get; set; } = string.Empty;
 
     /// <summary>تله ضداسپم</summary>
-    [MaxLength(0)]
+    [StringLength(0)]
     public string? Website { get; set; }
 
     public string? PageTitle { get; set; }

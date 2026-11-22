@@ -22,7 +22,7 @@ public class BookingFormViewModel
     public string? Message { get; set; }
 
     /// <summary>تله ضداسپم</summary>
-    [MaxLength(0)]
+    [StringLength(0)]
     public string? Website { get; set; }
 
     public List<BookingSlot> AvailableSlots { get; set; } = new();
