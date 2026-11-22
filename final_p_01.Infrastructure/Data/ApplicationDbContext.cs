@@ -143,7 +143,7 @@ public class SiteSettingsConfiguration : IEntityTypeConfiguration<SiteSettings>
         builder.HasData(new SiteSettings
         {
             Id = SiteSettings.SingletonId,
-            CanonicalHost = "darabico.com"
+            CanonicalHost = "darabico.com", UpdatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
         });
     }
 }
@@ -163,7 +163,7 @@ public class EstimatorSettingsConfiguration : IEntityTypeConfiguration<Estimator
             Id = EstimatorSettings.SingletonId,
             BasePricePerCourtOutdoor = 0,
             BasePricePerCourtIndoor = 0,
-            UpperBoundMultiplier = 1.35m
+            UpperBoundMultiplier = 1.35m, UpdatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
         });
 
         builder.HasMany(s => s.MaterialTiers)

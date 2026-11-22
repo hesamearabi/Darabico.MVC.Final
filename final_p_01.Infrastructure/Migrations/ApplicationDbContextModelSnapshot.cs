@@ -177,7 +177,7 @@ namespace final_p_01.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AdminUsers", (string)null);
+                    b.ToTable("AdminUsers");
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.BookingSlot", b =>
@@ -241,10 +241,7 @@ namespace final_p_01.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-<<<<<<< ours
                     b.ToTable("Categories");
-=======
-                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.CityPage", b =>
@@ -379,7 +376,7 @@ namespace final_p_01.Infrastructure.Migrations
 
                     b.HasIndex("EstimatorSettingsId");
 
-                    b.ToTable("EstimatorCityMultiplier", (string)null);
+                    b.ToTable("EstimatorCityMultiplier");
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.EstimatorMaterialTier", b =>
@@ -412,7 +409,7 @@ namespace final_p_01.Infrastructure.Migrations
 
                     b.HasIndex("EstimatorSettingsId");
 
-                    b.ToTable("EstimatorMaterialTier", (string)null);
+                    b.ToTable("EstimatorMaterialTier");
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.EstimatorSettings", b =>
@@ -450,10 +447,9 @@ namespace final_p_01.Infrastructure.Migrations
                             Id = 1,
                             BasePricePerCourtIndoor = 0L,
                             BasePricePerCourtOutdoor = 0L,
-                            UpdatedAtUtc = new DateTime(2026, 11, 22, 17, 18, 59, 430, DateTimeKind.Utc).AddTicks(4808),
+                            UpdatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             UpperBoundMultiplier = 1.35m
                         });
->>>>>>> theirs
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.Faq", b =>
@@ -719,14 +715,10 @@ namespace final_p_01.Infrastructure.Migrations
 
                     b.HasIndex("CategoryId");
 
-<<<<<<< ours
-                    b.ToTable("Posts");
-=======
                     b.HasIndex("Slug")
                         .IsUnique();
 
                     b.ToTable("Posts", (string)null);
->>>>>>> theirs
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.PostSlugHistory", b =>
@@ -752,10 +744,7 @@ namespace final_p_01.Infrastructure.Migrations
 
                     b.HasIndex("PostId");
 
-<<<<<<< ours
                     b.ToTable("PostSlugHistories");
-=======
-                    b.ToTable("PostSlugHistories", (string)null);
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.ProcessStage", b =>
@@ -879,7 +868,7 @@ namespace final_p_01.Infrastructure.Migrations
                             CanonicalUseWww = false,
                             EnableMultiLanguage = false,
                             FeasibilityPageTitle = "نمونه طرح توجیهی احداث زمین پدل",
-                            UpdatedAtUtc = new DateTime(2026, 11, 22, 17, 18, 59, 427, DateTimeKind.Utc).AddTicks(5289)
+                            UpdatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         });
                 });
 
@@ -910,18 +899,6 @@ namespace final_p_01.Infrastructure.Migrations
                         .HasForeignKey("EstimatorSettingsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
->>>>>>> theirs
-                });
-
-            modelBuilder.Entity("Darabico.Domain.Entities.ProjectImage", b =>
-                {
-                    b.HasOne("Darabico.Domain.Entities.Project", "Project")
-                        .WithMany("Images")
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.Faq", b =>

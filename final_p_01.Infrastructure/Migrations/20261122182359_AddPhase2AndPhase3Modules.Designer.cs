@@ -12,7 +12,7 @@ using final_p_01.Infrastructure.Data;
 namespace final_p_01.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20261122171900_AddPhase2AndPhase3Modules")]
+    [Migration("20261122182359_AddPhase2AndPhase3Modules")]
     partial class AddPhase2AndPhase3Modules
     {
         /// <inheritdoc />
@@ -450,7 +450,7 @@ namespace final_p_01.Infrastructure.Migrations
                             Id = 1,
                             BasePricePerCourtIndoor = 0L,
                             BasePricePerCourtOutdoor = 0L,
-                            UpdatedAtUtc = new DateTime(2026, 11, 22, 17, 18, 59, 430, DateTimeKind.Utc).AddTicks(4808),
+                            UpdatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             UpperBoundMultiplier = 1.35m
                         });
                 });
@@ -871,7 +871,7 @@ namespace final_p_01.Infrastructure.Migrations
                             CanonicalUseWww = false,
                             EnableMultiLanguage = false,
                             FeasibilityPageTitle = "نمونه طرح توجیهی احداث زمین پدل",
-                            UpdatedAtUtc = new DateTime(2026, 11, 22, 17, 18, 59, 427, DateTimeKind.Utc).AddTicks(5289)
+                            UpdatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
                         });
                 });
 
