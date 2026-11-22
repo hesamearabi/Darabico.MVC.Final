@@ -122,6 +122,19 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit = 0
         });
     });
+
+    // محدودیت نرخ عمومی برای همه فرم‌های POST عمومی (لید، رزرو، پس از فروش)
+    options.AddPolicy("FormRateLimit", context =>
+    {
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(10),
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            QueueLimit = 0
+        });
+    });
 });
 
 builder.Services.AddControllersWithViews();
@@ -421,6 +434,8 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.UseRouting();
+
+app.UseMiddleware<final_p_01.Middleware.LanguageMiddleware>();
 
 app.UseRateLimiter();
 

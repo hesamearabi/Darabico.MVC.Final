@@ -1,0 +1,35 @@
+@model IEnumerable<final_p_01.Domain.Entities.ProcessStage>
+@{
+    ViewData["Title"] = "فرایند اجرای زمین پدل";
+}
+<main class="container py-5" dir="rtl">
+    <h1>فرایند اجرا</h1>
+    <div class="process-timeline">
+        @foreach (var stage in Model)
+        {
+            <section class="process-stage">
+                <h2>@stage.StepNumber. @stage.Title</h2>
+                @if (!string.IsNullOrEmpty(stage.EstimatedDuration))
+                {
+                    <span class="badge bg-secondary">مدت تقریبی: @stage.EstimatedDuration</span>
+                }
+                <div>@stage.Description</div>
+            </section>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty((string?)ViewData["PaymentTermsHtml"]))
+    {
+        <section class="mt-5">
+            <h2>شیوه پرداخت</h2>
+            @Html.Raw((string)ViewData["PaymentTermsHtml"])
+        </section>
+    }
+    @if (!string.IsNullOrEmpty((string?)ViewData["WarrantyHtml"]))
+    {
+        <section class="mt-5">
+            <h2>ضمانت و خدمات پس از اجرا</h2>
+            @Html.Raw((string)ViewData["WarrantyHtml"])
+        </section>
+    }
+</main>

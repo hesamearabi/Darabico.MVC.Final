@@ -1,0 +1,29 @@
+@model final_p_01.Domain.Entities.PillarPage
+@{
+    ViewData["Title"] = Model.MetaTitle ?? Model.Title;
+    if (!string.IsNullOrEmpty(Model.MetaDescription))
+    {
+        ViewData["Description"] = Model.MetaDescription;
+    }
+    var faqs = (IList<final_p_01.Domain.Entities.Faq>)(ViewData["Faqs"] ?? new List<final_p_01.Domain.Entities.Faq>());
+}
+<main class="container py-5" dir="rtl">
+    <article>
+        <h1>@Model.Title</h1>
+        @Html.Raw(Model.ContentHtml)
+    </article>
+
+    @if (faqs.Count > 0)
+    {
+        <section class="mt-5">
+            <h2>سوالات متداول</h2>
+            @foreach (var faq in faqs)
+            {
+                <details class="mb-2">
+                    <summary>@faq.Question</summary>
+                    <p>@faq.Answer</p>
+                </details>
+            }
+        </section>
+    }
+</main>

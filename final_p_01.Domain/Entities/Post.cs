@@ -20,6 +20,18 @@ public class Post
     [MaxLength(500)]
     public string? MetaDescription { get; set; }
 
+    [MaxLength(160)]
+    public string? MetaTitle { get; set; }
+
+    [MaxLength(500)]
+    public string? Canonical { get; set; }
+
+    [MaxLength(150)]
+    public string? AuthorName { get; set; }
+
+    /// <summary>تاریخ انتشار رسمی برای نمایش شمسی؛ خالی بودن از CreatedAt استفاده می‌شود.</summary>
+    public DateTime? PublishedAtUtc { get; set; }
+
     public bool IsPublished { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }

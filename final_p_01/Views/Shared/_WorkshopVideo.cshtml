@@ -1,0 +1,20 @@
+@model final_p_01.Domain.Entities.SiteSettings?
+@if (Model is not null && !string.IsNullOrEmpty(Model.WorkshopVideoUrl))
+{
+    <section class="workshop-video my-5" dir="rtl">
+        <div class="container">
+            @if (!string.IsNullOrEmpty(Model.WorkshopVideoTitle))
+            {
+                <h2>@Model.WorkshopVideoTitle</h2>
+            }
+            @if (!string.IsNullOrEmpty(Model.WorkshopVideoDescription))
+            {
+                <p class="text-muted">@Model.WorkshopVideoDescription</p>
+            }
+            <video controls preload="none" poster="@Model.WorkshopVideoPosterUrl" class="w-100" style="max-height:480px">
+                <source src="@Model.WorkshopVideoUrl" type="video/mp4" />
+                مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
+            </video>
+        </div>
+    </section>
+}

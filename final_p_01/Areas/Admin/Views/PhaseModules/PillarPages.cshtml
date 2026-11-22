@@ -1,0 +1,22 @@
+@model IEnumerable<final_p_01.Domain.Entities.PillarPage>
+@{
+    ViewData["Title"] = "صفحات پیلار سئو";
+}
+<div class="container py-4" dir="rtl">
+    <h1>صفحات پیلار سئو</h1>
+    <a class="btn btn-primary mb-3" asp-action="CreatePillarPage">صفحه جدید</a>
+    <table class="table">
+        <thead><tr><th>عنوان</th><th>نامک</th><th>انتشار</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var pillar in Model)
+        {
+            <tr>
+                <td>@pillar.Title</td>
+                <td><code>@pillar.Slug</code></td>
+                <td>@(pillar.IsPublished ? "منتشرشده" : "پیش‌نویس")</td>
+                <td><a class="btn btn-sm btn-outline-primary" asp-action="EditPillarPage" asp-route-id="@pillar.Id">ویرایش</a></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

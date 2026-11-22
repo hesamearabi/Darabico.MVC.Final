@@ -1,0 +1,26 @@
+@model final_p_01.Domain.Entities.CityPage
+@{
+    ViewData["Title"] = Model.MetaTitle ?? Model.Title;
+    if (!string.IsNullOrEmpty(Model.MetaDescription))
+    {
+        ViewData["Description"] = Model.MetaDescription;
+    }
+    var projects = (IList<Darabico.Domain.Entities.Project>)(ViewData["Projects"] ?? new List<Darabico.Domain.Entities.Project>());
+}
+<main class="container py-5" dir="rtl">
+    <h1>@Model.Title</h1>
+    <article>@Html.Raw(Model.ContentHtml)</article>
+
+    @if (projects.Count > 0)
+    {
+        <section class="mt-5">
+            <h2>پروژه‌های اجراشده در @Model.CityName</h2>
+            <ul>
+                @foreach (var project in projects)
+                {
+                    <li><a href="/projects/@project.Slug">@project.Title</a></li>
+                }
+            </ul>
+        </section>
+    }
+</main>

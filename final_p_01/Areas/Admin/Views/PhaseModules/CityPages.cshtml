@@ -1,0 +1,34 @@
+@model IEnumerable<final_p_01.Domain.Entities.CityPage>
+@{
+    ViewData["Title"] = "صفحات شهرها";
+    var projectCounts = (Dictionary<string, int>)(ViewData["ProjectCounts"] ?? new Dictionary<string, int>());
+}
+<div class="container py-4" dir="rtl">
+    <h1>صفحات شهرها</h1>
+    @if (TempData["Error"] is not null)
+    {
+        <div class="alert alert-warning">@TempData["Error"]</div>
+    }
+    <a class="btn btn-primary mb-3" asp-action="CreateCityPage">صفحه شهر جدید</a>
+    <table class="table">
+        <thead><tr><th>شهر</th><th>نامک</th><th>پروژه‌های منتشرشده</th><th>وضعیت</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var cityPage in Model)
+        {
+            var count = projectCounts.TryGetValue(cityPage.CityName, out var c) ? c : 0;
+            <tr>
+                <td>@cityPage.CityName</td>
+                <td><code dir="ltr">@cityPage.Slug</code></td>
+                <td>@count</td>
+                <td>@(cityPage.IsPublished ? "منتشرشده" : "پیش‌نویس")</td>
+                <td>
+                    <form method="post" asp-action="ToggleCityPage" asp-route-id="@cityPage.Id" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-sm btn-outline-secondary">تغییر وضعیت انتشار</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
