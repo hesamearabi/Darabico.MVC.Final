@@ -11,21 +11,27 @@ namespace final_p_01.Controllers;
 public class EstimatorFormViewModel
 {
     [Required(ErrorMessage = "نام و نام خانوادگی الزامی است."), MaxLength(150)]
+    [Display(Name = "نام و نام خانوادگی")]
     public string FullName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "شماره موبایل الزامی است."), MaxLength(20)]
+    [Display(Name = "شماره موبایل")]
     public string Mobile { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "انتخاب نوع زمین الزامی است.")]
+    [Display(Name = "نوع زمین")]
     public byte CourtType { get; set; }
 
     [Range(1, 50, ErrorMessage = "تعداد زمین باید بین ۱ تا ۵۰ باشد.")]
+    [Display(Name = "تعداد زمین")]
     public int CourtCount { get; set; } = 1;
 
     [MaxLength(100)]
+    [Display(Name = "شهر")]
     public string? City { get; set; }
 
     [MaxLength(100)]
+    [Display(Name = "سطح متریال")]
     public string? MaterialTier { get; set; }
 
     /// <summary>تله ضداسپم: باید خالی بماند</summary>

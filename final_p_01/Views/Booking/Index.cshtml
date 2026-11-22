@@ -1,55 +1,92 @@
 @model final_p_01.Controllers.BookingFormViewModel
+@using System.Globalization
 @{
     ViewData["Title"] = "رزرو بازدید";
+    var pc = new PersianCalendar();
+    string ToPersianDate(DateOnly d)
+    {
+        var dt = d.ToDateTime(TimeOnly.MinValue);
+        return $"{pc.GetYear(dt)}/{pc.GetMonth(dt):00}/{pc.GetDayOfMonth(dt):00}";
+    }
+    string ToWeekday(DateOnly d) => d.ToDateTime(TimeOnly.MinValue).ToString("dddd", new CultureInfo("fa-IR"));
+    var openSlots = Model.AvailableSlots.Where(s => s.BookedCount < s.Capacity).ToList();
 }
-<main class="container py-5" dir="rtl">
+<main class="form-page" dir="rtl">
     <h1>رزرو بازدید</h1>
+    <p class="form-page__intro">زمان مناسب خود را انتخاب کنید تا کارشناسان ما در محل شما حاضر شوند.</p>
+
     @if (!string.IsNullOrEmpty(Model.SuccessMessage))
     {
-        <div class="alert alert-success">@Model.SuccessMessage</div>
+        <div class="form-alert form-alert--success" role="status">@Model.SuccessMessage</div>
     }
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
-        <div class="alert alert-warning">@Model.ErrorMessage</div>
+        <div class="form-alert form-alert--warning" role="alert">@Model.ErrorMessage</div>
     }
 
-    <form method="post" asp-action="Index" class="row g-3">
+    <form method="post" asp-action="Index" class="form-grid" novalidate>
         @Html.AntiForgeryToken()
-        <div class="col-md-6">
-            <label asp-for="SlotId" class="form-label">اسلات بازدید</label>
-            <select asp-for="SlotId" class="form-select">
-                <option value="">— انتخاب اسلات —</option>
-                @foreach (var slot in Model.AvailableSlots)
-                {
-                    @if (slot.BookedCount < slot.Capacity)
+        <div class="form-field form-grid__full">
+            <label asp-for="SlotId">اسلات بازدید</label>
+            @if (openSlots.Any())
+            {
+                <div class="slot-list">
+                    @foreach (var slot in openSlots)
                     {
-                        <option value="@slot.Id">@slot.Date.ToString("yyyy/MM/dd") — @slot.StartTime تا @slot.EndTime</option>
+                        <div class="slot-option">
+                            <input type="radio" asp-for="SlotId" value="@slot.Id" id="slot-@slot.Id" />
+                            <label class="slot-option__card" for="slot-@slot.Id">
+                                <span class="slot-option__date">@ToWeekday(slot.Date) — @ToPersianDate(slot.Date)</span>
+                                <span class="slot-option__time">@slot.StartTime تا @slot.EndTime</span>
+                            </label>
+                        </div>
                     }
-                }
-            </select>
-            <span asp-validation-for="SlotId" class="text-danger"></span>
+                </div>
+            }
+            else
+            {
+                <div class="slot-empty">در حال حاضر اسلات خالی وجود ندارد. لطفاً بعداً مراجعه کنید یا با ما تماس بگیرید.</div>
+            }
+            <span asp-validation-for="SlotId" class="field-validation-error"></span>
         </div>
-        <div class="col-md-6">
-            <label asp-for="FullName" class="form-label"></label>
-            <input asp-for="FullName" class="form-control" />
-            <span asp-validation-for="FullName" class="text-danger"></span>
+        <div class="form-field">
+            <label asp-for="FullName">نام و نام خانوادگی</label>
+            <input asp-for="FullName" class="form-input" />
+            <span asp-validation-for="FullName" class="field-validation-error"></span>
         </div>
-        <div class="col-md-6">
-            <label asp-for="Mobile" class="form-label">شماره موبایل</label>
-            <input asp-for="Mobile" class="form-control" inputmode="tel" dir="ltr" />
-            <span asp-validation-for="Mobile" class="text-danger"></span>
+        <div class="form-field">
+            <label asp-for="Mobile">شماره موبایل</label>
+            <input asp-for="Mobile" class="form-input form-input--ltr" inputmode="tel" />
+            <span asp-validation-for="Mobile" class="field-validation-error"></span>
         </div>
-        <div class="col-12">
-            <label asp-for="Message" class="form-label">توضیحات (اختیاری)</label>
-            <textarea asp-for="Message" rows="3" class="form-control"></textarea>
+        <div class="form-field form-grid__full">
+            <label asp-for="Message">توضیحات (اختیاری)</label>
+            <textarea asp-for="Message" rows="3" class="form-textarea"></textarea>
         </div>
         <input type="text" name="Website" value="" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true" />
-        <div class="col-12">
-            <button type="submit" class="btn btn-primary">ثبت رزرو</button>
+        <div class="form-grid__full">
+            <button type="submit" class="btn-submit">
+                <span class="btn-submit__spinner" aria-hidden="true"></span>
+                <span class="btn-submit__label">ثبت رزرو</span>
+            </button>
         </div>
     </form>
 </main>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll('form').forEach(function (form) {
+            form.addEventListener('submit', function () {
+                if (form.dataset.submitted) return;
+                form.dataset.submitted = '1';
+                var btn = form.querySelector('.btn-submit');
+                if (btn) {
+                    btn.classList.add('is-loading');
+                    btn.disabled = true;
+                    var label = btn.querySelector('.btn-submit__label');
+                    if (label) label.textContent = 'در حال ثبت…';
+                }
+            });
+        });
+    </script>
 }

@@ -2,31 +2,31 @@
 @{
     ViewData["Title"] = "درخواست خدمات پس از اجرا";
 }
-<main class="container py-5" dir="rtl">
+<main class="form-page" dir="rtl">
     <h1>خدمات پس از اجرا</h1>
     @if (!string.IsNullOrEmpty(Model.Intro))
     {
-        <p class="text-muted">@Model.Intro</p>
+        <p class="form-page__intro">@Model.Intro</p>
     }
     @if (!string.IsNullOrEmpty(Model.SuccessMessage))
     {
-        <div class="alert alert-success">@Model.SuccessMessage</div>
+        <div class="form-alert form-alert--success" role="status">@Model.SuccessMessage</div>
     }
 
-    <form method="post" asp-action="Index" class="row g-3">
+    <form method="post" asp-action="Index" class="form-grid" novalidate>
         @Html.AntiForgeryToken()
-        <div class="col-md-6">
-            <label asp-for="FullName" class="form-label"></label>
-            <input asp-for="FullName" class="form-control" />
-            <span asp-validation-for="FullName" class="text-danger"></span>
+        <div class="form-field">
+            <label asp-for="FullName">نام و نام خانوادگی</label>
+            <input asp-for="FullName" class="form-input" />
+            <span asp-validation-for="FullName" class="field-validation-error"></span>
         </div>
-        <div class="col-md-6">
-            <label asp-for="Mobile" class="form-label">شماره موبایل</label>
-            <input asp-for="Mobile" class="form-control" inputmode="tel" dir="ltr" />
-            <span asp-validation-for="Mobile" class="text-danger"></span>
+        <div class="form-field">
+            <label asp-for="Mobile">شماره موبایل</label>
+            <input asp-for="Mobile" class="form-input form-input--ltr" inputmode="tel" />
+            <span asp-validation-for="Mobile" class="field-validation-error"></span>
         </div>
-        <div class="col-md-6">
-            <label asp-for="ServiceType" class="form-label">نوع خدمت</label>
+        <div class="form-field">
+            <label asp-for="ServiceType">نوع خدمت</label>
             <select asp-for="ServiceType" class="form-select">
                 <option value="">— انتخاب کنید —</option>
                 @foreach (var service in final_p_01.Controllers.AfterSalesFormViewModel.AllowedServiceTypes)
@@ -34,10 +34,10 @@
                     <option value="@service">@service</option>
                 }
             </select>
-            <span asp-validation-for="ServiceType" class="text-danger"></span>
+            <span asp-validation-for="ServiceType" class="field-validation-error"></span>
         </div>
-        <div class="col-md-6">
-            <label asp-for="VisitType" class="form-label">نوع مراجعه</label>
+        <div class="form-field">
+            <label asp-for="VisitType">نوع مراجعه</label>
             <select asp-for="VisitType" class="form-select">
                 <option value="">— انتخاب کنید —</option>
                 @foreach (var visit in final_p_01.Controllers.AfterSalesFormViewModel.AllowedVisitTypes)
@@ -45,19 +45,36 @@
                     <option value="@visit">@visit</option>
                 }
             </select>
-            <span asp-validation-for="VisitType" class="text-danger"></span>
+            <span asp-validation-for="VisitType" class="field-validation-error"></span>
         </div>
-        <div class="col-12">
-            <label asp-for="Message" class="form-label">توضیحات</label>
-            <textarea asp-for="Message" rows="4" class="form-control"></textarea>
+        <div class="form-field form-grid__full">
+            <label asp-for="Message">توضیحات</label>
+            <textarea asp-for="Message" rows="4" class="form-textarea"></textarea>
         </div>
         <input type="text" name="Website" value="" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true" />
-        <div class="col-12">
-            <button type="submit" class="btn btn-primary">ثبت درخواست</button>
+        <div class="form-grid__full">
+            <button type="submit" class="btn-submit">
+                <span class="btn-submit__spinner" aria-hidden="true"></span>
+                <span class="btn-submit__label">ثبت درخواست</span>
+            </button>
         </div>
     </form>
 </main>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll('form').forEach(function (form) {
+            form.addEventListener('submit', function () {
+                if (form.dataset.submitted) return;
+                form.dataset.submitted = '1';
+                var btn = form.querySelector('.btn-submit');
+                if (btn) {
+                    btn.classList.add('is-loading');
+                    btn.disabled = true;
+                    var label = btn.querySelector('.btn-submit__label');
+                    if (label) label.textContent = 'در حال ثبت…';
+                }
+            });
+        });
+    </script>
 }

@@ -11,18 +11,23 @@ namespace final_p_01.Controllers;
 public class AfterSalesFormViewModel
 {
     [Required(ErrorMessage = "نام و نام خانوادگی الزامی است."), MaxLength(150)]
+    [Display(Name = "نام و نام خانوادگی")]
     public string FullName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "شماره موبایل الزامی است."), MaxLength(20)]
+    [Display(Name = "شماره موبایل")]
     public string Mobile { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "انتخاب نوع خدمت الزامی است."), MaxLength(100)]
+    [Display(Name = "نوع خدمت")]
     public string ServiceType { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "انتخاب نوع مراجعه الزامی است."), MaxLength(50)]
+    [Display(Name = "نوع مراجعه")]
     public string VisitType { get; set; } = string.Empty;
 
     [MaxLength(2000)]
+    [Display(Name = "توضیحات")]
     public string? Message { get; set; }
 
     /// <summary>تله ضداسپم</summary>

@@ -66,6 +66,354 @@ body {
 }
 
 /* =========================================
+   Public Forms (booking / estimator / after-sales / feasibility)
+   ========================================= */
+.form-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 120px 20px 64px;
+}
+
+.form-page > h1 {
+    font-size: clamp(1.5rem, 3.5vw, 2rem);
+    font-weight: var(--fw-bold);
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+    margin-bottom: 8px;
+}
+
+.form-page__intro {
+    color: var(--color-muted);
+    font-size: 0.95rem;
+    line-height: 1.8;
+    margin-bottom: 28px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+@media (min-width: 640px) {
+    .form-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .form-grid__full {
+        grid-column: 1 / -1;
+    }
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-field > label {
+    font-size: 0.9rem;
+    font-weight: var(--fw-medium);
+    color: var(--brand-navy);
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: var(--brand-navy);
+    background: var(--text-white);
+    border: 1px solid #d9dee7;
+    border-radius: 12px;
+    outline: none;
+    transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+    appearance: none;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 96px;
+    line-height: 1.8;
+}
+
+.form-select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23121D35' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 16px center;
+    padding-left: 40px;
+}
+
+.form-input:hover,
+.form-select:hover,
+.form-textarea:hover {
+    border-color: #b8c1d1;
+}
+
+.form-input:focus-visible,
+.form-select:focus-visible,
+.form-textarea:focus-visible {
+    border-color: var(--brand-gold);
+    box-shadow: 0 0 0 3px rgba(var(--brand-gold-rgb), 0.25);
+}
+
+.form-input--ltr {
+    direction: ltr;
+    text-align: left;
+    font-variant-numeric: tabular-nums;
+}
+
+.form-input[aria-invalid="true"],
+.form-input.input-validation-error,
+.form-select.input-validation-error,
+.form-textarea.input-validation-error {
+    border-color: #c0392b;
+}
+
+.field-validation-error {
+    color: #c0392b;
+    font-size: 0.8rem;
+    line-height: 1.6;
+}
+
+.field-validation-valid {
+    display: none;
+}
+
+.btn-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 12px 32px;
+    font-size: 0.95rem;
+    font-weight: var(--fw-medium);
+    font-family: inherit;
+    color: var(--text-white);
+    background: var(--brand-navy);
+    border: none;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: background-color 0.2s ease-out, transform 0.15s ease-out, box-shadow 0.2s ease-out;
+}
+
+.btn-submit:hover {
+    background: #1c2c4f;
+    box-shadow: var(--card-shadow);
+}
+
+.btn-submit:focus-visible {
+    outline: 2px solid var(--brand-gold);
+    outline-offset: 3px;
+}
+
+.btn-submit:active {
+    transform: scale(0.98);
+}
+
+.btn-submit[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-submit .btn-submit__spinner {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: var(--text-white);
+    border-radius: 50%;
+    animation: btn-spin 0.7s linear infinite;
+}
+
+.btn-submit.is-loading .btn-submit__spinner {
+    display: inline-block;
+}
+
+@keyframes btn-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn-submit .btn-submit__spinner {
+        animation-duration: 1.6s;
+    }
+}
+
+/* Notices and result cards */
+.form-alert {
+    padding: 16px 20px;
+    border-radius: 14px;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    margin-bottom: 24px;
+}
+
+.form-alert--success {
+    background: #eef7ee;
+    border: 1px solid #bfe0bf;
+    color: #1e5c28;
+}
+
+.form-alert--warning {
+    background: #fdf6e8;
+    border: 1px solid #ecd9ac;
+    color: #7a5a12;
+}
+
+/* Estimator result card */
+.result-card {
+    background: var(--text-white);
+    border: 1px solid #e3e7ee;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--card-shadow);
+    padding: 28px;
+    margin-bottom: 28px;
+}
+
+.result-card__title {
+    font-size: 1.1rem;
+    font-weight: var(--fw-bold);
+    margin-bottom: 18px;
+}
+
+.result-card__total {
+    font-size: clamp(1.25rem, 3vw, 1.6rem);
+    font-weight: var(--fw-bold);
+    color: var(--brand-navy);
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 20px;
+}
+
+.result-card__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+
+.result-card__table th,
+.result-card__table td {
+    padding: 10px 0;
+    text-align: right;
+    border-bottom: 1px solid #eef1f6;
+}
+
+.result-card__table th {
+    color: var(--color-muted);
+    font-weight: var(--fw-medium);
+}
+
+.result-card__table td {
+    font-variant-numeric: tabular-nums;
+}
+
+.result-card__table tr:last-child th,
+.result-card__table tr:last-child td {
+    border-bottom: none;
+    font-weight: var(--fw-bold);
+}
+
+.result-card__note {
+    color: var(--color-muted);
+    font-size: 0.82rem;
+    line-height: 1.8;
+    margin-top: 16px;
+}
+
+/* Booking slot cards */
+.slot-list {
+    display: grid;
+    gap: 12px;
+}
+
+.slot-option {
+    display: block;
+    position: relative;
+}
+
+.slot-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.slot-option__card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--text-white);
+    border: 1px solid #d9dee7;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+.slot-option__card:hover {
+    border-color: var(--brand-gold);
+}
+
+.slot-option input:checked + .slot-option__card {
+    border-color: var(--brand-gold);
+    box-shadow: 0 0 0 3px rgba(var(--brand-gold-rgb), 0.22);
+}
+
+.slot-option input:focus-visible + .slot-option__card {
+    outline: 2px solid var(--brand-gold);
+    outline-offset: 2px;
+}
+
+.slot-option__date {
+    font-weight: var(--fw-medium);
+    font-variant-numeric: tabular-nums;
+}
+
+.slot-option__time {
+    color: var(--color-muted);
+    font-size: 0.88rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.slot-empty {
+    color: var(--color-muted);
+    font-size: 0.92rem;
+    padding: 16px;
+    background: var(--text-white);
+    border: 1px dashed #d9dee7;
+    border-radius: 14px;
+    text-align: center;
+}
+
+/* Feasibility download CTA */
+.download-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 12px 32px;
+    font-size: 0.95rem;
+    font-weight: var(--fw-medium);
+    color: var(--text-white);
+    background: var(--brand-gold);
+    border-radius: var(--radius-pill);
+    transition: background-color 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.download-cta:hover {
+    background: #b3945a;
+    box-shadow: var(--card-shadow);
+}
+
+.download-cta:focus-visible {
+    outline: 2px solid var(--brand-navy);
+    outline-offset: 3px;
+}
+
+/* =========================================
    Header
    ========================================= */
 .site-header {

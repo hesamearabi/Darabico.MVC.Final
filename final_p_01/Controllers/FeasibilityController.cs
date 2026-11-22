@@ -12,9 +12,11 @@ namespace final_p_01.Controllers;
 public class FeasibilityLeadViewModel
 {
     [Required(ErrorMessage = "نام و نام خانوادگی الزامی است."), MaxLength(150)]
+    [Display(Name = "نام و نام خانوادگی")]
     public string FullName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "شماره موبایل الزامی است."), MaxLength(20)]
+    [Display(Name = "شماره موبایل")]
     public string Mobile { get; set; } = string.Empty;
 
     /// <summary>تله ضداسپم</summary>

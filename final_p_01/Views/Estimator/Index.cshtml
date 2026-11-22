@@ -2,56 +2,87 @@
 @{
     ViewData["Title"] = "برآوردگر هزینه احداث زمین پدل";
 }
-<main class="container py-5" dir="rtl">
+<main class="form-page" dir="rtl">
     <h1>برآوردگر هزینه احداث زمین پدل</h1>
-    <p class="text-muted">مشخصات زمین موردنظر خود را وارد کنید تا بازه هزینه برآورد شود.</p>
+    <p class="form-page__intro">مشخصات زمین موردنظر خود را وارد کنید تا بازه هزینه برآورد شود.</p>
 
     @if (Model.Result is not null)
     {
-        <div class="alert alert-success">
-            <h2>بازه برآورد هزینه</h2>
-            <p>برای @Model.CourtCount زمین @(Model.CourtType == 2 ? "سرپوشیده" : "روباز"):</p>
-            <p class="fw-bold fs-4">
-                @Model.Result.MinCost.ToString("N0") تا @Model.Result.MaxCost.ToString("N0") تومان
-            </p>
+        <div class="result-card" role="status">
+            <h2 class="result-card__title">بازه برآورد هزینه</h2>
+            <p class="result-card__total">@Model.Result.MinCost.ToString("N0") تا @Model.Result.MaxCost.ToString("N0") تومان</p>
+            <table class="result-card__table">
+                <tbody>
+                    <tr>
+                        <th scope="row">نوع زمین</th>
+                        <td>@(Model.CourtType == 2 ? "سرپوشیده" : "روباز")</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">تعداد زمین</th>
+                        <td>@Model.CourtCount</td>
+                    </tr>
+                    @if (!string.IsNullOrEmpty(Model.Result.City))
+                    {
+                        <tr>
+                            <th scope="row">شهر</th>
+                            <td>@Model.Result.City</td>
+                        </tr>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Result.MaterialTierTitle))
+                    {
+                        <tr>
+                            <th scope="row">سطح متریال</th>
+                            <td>@Model.Result.MaterialTierTitle</td>
+                        </tr>
+                    }
+                    <tr>
+                        <th scope="row">هزینه هر زمین</th>
+                        <td>@Model.Result.PricePerCourt.ToString("N0") تومان</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">جمع بازه برآورد</th>
+                        <td>@Model.Result.MinCost.ToString("N0") – @Model.Result.MaxCost.ToString("N0") تومان</td>
+                    </tr>
+                </tbody>
+            </table>
             @if (!string.IsNullOrEmpty(Model.Result.Disclaimer))
             {
-                <p class="small text-muted">@Model.Result.Disclaimer</p>
+                <p class="result-card__note">@Model.Result.Disclaimer</p>
             }
         </div>
     }
 
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
-        <div class="alert alert-warning">@Model.ErrorMessage</div>
+        <div class="form-alert form-alert--warning" role="alert">@Model.ErrorMessage</div>
     }
 
-    <form method="post" asp-action="Index" class="row g-3">
+    <form method="post" asp-action="Index" class="form-grid" novalidate>
         @Html.AntiForgeryToken()
-        <div class="col-md-6">
-            <label asp-for="FullName" class="form-label"></label>
-            <input asp-for="FullName" class="form-control" />
-            <span asp-validation-for="FullName" class="text-danger"></span>
+        <div class="form-field">
+            <label asp-for="FullName">نام و نام خانوادگی</label>
+            <input asp-for="FullName" class="form-input" />
+            <span asp-validation-for="FullName" class="field-validation-error"></span>
         </div>
-        <div class="col-md-6">
-            <label asp-for="Mobile" class="form-label">شماره موبایل</label>
-            <input asp-for="Mobile" class="form-control" inputmode="tel" dir="ltr" />
-            <span asp-validation-for="Mobile" class="text-danger"></span>
+        <div class="form-field">
+            <label asp-for="Mobile">شماره موبایل</label>
+            <input asp-for="Mobile" class="form-input form-input--ltr" inputmode="tel" />
+            <span asp-validation-for="Mobile" class="field-validation-error"></span>
         </div>
-        <div class="col-md-4">
-            <label asp-for="CourtType" class="form-label">نوع زمین</label>
+        <div class="form-field">
+            <label asp-for="CourtType">نوع زمین</label>
             <select asp-for="CourtType" class="form-select">
                 <option value="1">روباز</option>
                 <option value="2">سرپوشیده</option>
             </select>
         </div>
-        <div class="col-md-4">
-            <label asp-for="CourtCount" class="form-label">تعداد زمین</label>
-            <input asp-for="CourtCount" type="number" min="1" max="50" class="form-control" />
-            <span asp-validation-for="CourtCount" class="text-danger"></span>
+        <div class="form-field">
+            <label asp-for="CourtCount">تعداد زمین</label>
+            <input asp-for="CourtCount" type="number" min="1" max="50" class="form-input form-input--ltr" />
+            <span asp-validation-for="CourtCount" class="field-validation-error"></span>
         </div>
-        <div class="col-md-4">
-            <label asp-for="City" class="form-label">شهر</label>
+        <div class="form-field">
+            <label asp-for="City">شهر</label>
             <select asp-for="City" class="form-select">
                 <option value="">— انتخاب شهر —</option>
                 @foreach (var city in Model.CityMultipliers)
@@ -60,8 +91,8 @@
                 }
             </select>
         </div>
-        <div class="col-md-6">
-            <label asp-for="MaterialTier" class="form-label">سطح کیفیت متریال</label>
+        <div class="form-field">
+            <label asp-for="MaterialTier">سطح کیفیت متریال</label>
             <select asp-for="MaterialTier" class="form-select">
                 <option value="">— انتخاب کنید —</option>
                 @foreach (var tier in Model.MaterialTiers)
@@ -72,12 +103,29 @@
         </div>
         @* تله ضداسپم *@
         <input type="text" name="Website" value="" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true" />
-        <div class="col-12">
-            <button type="submit" class="btn btn-primary">محاسبه هزینه</button>
+        <div class="form-grid__full">
+            <button type="submit" class="btn-submit">
+                <span class="btn-submit__spinner" aria-hidden="true"></span>
+                <span class="btn-submit__label">محاسبه هزینه</span>
+            </button>
         </div>
     </form>
 </main>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll('form').forEach(function (form) {
+            form.addEventListener('submit', function () {
+                if (form.dataset.submitted) return;
+                form.dataset.submitted = '1';
+                var btn = form.querySelector('.btn-submit');
+                if (btn) {
+                    btn.classList.add('is-loading');
+                    btn.disabled = true;
+                    var label = btn.querySelector('.btn-submit__label');
+                    if (label) label.textContent = 'در حال محاسبه…';
+                }
+            });
+        });
+    </script>
 }

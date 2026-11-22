@@ -10,15 +10,19 @@ namespace final_p_01.Controllers;
 
 public class BookingFormViewModel
 {
+    [Display(Name = "اسلات بازدید")]
     public int SlotId { get; set; }
 
     [Required(ErrorMessage = "نام و نام خانوادگی الزامی است."), MaxLength(150)]
+    [Display(Name = "نام و نام خانوادگی")]
     public string FullName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "شماره موبایل الزامی است."), MaxLength(20)]
+    [Display(Name = "شماره موبایل")]
     public string Mobile { get; set; } = string.Empty;
 
     [MaxLength(500)]
+    [Display(Name = "توضیحات")]
     public string? Message { get; set; }
 
     /// <summary>تله ضداسپم</summary>
