@@ -3,6 +3,7 @@
     const grid = document.getElementById('projectsGrid');
     const status = document.getElementById('projectsStatus');
     if (!button || !grid) return;
+    button.hidden = false;
     button.addEventListener('click', async () => {
         button.disabled = true;
         grid.setAttribute('aria-busy', 'true');

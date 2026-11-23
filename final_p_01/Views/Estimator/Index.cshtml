@@ -1,7 +1,12 @@
 @model final_p_01.Controllers.EstimatorFormViewModel
 @{
-    ViewData["Title"] = "برآوردگر هزینه احداث زمین پدل";
+    ViewData["Title"] = "برآورد هزینه ساخت زمین پدل به تومان | دارابیکو";
+    ViewData["MetaDescription"] = "هزینه تقریبی ساخت زمین پدل سرپوشیده و روباز را بر اساس تعداد زمین، شهر و سطح متریال به تومان محاسبه کنید؛ مبنایی برای برنامه‌ریزی بودجه و مشاوره فنی.";
+    ViewData["EstimatorHeadingLevel"] = 1;
 }
 <main class="dc-estimator-section dc-estimator-standalone" aria-labelledby="estimator-title">
     <partial name="_EstimatorForm" model="Model" />
+    <aside class="dc-estimator" aria-label="مبنای برآورد هزینه">
+        <p class="dc-estimator-note">مبنای برنامه‌ریزی بودجه — همه مبالغ به تومان هستند. این بازه از قیمت پایه هر زمین، تعداد زمین و ضرایب شهر و سطح متریال محاسبه می‌شود و سقف آن تابع ضریب تنظیم‌شده است. فقط موارد منظورشده در قیمت پایه در این برآورد پوشش داده می‌شوند؛ خرید یا اجاره زمین، مجوزها، مالیات و زیرسازی ویژه جداگانه محاسبه نشده‌اند و باید در پیشنهاد فنی و مالی بررسی شوند. مبلغ نهایی پس از بازدید و تعیین دامنه اجرا مشخص می‌شود.</p>
+    </aside>
 </main>

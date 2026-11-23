@@ -1,15 +1,27 @@
 ﻿@using Darabico.Domain.Enums
+@inject final_p_01.Services.ISiteUrlBuilder UrlBuilder
 @model Darabico.Web.ViewModels.Public.ProjectDetailViewModel
 @{
     ViewData["Title"] = Model.MetaTitle;
     ViewData["MetaDescription"] = Model.MetaDescription;
-    ViewData["CanonicalUrl"] = Model.CanonicalUrl;
+    var canonicalUrl = UrlBuilder.Absolute($"/projects/{Uri.EscapeDataString(Model.Slug)}");
+    ViewData["Canonical"] = canonicalUrl;
+    var breadcrumbs = new Dictionary<string, object>
+    {
+        ["@context"] = "https://schema.org",
+        ["@type"] = "BreadcrumbList",
+        ["itemListElement"] = new[]
+        {
+            new Dictionary<string, object> { ["@type"] = "ListItem", ["position"] = 1, ["name"] = "خانه", ["item"] = UrlBuilder.Absolute("/") },
+            new Dictionary<string, object> { ["@type"] = "ListItem", ["position"] = 2, ["name"] = "پروژه‌ها", ["item"] = UrlBuilder.Absolute("/projects") },
+            new Dictionary<string, object> { ["@type"] = "ListItem", ["position"] = 3, ["name"] = Model.Title, ["item"] = canonicalUrl }
+        }
+    };
     var courtTypeLabel = Model.CourtType == CourtType.Outdoor ? "روباز" : "سرپوشیده";
 }
 
 @section Head {
-    <link rel="canonical" href="@Model.CanonicalUrl" />
-    <meta name="description" content="@Model.MetaDescription" />
+    <script type="application/ld+json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(breadcrumbs))</script>
 }
 
 <article class="project-detail" dir="rtl">

@@ -32,11 +32,13 @@ public class ProjectsController(ApplicationDbContext dbContext) : Controller
 
         var filteredQuery = ApplyFilters(baseQuery, city, courtType);
         var totalCount = await filteredQuery.CountAsync(cancellationToken);
+        page = Math.Min(page, Math.Max(1, (int)Math.Ceiling(totalCount / (double)DefaultPageSize)));
 
         var items = await filteredQuery
             .OrderBy(p => p.DisplayOrder)
             .ThenByDescending(p => p.Id)
-            .Take(page * DefaultPageSize)
+            .Skip((page - 1) * DefaultPageSize)
+            .Take(DefaultPageSize)
             .Select(p => new ProjectCardViewModel
             {
                 Id = p.Id,
@@ -102,6 +104,12 @@ public class ProjectsController(ApplicationDbContext dbContext) : Controller
         Response.Headers["X-Has-More"] = hasMore ? "true" : "false";
 
         return PartialView("_ProjectCardsPartial", items);
+    }
+
+    [HttpGet("/projects/details/{slug}")]
+    public IActionResult LegacyDetails(string slug)
+    {
+        return RedirectPermanent($"/projects/{Uri.EscapeDataString(slug)}");
     }
 
     [HttpGet("/projects/{slug}")]

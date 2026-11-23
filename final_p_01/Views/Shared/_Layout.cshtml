@@ -27,7 +27,9 @@
         : canonicalRaw.ToLowerInvariant().TrimEnd('/');
         string defaultCanonicalUrl = UrlBuilder.Absolute(canonicalPath);
 
-        string canonicalUrl = ViewData["Canonical"] as string ?? defaultCanonicalUrl;
+        string canonicalUrl = ViewData["Canonical"] is string customCanonical
+            ? UrlBuilder.Absolute(customCanonical)
+            : defaultCanonicalUrl;
         string ogType = ViewData["OgType"] as string ?? "website";
         string ogTitle = ViewData["OgTitle"] as string ?? pageTitle;
 

@@ -1,5 +1,8 @@
 @model final_p_01.Domain.Entities.SiteSettings
-@{ ViewData["Title"] = Model.InquiryThanksTitle; }
+@{
+    ViewData["Title"] = Model.InquiryThanksTitle;
+    ViewData["Robots"] = "noindex, follow";
+}
 <main class="dc-thanks">
     <span class="dc-confirmation-mark" aria-hidden="true">✓</span>
     <h1>@Model.InquiryThanksTitle</h1>

@@ -4,7 +4,7 @@
 .dc-estimator *, .dc-estimator *::before, .dc-estimator *::after { box-sizing: border-box; }
 .dc-estimator-header { margin-bottom: var(--dc-s6); max-width: 72ch; }
 .dc-estimator .dc-estimator-eyebrow { font-size: var(--dc-small); color: var(--dc-accent); font-weight: 700; margin: 0 0 var(--dc-s2); }
-.dc-estimator-header h2 { font: 700 var(--dc-display)/1.5 var(--dc-font); color: var(--ws-heading); margin: 0 0 var(--dc-s3); }
+.dc-estimator-header :is(h1, h2) { font: 700 var(--dc-display)/1.5 var(--dc-font); color: var(--ws-heading); margin: 0 0 var(--dc-s3); }
 .dc-estimator-header p { color: var(--dc-muted); margin: 0; }
 .dc-estimator-form { margin: 0; padding: var(--dc-s8); background: var(--dc-surface); border: 1px solid var(--dc-border); border-radius: var(--dc-radius); box-shadow: var(--dc-shadow); }
 .dc-estimator-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--dc-s6); }
@@ -32,7 +32,7 @@
     .dc-estimator-standalone { padding-top: calc(88px + var(--dc-s6)); }
     .dc-estimator-form { padding: var(--dc-s4); }
     .dc-estimator-grid { grid-template-columns: minmax(0, 1fr); gap: var(--dc-s4); }
-    .dc-estimator-header h2 { font-size: var(--dc-title); }
+    .dc-estimator-header :is(h1, h2) { font-size: var(--dc-title); }
     .dc-estimator .dc-estimator-button { width: 100%; }
     .dc-estimator-result { padding: var(--dc-s4); }
 }

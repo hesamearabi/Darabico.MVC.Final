@@ -2,7 +2,14 @@
 <div class="dc-estimator" dir="rtl">
     <header class="dc-estimator-header">
         <p class="dc-estimator-eyebrow">از ایده تا برنامه‌ریزی سرمایه‌گذاری</p>
-        <h2 id="estimator-title">برآوردگر هزینه احداث زمین پدل</h2>
+        @if (ViewData["EstimatorHeadingLevel"] is 1)
+        {
+            <h1 id="estimator-title">برآوردگر هزینه احداث زمین پدل</h1>
+        }
+        else
+        {
+            <h2 id="estimator-title">برآوردگر هزینه احداث زمین پدل</h2>
+        }
         <p>نوع زمین، شهر و سطح متریال را انتخاب کنید تا بازه اولیه هزینه پروژه را ببینید.</p>
     </header>
     <form asp-controller="Estimator" asp-action="Index" method="post" class="dc-estimator-form" data-estimator>

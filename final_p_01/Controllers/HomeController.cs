@@ -268,6 +268,12 @@ namespace final_p_01.Controllers
                 })
                 .ToListAsync();
 
+            var publishedProjects = await _context.Projects
+                .AsNoTracking()
+                .Where(p => p.IsPublished)
+                .Select(p => new { p.Slug, CreatedAt = p.CreatedAtUtc, UpdatedAt = p.UpdatedAtUtc })
+                .ToListAsync(HttpContext.RequestAborted);
+
             var guidePost = allPublishedPosts.FirstOrDefault(p => string.Equals(p.Slug, GuideSlug, StringComparison.OrdinalIgnoreCase));
             var blogPosts = allPublishedPosts
                 .Where(p => !string.Equals(p.Slug, GuideSlug, StringComparison.OrdinalIgnoreCase))
@@ -363,6 +369,19 @@ namespace final_p_01.Controllers
                 urlset.Add(urlElement);
             }
 
+            foreach (var path in new[] { "/projects", "/estimator", "/inquiry" })
+            {
+                urlset.Add(new XElement(sitemapNs + "url",
+                    new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, path))));
+            }
+
+            foreach (var project in publishedProjects)
+            {
+                urlset.Add(new XElement(sitemapNs + "url",
+                    new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, $"/projects/{Uri.EscapeDataString(project.Slug)}")),
+                    new XElement(sitemapNs + "lastmod", (project.UpdatedAt ?? project.CreatedAt).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture))));
+            }
+
             var document = new XDocument(new XDeclaration("1.0", "utf-8", null), urlset);
 
             await using var memoryStream = new MemoryStream();
@@ -444,21 +463,15 @@ namespace final_p_01.Controllers
             return fallbackTitle ?? string.Empty;
         }
 
+        [HttpGet("/robots.txt")]
+        public IActionResult Robots([FromServices] final_p_01.Services.ISiteUrlBuilder urlBuilder)
+        {
+            return Content($"User-agent: *\nDisallow: /Admin/\nDisallow: /admin/\n\nSitemap: {urlBuilder.Absolute("/sitemap.xml")}\n", "text/plain", Encoding.UTF8);
+        }
+
         private string ResolveBaseUrl()
         {
-            var configuredBaseUrl = _configuration["SiteSettings:BaseUrl"]?.Trim().TrimEnd('/');
-            if (!string.IsNullOrWhiteSpace(configuredBaseUrl))
-            {
-                return configuredBaseUrl;
-            }
-
-            var env = HttpContext?.RequestServices?.GetService<IWebHostEnvironment>();
-            if (env?.IsDevelopment() == true && Request?.Host.HasValue == true)
-            {
-                return $"{Request.Scheme}://{Request.Host}";
-            }
-
-            return "https://darabico.com";
+            return new final_p_01.Services.SiteUrlBuilder(_configuration).Absolute("/").TrimEnd('/');
         }
 
         private static string BuildAbsoluteUrl(string baseUrl, string path)

@@ -47,3 +47,6 @@
     .dc-projects-header h1 { font-size: var(--dc-title); }
 }
 @media (prefers-reduced-motion: reduce) { .dc-projects-media img { transition: none; } .dc-projects-card-link:hover img { transform: none; } }
+
+.dc-projects-page-links { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--dc-s2); }
+.dc-projects-page-links [aria-current="page"] { outline: 2px solid var(--dc-accent); outline-offset: 3px; }
