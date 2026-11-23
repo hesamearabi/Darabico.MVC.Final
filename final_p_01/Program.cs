@@ -403,7 +403,6 @@ app.Use(async (context, next) =>
 
 app.UseHttpsRedirection();
 
-// CSP کاملاً لوکال و بدون وابستگی به CDN خارجی
 const string contentSecurityPolicyReportOnly =
     "default-src 'self'; " +
     "script-src 'self' 'unsafe-inline'; " +
@@ -464,8 +463,6 @@ app.UseStaticFiles(new StaticFileOptions
             : "public,max-age=2592000";
     }
 });
-
-app.UseMiddleware<final_p_01.Middleware.LanguageMiddleware>();
 
 app.UseRouting();
 

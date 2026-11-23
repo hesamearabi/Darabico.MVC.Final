@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using final_p_01.Application.Services;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -161,14 +160,20 @@ namespace final_p_01.Controllers
                 .Skip((page - 1) * pageSize).Take(pageSize)
                 .Select(p => new PostCardViewModel
                 {
-                    Id = p.Id, Slug = p.Slug, Title = p.Title,
-                    CoverImagePath = p.CoverImagePath, CoverImageAlt = p.CoverImageAlt,
-                    MetaDescription = p.MetaDescription, CreatedAt = p.CreatedAt,
+                    Id = p.Id,
+                    Slug = p.Slug,
+                    Title = p.Title,
+                    CoverImagePath = p.CoverImagePath,
+                    CoverImageAlt = p.CoverImageAlt,
+                    MetaDescription = p.MetaDescription,
+                    CreatedAt = p.CreatedAt,
                     CategoryName = p.Category != null ? p.Category.Name : null
                 }).ToListAsync();
             var viewModel = new BlogListViewModel
             {
-                Posts = posts, CurrentPage = page, TotalPages = totalPages,
+                Posts = posts,
+                CurrentPage = page,
+                TotalPages = totalPages,
                 SelectedCategory = category,
                 Categories = await _context.Categories.AsNoTracking()
                     .Where(c => _context.Posts.Any(p => p.IsPublished && p.CategoryId == c.Id && p.Slug != GuideSlug))
@@ -231,12 +236,10 @@ namespace final_p_01.Controllers
         }
 
         [HttpGet("about")]
-        public IActionResult AboutAlias() => RedirectPermanent(
-            (HttpContext.Items[LanguageRouteHelper.CultureKey] as string == "ar" ? "/ar" : "") + "/about-us");
+        public IActionResult AboutAlias() => RedirectPermanent("/about-us");
 
         [HttpGet("contact")]
-        public IActionResult ContactAlias() => RedirectPermanent(
-            (HttpContext.Items[LanguageRouteHelper.CultureKey] as string == "ar" ? "/ar" : "") + "/contact-us");
+        public IActionResult ContactAlias() => RedirectPermanent("/contact-us");
 
         [Route("contact-us")]
         public IActionResult Contact()

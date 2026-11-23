@@ -1,30 +1,26 @@
 @model final_p_01.ViewComponents.SiteNavViewModel
-@{
-    var arabic = Context.Items[final_p_01.Application.Services.LanguageRouteHelper.CultureKey] as string == "ar";
-    var prefix = arabic ? "/ar" : "";
-}
 <div class="workspace-nav-subtree">
     <details class="workspace-nav-group">
-        <summary>@(arabic ? "دليل إنشاء ملعب البادل" : "راهنمای جامع 0 تا 100 ساخت زمین پدل")</summary>
+        <summary>راهنمای جامع 0 تا 100 ساخت زمین پدل</summary>
         <ul class="workspace-nav-cluster">
-            <li><a href="@prefix/padel-court-construction-guide" class="nav-link">@(arabic ? "الدليل الشامل" : "مشاهده راهنمای جامع")</a></li>
+            <li><a href="/padel-court-construction-guide" class="nav-link">مشاهده راهنمای جامع</a></li>
             @foreach (var child in Model.GuideChildren)
             {
-                <li><a href="@prefix/blog/@child.Slug" class="nav-link">@child.Title</a></li>
+                <li><a href="/blog/@child.Slug" class="nav-link">@child.Title</a></li>
             }
         </ul>
     </details>
     <details class="workspace-nav-group">
-        <summary>@(arabic ? "المقالات والتصنيفات" : "مقالات و دسته‌بندی‌ها")</summary>
+        <summary>مقالات و دسته‌بندی‌ها</summary>
         <ul class="workspace-nav-cluster">
-            <li><a href="@prefix/blog" class="nav-link">@(arabic ? "جميع المقالات" : "همه مقالات")</a></li>
+            <li><a href="/blog" class="nav-link">همه مقالات</a></li>
             @foreach (var category in Model.Categories)
             {
-                <li><a href="@prefix/blog?category=@category.Id" class="nav-link">@category.Name</a></li>
+                <li><a href="/blog?category=@category.Id" class="nav-link">@category.Name</a></li>
             }
             @foreach (var post in Model.LatestPosts)
             {
-                <li><a href="@prefix/blog/@post.Slug" class="nav-link">@post.Title</a></li>
+                <li><a href="/blog/@post.Slug" class="nav-link">@post.Title</a></li>
             }
         </ul>
     </details>

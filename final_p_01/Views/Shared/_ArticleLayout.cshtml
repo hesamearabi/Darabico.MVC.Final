@@ -459,6 +459,25 @@
                     margin: 2rem 0;
                 }
 
+                    .pd-body table th,
+                    .pd-body table td {
+                        padding: 0.85rem 1.1rem;
+                        border: 1px solid #e2e8f0;
+                        text-align: right;
+                        vertical-align: middle;
+                        line-height: 1.75;
+                    }
+
+                    .pd-body table th {
+                        background-color: #f8fafc;
+                        color: var(--pd-text-main);
+                        font-weight: 800;
+                    }
+
+                    .pd-body table tbody tr:nth-child(even) td {
+                        background-color: #fcfcfd;
+                    }
+
                 .pd-body .pdf-btn {
                     display: inline-flex;
                     align-items: center;
@@ -995,7 +1014,10 @@
                         {
                             <a href="#@heading.Id" data-level="@heading.Level">@heading.Title</a>
                         }
-                        @if (!reading.Headings.Any()) { <a href="#article-body">متن مقاله</a> }
+                        @if (!reading.Headings.Any())
+                        {
+                            <a href="#article-body">متن مقاله</a>
+                        }
                     </nav>
                 </details>
                 <div class="pd-body pd-content" id="article-body">

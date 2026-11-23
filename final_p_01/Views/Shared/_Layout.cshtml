@@ -1,6 +1,5 @@
 ﻿@inject final_p_01.Services.ISiteUrlBuilder UrlBuilder
 @using final_p_01.ViewModels
-@using final_p_01.ViewComponents
 @using final_p_01.Application.Services
 @inject final_p_01.Services.ISiteSettingsProvider SiteSettings
 @{
@@ -17,18 +16,9 @@
         _ => null
     });
     var (pageSeoTitle, pageSeoDescription) = pageSeoKey != null ? siteSettings.ForPage(pageSeoKey) : (null, null);
-    string currentCulture = Context.Items[LanguageRouteHelper.CultureKey] as string ?? LanguageRouteHelper.Persian;
-    bool isArabic = currentCulture == LanguageRouteHelper.Arabic;
-    string htmlLang = isArabic ? "ar" : "fa-IR";
-    string strippedPath = Context.Request.Path.Value?.Trim('/') ?? "";
-    string persianPath = "/" + strippedPath;
-    string arabicPath = "/ar" + (strippedPath.Length == 0 ? "" : "/" + strippedPath);
-    string langSwitchUrl = (isArabic ? persianPath : arabicPath) + Context.Request.QueryString;
-    string switchLanguage = isArabic ? "fa" : "ar";
-    string switchLabel = isArabic ? "فارسی" : "العربية";
 }
 <!DOCTYPE html>
-<html lang="@htmlLang" dir="rtl">
+<html lang="fa-IR" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -57,11 +47,9 @@
         : canonicalRaw.ToLowerInvariant().TrimEnd('/');
         string defaultCanonicalUrl = UrlBuilder.Absolute(canonicalPath);
 
-        string canonicalUrl = isArabic
-            ? UrlBuilder.Absolute(arabicPath)
-            : ViewData["Canonical"] is string customCanonical
-                ? UrlBuilder.Absolute(customCanonical)
-                : defaultCanonicalUrl;
+        string canonicalUrl = ViewData["Canonical"] is string customCanonical
+        ? UrlBuilder.Absolute(customCanonical)
+        : defaultCanonicalUrl;
         string ogType = ViewData["OgType"] as string ?? "website";
         string ogTitle = ViewData["OgTitle"] as string ?? pageTitle;
 
@@ -92,9 +80,7 @@
     <meta name="robots" content="@robots">
     @if (!isNoIndex)
     {
-        <link rel="alternate" hreflang="fa" href="@UrlBuilder.Absolute(strippedPath)" />
-    <link rel="alternate" hreflang="ar" href="@UrlBuilder.Absolute("ar/" + strippedPath)" />
-    <link rel="canonical" href="@canonicalUrl" />
+        <link rel="canonical" href="@canonicalUrl" />
     }
 
     <meta property="og:locale" content="fa_IR">
@@ -454,18 +440,12 @@
                     <li><a asp-controller="Home" asp-action="About" class="nav-link">درباره ما</a></li>
                     <li><a href="/#services-section" class="nav-link">خدمات</a></li>
                     <li><a asp-controller="Projects" asp-action="Index" class="nav-link">پروژه‌ها</a></li>
-                    <li>@await Component.InvokeAsync(typeof(SiteNavViewComponent))</li>
+                    <li><a asp-controller="Home" asp-action="Blog" class="nav-link">مقالات</a></li>
+                    <li><a asp-controller="Home" asp-action="PadelGuide" class="nav-link">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
                 </ul>
             </nav>
 
             <div class="header-actions">
-                @if (siteSettings.EnableMultiLanguage)
-                {
-                    <a href="@langSwitchUrl" class="lang-switcher" lang="@switchLanguage" hreflang="@switchLanguage" title="@switchLabel" aria-label="@switchLabel">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                        <span>@(isArabic ? "FA" : "AR")</span>
-                    </a>
-                }
                 <a asp-controller="Home" asp-action="Contact" class="header-cta-btn">مشاوره رایگان</a>
                 <button class="hamburger" id="hamburger-btn" aria-label="منو">
                     <span></span><span></span><span></span>
@@ -484,14 +464,10 @@
                     <li><a href="/#services-section" class="mobile-link">خدمات ما</a></li>
                     <li><a asp-controller="Projects" asp-action="Index" class="mobile-link">پروژه‌ها</a></li>
                     <li><a asp-controller="Home" asp-action="Blog" class="mobile-link">وبلاگ آموزشی</a></li>
-                    <li>@await Component.InvokeAsync(typeof(SiteNavViewComponent))</li>
+                    <li><a asp-controller="Home" asp-action="PadelGuide" class="mobile-link">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
                 </ul>
             </nav>
             <div class="mobile-menu-footer">
-                @if (siteSettings.EnableMultiLanguage)
-                {
-                    <a href="@langSwitchUrl" class="mobile-link lang-switcher" lang="@switchLanguage" hreflang="@switchLanguage">@switchLabel (@(isArabic ? "FA" : "AR"))</a>
-                }
                 <a asp-controller="Home" asp-action="Contact" class="mobile-cta">درخواست بازدید پروژه</a>
             </div>
         </div>
@@ -562,7 +538,6 @@
                         <li><a asp-controller="Home" asp-action="About">درباره ما</a></li>
                         <li><a asp-controller="Home" asp-action="Contact">ارتباط با ما</a></li>
                         <li><a asp-controller="Home" asp-action="PadelGuide">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
-                        <li>@await Component.InvokeAsync(typeof(SiteNavViewComponent))</li>
                     </ul>
                 </div>
 
