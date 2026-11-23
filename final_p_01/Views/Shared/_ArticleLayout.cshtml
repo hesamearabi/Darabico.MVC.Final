@@ -1,4 +1,4 @@
-﻿@model final_p_01.Models.PostDetailsViewModel
+﻿@model final_p_01.ViewModels.PostDetailsViewModel
 @using System.Linq
 @using System.Collections
 @using System.Collections.Generic
@@ -20,7 +20,7 @@
 
     string coverImage = (Model?.Post != null && !string.IsNullOrWhiteSpace(Model.Post.CoverImagePath))
         ? Model.Post.CoverImagePath
-        : "/H-IMG/133.webp";
+        : "/images/H-IMG/133.webp";
     string coverAlt = (Model?.Post != null && !string.IsNullOrWhiteSpace(Model.Post.CoverImageAlt))
         ? Model.Post.CoverImageAlt
         : postTitle;
@@ -238,7 +238,7 @@
         graph.Add(webPageNode);
 
         var authorNode = new Hashtable { ["\u0040type"] = "Organization", ["name"] = "دارابی کو" };
-        var logoNode = new Hashtable { ["\u0040type"] = "ImageObject", ["url"] = UrlBuilder.Absolute("siteLOGO/sitelogo.png") };
+        var logoNode = new Hashtable { ["\u0040type"] = "ImageObject", ["url"] = UrlBuilder.Absolute("images/siteLOGO/sitelogo.png") };
         var publisherNode = new Hashtable { ["\u0040type"] = "Organization", ["name"] = "دارابی کو", ["logo"] = logoNode };
 
         var articleNode = new Hashtable
@@ -1074,7 +1074,7 @@
                     @foreach (var rpost in Model.RelatedPosts)
                     {
                         string relatedAlt = !string.IsNullOrWhiteSpace(rpost.CoverImageAlt) ? rpost.CoverImageAlt : rpost.Title;
-                        string relatedImg = !string.IsNullOrWhiteSpace(rpost.CoverImagePath) ? rpost.CoverImagePath : "/H-IMG/133.webp";
+                        string relatedImg = !string.IsNullOrWhiteSpace(rpost.CoverImagePath) ? rpost.CoverImagePath : "/images/H-IMG/133.webp";
                         <a asp-controller="Home" asp-action="Post" asp-route-slug="@rpost.Slug" class="pd-card">
                             <div style="overflow: hidden;">
                                 <img src="@relatedImg" alt="@relatedAlt" class="pd-card-img" width="640" height="360" loading="lazy" decoding="async" />

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace final_p_01.Infrastructure.Data;
 
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options), final_p_01.Application.Common.Interfaces.IAppDbContext
 {
     // جداول قبلی سایت دارابیکو
     public DbSet<AdminUser> AdminUsers => Set<AdminUser>();

@@ -1,7 +1,9 @@
 ﻿using Darabico.Domain.Entities;
-using final_p_01.Infrastructure;
+using final_p_01.Infrastructure.Data;
+using Darabico.Web.Helpers;
 using Darabico.Web.Areas.Admin.ViewModels;
-using Darabico.Web.Services;
+using final_p_01.Application.Common.Interfaces;
+using final_p_01.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -72,7 +74,7 @@ public class ProjectsController(
         try
         {
             var featuredResult = await imageService.SaveProjectImageAsync(
-                model.FeaturedImageFile!,
+                model.FeaturedImageFile!.ToUploadFile(),
                 subFolder: "projects/featured",
                 generateThumbnail: true,
                 maxWidth: 1200,
@@ -82,7 +84,7 @@ public class ProjectsController(
             if (model.BeforeImageFile is { Length: > 0 })
             {
                 var beforeRes = await imageService.SaveProjectImageAsync(
-                    model.BeforeImageFile, "projects/compare", false, 1200, cancellationToken);
+                    model.BeforeImageFile.ToUploadFile(), "projects/compare", false, 1200, cancellationToken);
                 beforeUrl = beforeRes.ImageUrl;
             }
 
@@ -90,14 +92,14 @@ public class ProjectsController(
             if (model.AfterImageFile is { Length: > 0 })
             {
                 var afterRes = await imageService.SaveProjectImageAsync(
-                    model.AfterImageFile, "projects/compare", false, 1200, cancellationToken);
+                    model.AfterImageFile.ToUploadFile(), "projects/compare", false, 1200, cancellationToken);
                 afterUrl = afterRes.ImageUrl;
             }
 
             string? videoUrl = model.VideoUrl?.Trim();
             if (model.VideoFile is { Length: > 0 })
             {
-                videoUrl = await imageService.SaveVideoAsync(model.VideoFile, "projects/videos", cancellationToken);
+                videoUrl = await imageService.SaveVideoAsync(model.VideoFile.ToUploadFile(), "projects/videos", cancellationToken);
             }
 
             var project = new Project
@@ -215,7 +217,7 @@ public class ProjectsController(
                 var oldThumb = project.ThumbnailUrl;
 
                 var featuredRes = await imageService.SaveProjectImageAsync(
-                    model.FeaturedImageFile, "projects/featured", true, 1200, cancellationToken);
+                    model.FeaturedImageFile.ToUploadFile(), "projects/featured", true, 1200, cancellationToken);
 
                 project.FeaturedImageUrl = featuredRes.ImageUrl;
                 project.ThumbnailUrl = featuredRes.ThumbnailUrl!;
@@ -234,7 +236,7 @@ public class ProjectsController(
             {
                 imageService.DeleteFile(project.BeforeImageUrl);
                 var beforeRes = await imageService.SaveProjectImageAsync(
-                    model.BeforeImageFile, "projects/compare", false, 1200, cancellationToken);
+                    model.BeforeImageFile.ToUploadFile(), "projects/compare", false, 1200, cancellationToken);
                 project.BeforeImageUrl = beforeRes.ImageUrl;
             }
 
@@ -248,7 +250,7 @@ public class ProjectsController(
             {
                 imageService.DeleteFile(project.AfterImageUrl);
                 var afterRes = await imageService.SaveProjectImageAsync(
-                    model.AfterImageFile, "projects/compare", false, 1200, cancellationToken);
+                    model.AfterImageFile.ToUploadFile(), "projects/compare", false, 1200, cancellationToken);
                 project.AfterImageUrl = afterRes.ImageUrl;
             }
 
@@ -261,7 +263,7 @@ public class ProjectsController(
             else if (model.VideoFile is { Length: > 0 })
             {
                 imageService.DeleteFile(project.VideoUrl);
-                project.VideoUrl = await imageService.SaveVideoAsync(model.VideoFile, "projects/videos", cancellationToken);
+                project.VideoUrl = await imageService.SaveVideoAsync(model.VideoFile.ToUploadFile(), "projects/videos", cancellationToken);
             }
             else
             {
@@ -428,7 +430,7 @@ public class ProjectsController(
                 : (project.Images.Count + i + 1);
 
             var processed = await imageService.SaveProjectImageAsync(
-                file, "projects/gallery", generateThumbnail: false, maxWidth: 1200, cancellationToken);
+                file.ToUploadFile(), "projects/gallery", generateThumbnail: false, maxWidth: 1200, cancellationToken);
 
             project.Images.Add(new ProjectImage
             {

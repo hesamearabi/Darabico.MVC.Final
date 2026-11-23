@@ -1,8 +1,10 @@
-﻿using SixLabors.ImageSharp;
+﻿using final_p_01.Application.Common.Interfaces;
+using Microsoft.AspNetCore.Hosting;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
 
-namespace Darabico.Web.Services;
+namespace final_p_01.Infrastructure.Services;
 
 public class ImageService(IWebHostEnvironment environment) : IImageService
 {
@@ -24,7 +26,7 @@ public class ImageService(IWebHostEnvironment environment) : IImageService
     private const int ThumbnailHeight = 400;
 
     public async Task<ProcessedImageResult> SaveProjectImageAsync(
-        IFormFile file,
+        UploadFile file,
         string subFolder,
         bool generateThumbnail = false,
         int maxWidth = 1200,
@@ -89,7 +91,7 @@ public class ImageService(IWebHostEnvironment environment) : IImageService
     }
 
     public async Task<string> SaveVideoAsync(
-        IFormFile file,
+        UploadFile file,
         string subFolder,
         CancellationToken cancellationToken = default)
     {

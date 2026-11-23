@@ -4,14 +4,17 @@ using final_p_01.Controllers;
 using final_p_01.Domain.Entities;
 using final_p_01.Domain.Enums;
 using final_p_01.Infrastructure.Data;
-using final_p_01.Models;
-using final_p_01.Services;
+using final_p_01.ViewModels;
+using final_p_01.Application.Common.Interfaces;
+using final_p_01.Extensions;
+using final_p_01.Infrastructure.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Xunit;
 
@@ -78,11 +81,11 @@ public class InquiryTests
         {
             var storage = new InquiryAttachmentStorage(new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string,string?> { ["InquiryStorage:Root"] = root }).Build(), new TestEnvironment());
             var fake = new FormFile(new MemoryStream("not an image"u8.ToArray()), 0, 12, "Files", "fake.jpg");
-            await Assert.ThrowsAsync<InvalidDataException>(() => storage.SaveAsync(fake, CancellationToken.None));
+            await Assert.ThrowsAsync<InvalidDataException>(() => storage.SaveAsync(fake.ToUploadFile(), CancellationToken.None));
             var oversized = new FormFile(Stream.Null, 0, InquiryAttachmentStorage.MaxBytes + 1, "Files", "large.pdf");
-            await Assert.ThrowsAsync<InvalidDataException>(() => storage.SaveAsync(oversized, CancellationToken.None));
+            await Assert.ThrowsAsync<InvalidDataException>(() => storage.SaveAsync(oversized.ToUploadFile(), CancellationToken.None));
             var pdf = "%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\n%%EOF"u8.ToArray();
-            var saved = await storage.SaveAsync(new FormFile(new MemoryStream(pdf), 0, pdf.Length, "Files", "test.pdf"), CancellationToken.None);
+            var saved = await storage.SaveAsync(new FormFile(new MemoryStream(pdf), 0, pdf.Length, "Files", "test.pdf").ToUploadFile(), CancellationToken.None);
             Assert.Equal("application/pdf", saved.ContentType);
             using (var stream = storage.Open(saved.StorageKey)) Assert.Equal(pdf.Length, stream.Length);
             Assert.Throws<InvalidDataException>(() => storage.Open("../test.pdf"));
@@ -101,7 +104,7 @@ public class InquiryTests
 
     private class UnusedStorage : IInquiryAttachmentStorage
     {
-        public Task<InquiryLeadAttachment> SaveAsync(IFormFile file, CancellationToken token) => throw new InvalidOperationException();
+        public Task<InquiryLeadAttachment> SaveAsync(UploadFile file, CancellationToken token) => throw new InvalidOperationException();
         public Stream Open(string key) => throw new InvalidOperationException();
         public void Delete(string key) => throw new InvalidOperationException();
     }
@@ -122,7 +125,7 @@ public class InquiryTests
             Assert.True(Directory.Exists(expectedRoot));
             var pdf = "%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\n%%EOF"u8.ToArray();
             var file = new FormFile(new MemoryStream(pdf), 0, pdf.Length, "Files", "site.pdf");
-            var attachment = await storage.SaveAsync(file, CancellationToken.None);
+            var attachment = await storage.SaveAsync(file.ToUploadFile(), CancellationToken.None);
             Assert.True(File.Exists(Path.Combine(expectedRoot, attachment.StorageKey)));
             using (var stream = new InquiryAttachmentStorage(configuration, environment).Open(attachment.StorageKey))
             using (var copy = new MemoryStream())
@@ -200,6 +203,113 @@ public class InquiryTests
         Assert.Equal(true, controller.TempData["InquirySubmitted"]);
         Assert.Single(db.InquiryLeads);
     }
+
+    [Fact]
+    public async Task StreamStorageResolvesFromInfrastructureAndRoundTripsUploads()
+    {
+        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        try
+        {
+            var environment = new TestEnvironment { WebRootPath = Path.Combine(root, "wwwroot") };
+            var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+            services.AddSingleton<IWebHostEnvironment>(environment);
+            services.AddSingleton<Microsoft.Extensions.Configuration.IConfiguration>(
+                new Microsoft.Extensions.Configuration.ConfigurationBuilder().AddInMemoryCollection(
+                    new Dictionary<string, string?> { ["InquiryStorage:Root"] = Path.Combine(root, "private") }).Build());
+            final_p_01.Infrastructure.DependencyInjection.AddFileStorage(services);
+            using var provider = services.BuildServiceProvider();
+            using var scope = provider.CreateScope();
+            var attachments = scope.ServiceProvider.GetRequiredService<IInquiryAttachmentStorage>();
+            var images = scope.ServiceProvider.GetRequiredService<IImageService>();
+            Assert.Equal(typeof(ApplicationDbContext).Assembly, attachments.GetType().Assembly);
+            Assert.Equal(typeof(ApplicationDbContext).Assembly, images.GetType().Assembly);
+            Assert.DoesNotContain(typeof(UploadFile).Assembly.GetReferencedAssemblies(),
+                assembly => assembly.Name!.StartsWith("Microsoft.AspNetCore") || assembly.Name == "final_p_01.Infrastructure");
+
+            var pdf = "%PDF-1.4\n%%EOF"u8.ToArray();
+            var pdfStream = new MemoryStream(pdf);
+            var saved = await attachments.SaveAsync(new UploadFile("../drawing.pdf", pdf.Length, () => pdfStream), CancellationToken.None);
+            Assert.False(pdfStream.CanRead);
+            Assert.Equal("drawing.pdf", saved.OriginalFileName);
+            using (var input = attachments.Open(saved.StorageKey))
+            using (var output = new MemoryStream())
+            {
+                await input.CopyToAsync(output);
+                Assert.Equal(pdf, output.ToArray());
+            }
+            attachments.Delete(saved.StorageKey);
+            Assert.False(File.Exists(Path.Combine(root, "private", saved.StorageKey)));
+
+            using var source = new SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(30, 20);
+            using var encoded = new MemoryStream();
+            await source.SaveAsync(encoded, new SixLabors.ImageSharp.Formats.Png.PngEncoder());
+            var png = encoded.ToArray();
+            var image = await images.SaveProjectImageAsync(new UploadFile("court.png", png.Length, () => new MemoryStream(png)),
+                "projects/featured", generateThumbnail: true, maxWidth: 15);
+            Assert.Equal(15, image.Width);
+            Assert.Equal(10, image.Height);
+            foreach (var url in new[] { image.ImageUrl, image.ThumbnailUrl! })
+            {
+                var path = Path.Combine(environment.WebRootPath, url.TrimStart('/'));
+                Assert.True(File.Exists(path));
+                using var decoded = SixLabors.ImageSharp.Image.Load(path);
+                Assert.Equal(url == image.ImageUrl ? 15 : 600, decoded.Width);
+                images.DeleteFile(url);
+                Assert.False(File.Exists(path));
+            }
+            var videoStream = new MemoryStream(new byte[] { 1, 2, 3 });
+            var video = await images.SaveVideoAsync(new UploadFile("court.mp4", videoStream.Length, () => videoStream), "projects/videos");
+            Assert.False(videoStream.CanRead);
+            Assert.Equal(new byte[] { 1, 2, 3 }, await File.ReadAllBytesAsync(Path.Combine(environment.WebRootPath, video.TrimStart('/'))));
+            images.DeleteFile(video);
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
+
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(1, true)]
+    [InlineData(InquiryAttachmentStorage.MaxBytes, true)]
+    [InlineData(InquiryAttachmentStorage.MaxBytes + 1, false)]
+    public async Task StreamAttachmentLengthBoundariesArePreserved(long length, bool accepted)
+    {
+        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        try
+        {
+            var storage = Storage(root);
+            var opened = false;
+            var file = new UploadFile("drawing.pdf", length, () =>
+            {
+                opened = true;
+                return new MemoryStream("%PDF-1.4\n%%EOF"u8.ToArray());
+            });
+            if (accepted)
+                Assert.Equal("%PDF-1.4\n%%EOF"u8.Length, (await storage.SaveAsync(file, CancellationToken.None)).ByteLength);
+            else
+                await Assert.ThrowsAsync<InvalidDataException>(() => storage.SaveAsync(file, CancellationToken.None));
+            Assert.Equal(accepted, opened);
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public async Task StreamAttachmentRejectsActualOversizeEvenWhenDeclaredLengthIsSmall()
+    {
+        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        try
+        {
+            var stream = new MemoryStream(new byte[InquiryAttachmentStorage.MaxBytes + 1]);
+            await Assert.ThrowsAsync<InvalidDataException>(() => Storage(root).SaveAsync(
+                new UploadFile("drawing.pdf", 1, () => stream), CancellationToken.None));
+            Assert.False(stream.CanRead);
+            Assert.Empty(Directory.GetFiles(root));
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
+
+    private static InquiryAttachmentStorage Storage(string root) => new(
+        new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["InquiryStorage:Root"] = root }).Build(),
+        new TestEnvironment());
 
     private class MemoryTempDataProvider : Microsoft.AspNetCore.Mvc.ViewFeatures.ITempDataProvider
     {

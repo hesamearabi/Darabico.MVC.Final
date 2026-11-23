@@ -1,14 +1,10 @@
+using final_p_01.Application.Common.Interfaces;
 using final_p_01.Domain.Entities;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using SixLabors.ImageSharp;
 
-namespace final_p_01.Services;
-
-public interface IInquiryAttachmentStorage
-{
-    Task<InquiryLeadAttachment> SaveAsync(IFormFile file, CancellationToken cancellationToken);
-    Stream Open(string key);
-    void Delete(string key);
-}
+namespace final_p_01.Infrastructure.Services;
 
 public sealed class InquiryAttachmentStorage : IInquiryAttachmentStorage
 {
@@ -29,7 +25,7 @@ public sealed class InquiryAttachmentStorage : IInquiryAttachmentStorage
         Directory.CreateDirectory(root);
     }
 
-    public async Task<InquiryLeadAttachment> SaveAsync(IFormFile file, CancellationToken cancellationToken)
+    public async Task<InquiryLeadAttachment> SaveAsync(UploadFile file, CancellationToken cancellationToken)
     {
         if (file.Length is <= 0 or > MaxBytes) throw new InvalidDataException("حجم هر فایل باید بین ۱ بایت و ۵ مگابایت باشد.");
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();

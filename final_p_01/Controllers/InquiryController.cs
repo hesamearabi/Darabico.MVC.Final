@@ -1,8 +1,9 @@
 using final_p_01.Application.Services;
 using final_p_01.Domain.Entities;
 using final_p_01.Infrastructure.Data;
-using final_p_01.Models;
-using final_p_01.Services;
+using final_p_01.ViewModels;
+using final_p_01.Application.Common.Interfaces;
+using final_p_01.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -46,7 +47,7 @@ public class InquiryController(ApplicationDbContext db, IInquiryAttachmentStorag
         var saved = new List<InquiryLeadAttachment>();
         try
         {
-            foreach (var file in model.Files) saved.Add(await storage.SaveAsync(file, cancellationToken));
+            foreach (var file in model.Files) saved.Add(await storage.SaveAsync(file.ToUploadFile(), cancellationToken));
         }
         catch (InvalidDataException ex)
         {

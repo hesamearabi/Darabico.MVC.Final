@@ -1,5 +1,5 @@
-@model final_p_01.Models.InquiryFormViewModel
-@using final_p_01.Models
+@model final_p_01.ViewModels.InquiryFormViewModel
+@using final_p_01.ViewModels
 @{
     var cities = InquiryFormViewModel.Options(Model.Settings.InquiryCities);
     var budgets = InquiryFormViewModel.Options(Model.Settings.InquiryBudgetRanges);
@@ -49,4 +49,4 @@
 </dialog>
 @if (submitted) { <noscript><div class="dc-notice" role="status">درخواست شما با موفقیت ثبت شد. کارشناسان دارابیکو در کوتاه‌ترین زمان برای بررسی پروژه با شما تماس می‌گیرند. <a href="/projects">مشاهده پروژه‌های دارابیکو</a></div></noscript> }
 </div>
-<script src="~/JS-SOURCE/inquiry.js" asp-append-version="true" defer></script>
+<script src="~/js/inquiry.js" asp-append-version="true" defer></script>

@@ -4,7 +4,8 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Darabico.Domain.Entities;
 using Darabico.Domain.Enums;
-using Darabico.Web.Services;
+using final_p_01.Application.Common.Interfaces;
+using final_p_01.Infrastructure;
 using final_p_01.Controllers;
 using final_p_01.Infrastructure.Data;
 using final_p_01.Services;
@@ -49,14 +50,17 @@ public sealed class SeoApplication : IAsyncLifetime
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         builder.Services.AddControllersWithViews().AddApplicationPart(typeof(HomeController).Assembly);
         builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite($"Data Source={Path.Combine(directory, "seo.db")}"));
+        builder.Services.AddScoped<final_p_01.Application.Common.Interfaces.IAppDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
+        builder.Services.AddScoped<final_p_01.Application.Projects.Queries.ListProjectsHandler>();
+        builder.Services.AddScoped<final_p_01.Application.Projects.Queries.GetProjectHandler>();
         builder.Services.AddSingleton<ISiteUrlBuilder, SiteUrlBuilder>();
-        builder.Services.AddScoped<IImageService, ImageService>();
-        builder.Services.AddScoped<IInquiryAttachmentStorage, InquiryAttachmentStorage>();
+        builder.Services.AddFileStorage();
         builder.Services.AddAuthentication("test").AddCookie("test");
         builder.Services.AddAuthorization();
         builder.Services.AddOutputCache();
         App = builder.Build();
         App.UseDeveloperExceptionPage();
+        final_p_01.Extensions.StaticAssetExtensions.UseLegacyImagePaths(App, App.Environment);
         App.UseStaticFiles();
         App.UseRouting();
         App.UseAuthentication();
@@ -235,6 +239,93 @@ public sealed class SeoIntegrationTests(SeoApplication app) : IClassFixture<SeoA
         }
         Assert.Contains("مشاهده همه پروژه‌های اجرا شده", WebUtility.HtmlDecode(home));
         Assert.Equal(5, Tags(home, "<a class=\"gallery-item[^\"]*\" href=\"/projects\">").Length);
+    }
+
+    [Theory]
+    [InlineData("/")]
+    [InlineData("/projects")]
+    [InlineData("/estimator")]
+    [InlineData("/inquiry")]
+    public async Task RenderedAssetsUseStandardFoldersAndExist(string path)
+    {
+        var html = await Get(path);
+        foreach (var tag in Tags(html, "<(?:link|script)\\b[^>]*(?:href|src)=\"[^\"]+\"[^>]*>"))
+        {
+            var attribute = tag.StartsWith("<script", StringComparison.OrdinalIgnoreCase) ? "src" : "href";
+            var asset = Attribute(tag, attribute).Split('?')[0];
+            if (!asset.EndsWith(".css") && !asset.EndsWith(".js")) continue;
+            Assert.Matches("^/(css|js|lib)/", asset);
+            Assert.True(File.Exists(Path.Combine(app.App.Environment.WebRootPath, asset.TrimStart('/'))), asset);
+        }
+        Assert.DoesNotContain("minislider.js", html);
+        Assert.DoesNotContain("slider-body.js", html);
+    }
+
+    [Fact]
+    public void EveryLocalViewAndStylesheetAssetReferenceExists()
+    {
+        var root = app.App.Environment.ContentRootPath;
+        var webRoot = app.App.Environment.WebRootPath;
+        var files = Directory.EnumerateFiles(Path.Combine(root, "Views"), "*.cshtml", SearchOption.AllDirectories)
+            .Concat(Directory.EnumerateFiles(Path.Combine(root, "Areas"), "*.cshtml", SearchOption.AllDirectories))
+            .Concat(Directory.EnumerateFiles(webRoot, "*.css", SearchOption.AllDirectories));
+        var references = 0;
+        foreach (var file in files)
+        {
+            var content = File.ReadAllText(file);
+            var matches = Regex.Matches(content,
+                "[\"'(](?<path>(?:~?/)?(?:images|fonts|css|js|lib)/[^\"'<>\\r\\n]*?\\.(?:css|js|png|jpe?g|webp|svg|ico|woff2?|ttf|mp4|webm)(?:[?#][^\"'<>\\r\\n]*)?)[\"')]", RegexOptions.IgnoreCase);
+            foreach (Match match in matches)
+            {
+                var asset = Uri.UnescapeDataString(match.Groups["path"].Value.Split('?', '#')[0]).TrimStart('~', '/');
+                Assert.True(File.Exists(Path.Combine(webRoot, asset)), $"{file}: {asset}");
+                references++;
+            }
+            if (!file.EndsWith(".css")) continue;
+            foreach (Match match in Regex.Matches(content, "url\\(\\s*[\"']?(?<path>[^\"')]+)[\"']?\\s*\\)"))
+            {
+                var asset = match.Groups["path"].Value.Split('?', '#')[0];
+                if (asset.Length == 0 || asset.StartsWith("data:") || Uri.TryCreate(asset, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https") continue;
+                var resolved = asset.StartsWith('/') ? Path.Combine(webRoot, asset.TrimStart('/')) : Path.Combine(Path.GetDirectoryName(file)!, asset);
+                Assert.True(File.Exists(resolved), $"{file}: {asset}");
+                references++;
+            }
+        }
+        Assert.True(references > 40);
+    }
+
+    [Theory]
+    [InlineData("H-IMG/aratehcourt.webp")]
+    [InlineData("footerimg/phone.png")]
+    [InlineData("siteLOGO/sitelogo.png")]
+    [InlineData("sliderIMG/POP_Tennis_paddle.jpg")]
+    public async Task LegacyImagePathsReturnOriginalBytes(string path)
+    {
+        var legacy = await app.Client.GetByteArrayAsync("/" + path);
+        var organized = await app.Client.GetByteArrayAsync("/images/" + path);
+        Assert.Equal(organized, legacy);
+    }
+
+    [Theory]
+    [InlineData(-1, 1)]
+    [InlineData(0, 1)]
+    [InlineData(1, 1)]
+    [InlineData(3, 3)]
+    [InlineData(int.MaxValue, 3)]
+    public async Task ProjectPageBoundsRemainClamped(int requested, int expected)
+    {
+        var html = await Get($"/projects?page={requested}");
+        var canonical = Attribute(Assert.Single(Tags(html, "<link\\b[^>]*rel=\"canonical\"[^>]*>")), "href");
+        Assert.Equal(SeoApplication.Origin + "/projects" + (expected == 1 ? "" : $"?page={expected}"), canonical);
+    }
+
+    [Fact]
+    public async Task LoadMoreBeyondLastPageDoesNotRepeatProjects()
+    {
+        var response = await app.Client.GetAsync("/projects/load-more?page=4");
+        response.EnsureSuccessStatusCode();
+        Assert.Equal("false", Assert.Single(response.Headers.GetValues("X-Has-More")));
+        Assert.DoesNotContain("project-card", await response.Content.ReadAsStringAsync());
     }
 
     [Fact]

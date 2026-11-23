@@ -1,9 +1,9 @@
-@model final_p_01.Models.InquiryFormViewModel
+@model final_p_01.ViewModels.InquiryFormViewModel
 @{
     ViewData["Title"] = "درخواست مشاوره ساخت زمین پدل";
     ViewData["MetaDescription"] = "مشخصات پروژه خود را ثبت کنید تا کارشناسان دارابیکو برای مشاوره ساخت زمین پدل با شما تماس بگیرند.";
 }
 <main class="form-page">
     <header class="form-page__header"><h1 class="form-page__title">پروژه پدل شما از اینجا شروع می‌شود</h1><p class="form-page__subtitle">مشخصات محل و راه تماس را ثبت کنید؛ کارشناسان دارابیکو برای بررسی پروژه با شما تماس می‌گیرند.</p></header>
-    <partial name="_InquiryForm" model="Model" />
+    <partial name="Partials/_InquiryForm" model="Model" />
 </main>

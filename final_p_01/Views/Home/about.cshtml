@@ -5,16 +5,16 @@
     ViewData["MetaDescription"] = "آشنایی با هلدینگ توسعه سرمایه‌گذاری دارابی؛ بیش از ۵۰ سال تجربه در صنعت شیشه و سازه و مجری تخصصی طراحی و ساخت زمین پدل استاندارد در ایران.";
     string currentUrl = UrlBuilder.Absolute("about-us");
     string homeUrl = UrlBuilder.Absolute("");
-    string logoUrl = UrlBuilder.Absolute("siteLOGO/sitelogo.png");
+    string logoUrl = UrlBuilder.Absolute("images/siteLOGO/sitelogo.png");
 
     ViewData["Canonical"] = currentUrl;
-    ViewData["OgImage"] = UrlBuilder.Absolute("H-IMG/15-3.webp");
+    ViewData["OgImage"] = UrlBuilder.Absolute("images/H-IMG/15-3.webp");
     ViewData["OgImageAlt"] = "درباره هلدینگ دارابی و دپارتمان ساخت زمین پدل دارابی کو";
     ViewData["TwitterCard"] = "summary_large_image";
 }
 
 @section Head {
-    <link rel="preload" as="image" href="@Url.Content("~/H-IMG/15-3.webp")" fetchpriority="high" />
+    <link rel="preload" as="image" href="@Url.Content("~/images/H-IMG/15-3.webp")" fetchpriority="high" />
 
     <script type="application/ld+json">
         {
@@ -74,7 +74,7 @@
             height: 65vh;
             min-height: 500px;
             background-color: var(--secondary-navy);
-            background-image: url('/H-IMG/15-3.webp');
+            background-image: url('/images/H-IMG/15-3.webp');
             background-size: cover;
             background-position: center center;
             background-attachment: fixed;

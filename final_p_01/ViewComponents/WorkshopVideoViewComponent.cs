@@ -16,6 +16,6 @@ public class WorkshopVideoViewComponent : ViewComponent
         var settings = await _context.SiteSettings.AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == SiteSettings.SingletonId);
 
-        return View("~/Views/Shared/_WorkshopVideo.cshtml", settings);
+        return View("~/Views/Shared/Partials/_WorkshopVideo.cshtml", settings);
     }
 }

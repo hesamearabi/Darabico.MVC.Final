@@ -1,4 +1,4 @@
-@model final_p_01.Models.InquirySettingsViewModel
+@model final_p_01.ViewModels.InquirySettingsViewModel
 @{ ViewData["Title"] = "تنظیمات درخواست مشاوره"; }
 <section class="lead-panel"><h1>تنظیمات درخواست مشاوره</h1><p>گزینه‌های فرم و متن تأیید درخواست را مدیریت کنید. اطلاعات تماس اطلاع‌رسانی برای اتصال بعدی ذخیره می‌شود؛ ارسال خودکار در این بخش فعال نیست.</p>
 @if(TempData["InquirySaved"] is string message){<p class="form-alert form-alert--success" role="status">@message</p>}

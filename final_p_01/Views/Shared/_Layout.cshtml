@@ -42,7 +42,7 @@
         bool hasCustomOgImage = !string.IsNullOrWhiteSpace(customOgImage);
         string ogImage = hasCustomOgImage
         ? UrlBuilder.Absolute(customOgImage!)
-        : UrlBuilder.Absolute("siteLOGO/sitelogo.png");
+        : UrlBuilder.Absolute("images/siteLOGO/sitelogo.png");
 
         string? ogImageWidth = ViewData["OgImageWidth"] as string ?? (hasCustomOgImage ? null : "500");
         string? ogImageHeight = ViewData["OgImageHeight"] as string ?? (hasCustomOgImage ? null : "500");
@@ -99,10 +99,10 @@
 
     <link rel="icon" type="image/x-icon" href="@UrlBuilder.Absolute("favicon.ico")" sizes="48x48">
     <link rel="icon" type="image/png" sizes="192x192" href="@UrlBuilder.Absolute("android-chrome-192x192.png")">
-    <link rel="icon" type="image/png" sizes="192x192" href="@UrlBuilder.Absolute("siteLOGO/favicon.png")">
+    <link rel="icon" type="image/png" sizes="192x192" href="@UrlBuilder.Absolute("images/siteLOGO/favicon.png")">
     <link rel="apple-touch-icon" sizes="180x180" href="@UrlBuilder.Absolute("apple-touch-icon.png")">
 
-    <link rel="stylesheet" href="@Url.Content("~/CSS-SOURCE/layouts.css")" asp-append-version="true">
+    <link rel="stylesheet" href="@Url.Content("~/css/layouts.css")" asp-append-version="true">
 
     <noscript>
         <style>
@@ -305,7 +305,7 @@
           "@@type": "GeneralContractor",
           "name": "دارابی کو - Darabico",
           "url": "@UrlBuilder.Absolute("/")",
-          "logo": "@UrlBuilder.Absolute("siteLOGO/sitelogo.png")",
+          "logo": "@UrlBuilder.Absolute("images/siteLOGO/sitelogo.png")",
           "description": "پیمانکار تخصصی طراحی، زیرسازی، ساخت سازه و تجهیز زمین های پدل در ایران با تولید مستقیم شیشه.",
           "priceRange": "$$",
           "address": {
@@ -329,19 +329,19 @@
     </script>
 
     @await RenderSectionAsync("Head", required: false)
-    <link rel="stylesheet" href="~/CSS-SOURCE/workspace.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/CSS-SOURCE/consultation.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/CSS-SOURCE/projects.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/CSS-SOURCE/estimator.css" asp-append-version="true" />
-    <script src="~/JS-SOURCE/estimator.js" asp-append-version="true" defer></script>
-    <script src="~/JS-SOURCE/workspace.js" asp-append-version="true" defer></script>
+    <link rel="stylesheet" href="~/css/workspace.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/consultation.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/projects.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/estimator.css" asp-append-version="true" />
+    <script src="~/js/estimator.js" asp-append-version="true" defer></script>
+    <script src="~/js/workspace.js" asp-append-version="true" defer></script>
 </head>
 
 <body class="loading-state">
 
     <div id="brand-loader" aria-hidden="true">
         <div class="loader-content">
-            <img src="@Url.Content("~/siteLOGO/sitelogo.png")" alt="" class="loader-logo" width="110" height="40" fetchpriority="high" decoding="async">
+            <img src="@Url.Content("~/images/siteLOGO/sitelogo.png")" alt="" class="loader-logo" width="110" height="40" fetchpriority="high" decoding="async">
             <div class="loading-bar-container">
                 <div class="loading-bar"></div>
             </div>
@@ -449,7 +449,7 @@
     @if (isHomePage)
     {
         <section class="hero">
-            <img src="@Url.Content("~/H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp")" alt="طراحی و ساخت زمین پدل استاندارد FIP توسط دارابی کو" class="hero-bg-img" fetchpriority="high" decoding="async" width="1920" height="1080">
+            <img src="@Url.Content("~/images/H-IMG/man-playing-padel-9KR4F3U-e1750063137155-compressed.webp")" alt="طراحی و ساخت زمین پدل استاندارد FIP توسط دارابی کو" class="hero-bg-img" fetchpriority="high" decoding="async" width="1920" height="1080">
             <div class="hero-overlay"></div>
             <div class="hero-content">
                 <h1 class="hero-title">
@@ -489,7 +489,7 @@
             <div class="footer-top">
                 <a href="#" class="go-top-btn">
                     <span>بازگشت به بالا</span>
-                    <img src="@Url.Content("~/footerimg/1037792-200.png")" alt="" aria-hidden="true" width="24" height="24" loading="lazy">
+                    <img src="@Url.Content("~/images/footerimg/1037792-200.png")" alt="" aria-hidden="true" width="24" height="24" loading="lazy">
                 </a>
             </div>
 
@@ -516,27 +516,27 @@
                 <div class="footer-col">
                     <h3 class="footer-title">ارتباط با ما</h3>
                     <div class="contact-item">
-                        <img src="@Url.Content("~/footerimg/location-map-pin-3.svg")" alt="" aria-hidden="true" width="20" height="20" loading="lazy" decoding="async">
+                        <img src="@Url.Content("~/images/footerimg/location-map-pin-3.svg")" alt="" aria-hidden="true" width="20" height="20" loading="lazy" decoding="async">
                         <span>دفتر مرکزی: ساری، بلوار خزر، خیابان دریا ۴، فروشگاه دارابی</span>
                     </div>
                     <div class="contact-item">
-                        <img src="@Url.Content("~/footerimg/location-map-pin-3.svg")" alt="" aria-hidden="true" width="20" height="20" loading="lazy" decoding="async">
+                        <img src="@Url.Content("~/images/footerimg/location-map-pin-3.svg")" alt="" aria-hidden="true" width="20" height="20" loading="lazy" decoding="async">
                         <span>کارخانه: ساری، کیلومتر ۲۰ جاده فرح‌آباد، شهرک صنعتی شماره ۲، قطعه D5</span>
                     </div>
                     <div class="contact-item">
-                        <img src="@Url.Content("~/footerimg/phone.png")" alt="" aria-hidden="true" width="20" height="20" loading="lazy" decoding="async">
+                        <img src="@Url.Content("~/images/footerimg/phone.png")" alt="" aria-hidden="true" width="20" height="20" loading="lazy" decoding="async">
                         <a href="tel:09111515971" dir="ltr">09111515971</a>
                     </div>
                     <div class="contact-item">
-                        <img src="@Url.Content("~/footerimg/phone.png")" alt="" aria-hidden="true" width="20" height="20" loading="lazy" decoding="async">
+                        <img src="@Url.Content("~/images/footerimg/phone.png")" alt="" aria-hidden="true" width="20" height="20" loading="lazy" decoding="async">
                         <a href="tel:09121729882" dir="ltr">09121729882</a>
                     </div>
                     <div class="social-links">
                         <a href="https://instagram.com/darabicopadel" title="اینستاگرام دارابی کو" aria-label="اینستاگرام دارابی کو" rel="noopener noreferrer" target="_blank">
-                            <img src="@Url.Content("~/footerimg/logo-instagram.svg")" alt="" aria-hidden="true" width="22" height="22" loading="lazy" decoding="async">
+                            <img src="@Url.Content("~/images/footerimg/logo-instagram.svg")" alt="" aria-hidden="true" width="22" height="22" loading="lazy" decoding="async">
                         </a>
                         <a href="https://t.me/DarabiHolding" title="تلگرام دارابی کو" aria-label="تلگرام دارابی کو" rel="noopener noreferrer" target="_blank">
-                            <img src="@Url.Content("~/footerimg/4701496.png")" alt="" aria-hidden="true" width="22" height="22" loading="lazy" decoding="async">
+                            <img src="@Url.Content("~/images/footerimg/4701496.png")" alt="" aria-hidden="true" width="22" height="22" loading="lazy" decoding="async">
                         </a>
                     </div>
                 </div>
@@ -550,8 +550,7 @@
         </div>
     </div>
 
-    <script src="@Url.Content("~/JS-SOURCE/minislider.js")" asp-append-version="true" defer></script>
-    <script src="@Url.Content("~/JS-SOURCE/slider-body.js")" asp-append-version="true" defer></script>
+
     @await RenderSectionAsync("Scripts", required: false)
 
     <script>

@@ -1,4 +1,4 @@
-namespace final_p_01.Models
+namespace final_p_01.ViewModels
 {
     public class ErrorViewModel
     {

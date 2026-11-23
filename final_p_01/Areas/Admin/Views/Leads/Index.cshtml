@@ -1,5 +1,5 @@
-@model final_p_01.Models.LeadListViewModel
-@using final_p_01.Models
+@model final_p_01.ViewModels.LeadListViewModel
+@using final_p_01.ViewModels
 @using final_p_01.Domain.Enums
 @{ ViewData["Title"] = "مدیریت لیدها"; var f = Model.Filter;
     string Link(int? page = null, bool export = false) => "/admin/leads" + (export ? "/export" : "") + Microsoft.AspNetCore.Http.QueryString.Create(new Dictionary<string,string?> { ["status"] = f.Status?.ToString(), ["from"] = f.From, ["to"] = f.To, ["city"] = f.City, ["source"] = f.Source, ["leadType"] = f.LeadType, ["search"] = f.Search, ["page"] = page?.ToString() });

@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using final_p_01.Domain.Entities;
-using final_p_01.Infrastructure;
+using final_p_01.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;

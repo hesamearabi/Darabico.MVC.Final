@@ -1,7 +1,7 @@
 using final_p_01.Application.Services;
 using final_p_01.Domain.Entities;
 using final_p_01.Infrastructure.Data;
-using final_p_01.Models;
+using final_p_01.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

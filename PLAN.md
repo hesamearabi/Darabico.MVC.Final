@@ -48,6 +48,14 @@ Verification: Debug build has zero errors; 91 tests pass, including five new reg
 
 Limitations/findings: the browser tool cannot explicitly request networkidle. Public whole-page layout scans still flag legacy header/footer/about content and intentionally clipped accessibility/honeypot content outside the redesigned controls. Earlier status assertions matched hidden select options; SQL confirmed the actual update. Repeated QA requests hit the existing login/form 429 limits; final admin checks passed after the window expired, but the additional native Inquiry HTTP replay remained rate-limited (the native route contract is covered by passing tests). ImageSharp reports a missing commercial license warning for Release builds.
 
+## Repository cleanup and layer alignment
+- [x] Move project query handlers and database/storage abstractions into Application.
+- [x] Move project image/video and private inquiry attachment storage into Infrastructure; adapt HTTP uploads in MVC.
+- [x] Standardize active assets, view models and shared partials; preserve legacy image URLs, migrations and uploads.
+- [x] Audit local asset references and record every deletion/move in `CLEANUP-FILES.md`.
+- Verification: regression coverage is in the existing inquiry and SEO integration test files. Managed preview cannot host this ASP.NET application, so browser visual verification remains unavailable.
+- Scope: unrelated legacy controller persistence and post-media helpers are unchanged; optional admin visual expansion remains deferred.
+
 ## Phase 2: Optional future expansion
 Goal: extend coverage only if requested later.
 - [ ] Expand automated visual coverage to unrelated admin modules.

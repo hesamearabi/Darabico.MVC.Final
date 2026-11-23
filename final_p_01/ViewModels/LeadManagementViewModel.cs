@@ -3,7 +3,7 @@ using System.Globalization;
 using final_p_01.Domain.Entities;
 using final_p_01.Domain.Enums;
 
-namespace final_p_01.Models;
+namespace final_p_01.ViewModels;
 
 public class LeadFilter
 {

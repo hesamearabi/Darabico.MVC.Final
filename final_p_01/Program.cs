@@ -16,7 +16,6 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using System.Threading.RateLimiting;
-using Darabico.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,8 +29,7 @@ builder.Services.Configure<FormOptions>(options =>
 });
 
 builder.Services.AddSingleton<ISiteUrlBuilder, SiteUrlBuilder>();
-builder.Services.AddScoped<IImageService, ImageService>();
-builder.Services.AddScoped<IInquiryAttachmentStorage, InquiryAttachmentStorage>();
+builder.Services.AddFileStorage();
 
 builder.Services.AddWebEncoders(options =>
 {
@@ -158,12 +156,9 @@ builder.Services.AddControllersWithViews(options =>
     options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
 });
 
-// ثبت یکتای ApplicationDbContext همراه با اسمبلی مایگریشن‌ها
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        b => b.MigrationsAssembly("final_p_01.Infrastructure")
-    ));
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddScoped<final_p_01.Application.Projects.Queries.ListProjectsHandler>();
+builder.Services.AddScoped<final_p_01.Application.Projects.Queries.GetProjectHandler>();
 
 var adminSessionTimeoutHours = builder.Configuration.GetValue<double?>("AdminAuth:SessionTimeoutHours") ?? 12;
 
@@ -427,6 +422,7 @@ app.UseStatusCodePagesWithReExecute("/home/pagenotfound", "?statusCode={0}");
 
 app.UseResponseCompression();
 
+final_p_01.Extensions.StaticAssetExtensions.UseLegacyImagePaths(app, app.Environment);
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>

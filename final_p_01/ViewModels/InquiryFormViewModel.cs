@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using final_p_01.Domain.Entities;
 
-namespace final_p_01.Models;
+namespace final_p_01.ViewModels;
 
 public class InquiryFormViewModel
 {

@@ -77,7 +77,7 @@ public class PhaseModulesIntegrationTests : IDisposable
         await _context.SaveChangesAsync();
         var controller = new final_p_01.Areas.Admin.Controllers.LeadsController(_context, null!);
         controller.ModelState.AddModelError("Status", "وضعیت معتبر نیست.");
-        var result = Assert.IsType<ViewResult>(await controller.Update(lead.Id, new final_p_01.Models.LeadUpdateViewModel { AssignedTo = "پیگیری" }, null, default));
+        var result = Assert.IsType<ViewResult>(await controller.Update(lead.Id, new final_p_01.ViewModels.LeadUpdateViewModel { AssignedTo = "پیگیری" }, null, default));
         Assert.Equal("Details", result.ViewName);
         Assert.Equal(final_p_01.Domain.Enums.LeadStatus.New, lead.Status);
     }
