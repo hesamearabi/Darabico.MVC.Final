@@ -21,7 +21,7 @@
                     <option value="">همه شهرها</option>
                     @foreach (var city in Model.AvailableCities)
                     {
-                        <option value="@city" selected="@(Model.SelectedCity == city)">@city</option>
+                        <option value="@city" selected="@(Model.SelectedCity == city)">@city.Trim()</option>
                     }
                 </select>
             </div>

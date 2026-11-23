@@ -73,7 +73,7 @@ public class EstimatorController : Controller
         if (mobile is null)
             ModelState.AddModelError(nameof(model.Mobile), "شماره موبایل معتبر نیست. مثال: 09123456789");
 
-        if (!ModelState.IsValid)
+        if (!ModelState.IsValid || mobile is null)
             return FormResponse(form);
 
         var settings = await _context.EstimatorSettings.AsNoTracking()

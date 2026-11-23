@@ -7,10 +7,10 @@ namespace final_p_01.Domain.Entities
         public int Id { get; set; }
 
         [Required, MaxLength(500)]
-        public string Question { get; set; }
+        public string Question { get; set; } = string.Empty;
 
         [Required]
-        public string Answer { get; set; }
+        public string Answer { get; set; } = string.Empty;
 
         public int? PostId { get; set; }
         public Post? Post { get; set; }

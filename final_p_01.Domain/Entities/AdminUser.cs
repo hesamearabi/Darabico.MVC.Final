@@ -7,10 +7,10 @@ public class AdminUser
     public int Id { get; set; }
 
     [Required, MaxLength(150)]
-    public string Email { get; set; }
+    public string Email { get; set; } = string.Empty;
 
     [Required, MaxLength(500)]
-    public string Password { get; set; }
+    public string Password { get; set; } = string.Empty;
 
     [MaxLength(100)]
     public string FullName { get; set; } = "مدیر دارابیکو";

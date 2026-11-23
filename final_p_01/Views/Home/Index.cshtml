@@ -502,79 +502,6 @@
             }
         }
 
-        .blog-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 25px;
-            max-width: 1300px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .blog-card {
-            background: #fff;
-            border-radius: 16px;
-            overflow: hidden;
-            text-decoration: none;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            transition: transform 0.3s ease;
-            height: 100%;
-        }
-
-        @@media (hover: hover) {
-            .blog-card:hover {
-                transform: translateY(-8px);
-            }
-
-                .blog-card:hover .blog-img img {
-                    transform: scale(1.05);
-                }
-        }
-
-        .blog-img {
-            width: 100%;
-            aspect-ratio: 16 / 10;
-            overflow: hidden;
-            background: #f1f5f9;
-        }
-
-            .blog-img img {
-                display: block;
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                transition: transform 0.5s ease;
-            }
-
-        .blog-info {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-        }
-
-        .blog-category {
-            color: var(--primary-blue);
-            font-size: 0.8rem;
-            font-weight: bold;
-            margin-bottom: 5px;
-            display: block;
-        }
-
-        .blog-title {
-            color: #1a1a1a;
-            font-size: 1.1rem;
-            font-weight: 800;
-            line-height: 1.6;
-            margin: 0;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
         .about__stat-number-ui {
             font-size: 2.5rem;
             font-weight: 900;
@@ -800,28 +727,12 @@
         <a asp-controller="Home" asp-action="Blog" style="color: var(--primary-blue); font-weight: 700; text-decoration: none;">مشاهده همه ➜</a>
     </div>
 
-    <div class="blog-cards">
+    <div class="editorial-grid">
         @if (Model != null && Model.Any())
         {
             @foreach (var post in Model)
             {
-                var cardAlt = !string.IsNullOrWhiteSpace(post.CoverImageAlt) ? post.CoverImageAlt : post.Title;
-                <a asp-controller="Home" asp-action="Post" asp-route-slug="@post.Slug" class="blog-card">
-                    <div class="blog-img">
-                        @if (!string.IsNullOrEmpty(post.CoverImagePath))
-                        {
-                            <img src="@Url.Content(post.CoverImagePath)" alt="@cardAlt" loading="lazy" width="400" height="250">
-                        }
-                        else
-                        {
-                            <img src="@Url.Content("~/images/H-IMG/133.webp")" alt="@cardAlt" loading="lazy" width="400" height="250">
-                        }
-                    </div>
-                    <div class="blog-info">
-                        <span class="blog-category">@post.CategoryName</span>
-                        <h3 class="blog-title">@post.Title</h3>
-                    </div>
-                </a>
+                @await Html.PartialAsync("_PostCard", post)
             }
         }
         else

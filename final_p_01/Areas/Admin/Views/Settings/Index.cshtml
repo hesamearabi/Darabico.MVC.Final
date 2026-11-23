@@ -1,101 +1,85 @@
 ﻿@model final_p_01.Areas.Admin.Models.AdminSettingsViewModel
-
 @{
-    ViewData["Title"] = "تنظیمات حساب کاربری";
+    ViewData["Title"] = "تنظیمات سایت و حساب کاربری";
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
 }
-
-<div class="card" style="border-radius: 16px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); max-width: 600px; margin: 0 auto; padding: 30px;">
-    <h3 class="fw-bold mb-4" style="color: #121D35;"><i class="bi bi-person-gear me-2"></i> تنظیمات امنیتی</h3>
-
-    @if (ViewBag.SuccessMessage != null)
+<div class="card p-4 mx-auto" style="max-width: 760px;">
+    <h1 class="h3 mb-4">تنظیمات سایت و حساب کاربری</h1>
+    @if (ViewBag.SiteSeo is final_p_01.Areas.Admin.Models.SiteSeoViewModel seo)
     {
-        <div class="alert alert-success fw-bold">@ViewBag.SuccessMessage</div>
-    }
-
-    <form asp-action="Index" method="post">
-        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
-
-        @if (ViewBag.SiteSeo is final_p_01.Areas.Admin.Models.SiteSeoViewModel seo)
-        {
-            <hr class="my-4" />
-            <h3 class="fw-bold mb-4" style="color: #121D35;"><i class="bi bi-globe2 me-2"></i> سئوی صفحات و فاوآیکون</h3>
-
-            if (TempData["SeoSuccess"] != null)
+        <section aria-labelledby="seo-heading">
+            <h2 id="seo-heading" class="h4">سئوی صفحات و فاوآیکون</h2>
+            @if (TempData["SeoSuccess"] != null)
             {
-                <div class="alert alert-success fw-bold">@TempData["SeoSuccess"]</div>
+                <div class="alert alert-success" role="status">@TempData["SeoSuccess"]</div>
             }
-            if (TempData["SeoError"] != null)
+            @if (TempData["SeoError"] != null)
             {
-                <div class="alert alert-danger fw-bold">@TempData["SeoError"]</div>
+                <div class="alert alert-danger" role="alert">@TempData["SeoError"]</div>
             }
-
             <form asp-action="SaveSeo" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 <div class="row g-3">
-                    @foreach (var (key, label) in new[] { ("Home", "صفحه اصلی"), ("Projects", "پروژه‌ها"), ("Blog", "مجله"), ("Estimator", "برآورد هزینه"), ("Inquiry", "درخواست مشاوره"), ("Guide", "راهنمای جامع 0 تا 100") })
+                    @foreach (var (key, label) in new[] { ("Home", "صفحه اصلی"), ("Projects", "پروژه‌ها"), ("Blog", "مجله"), ("Estimator", "برآورد هزینه"), ("Inquiry", "درخواست مشاوره"), ("Guide", "راهنمای جامع 0 تا 100"), ("About", "درباره ما"), ("Contact", "تماس با ما") })
                     {
-                        <div class="col-md-12">
-                            <label class="form-label fw-bold">عنوان سئو — @label</label>
-                            <input name="Seo@(key)Title" class="form-control" value="@((string?)typeof(final_p_01.Areas.Admin.Models.SiteSeoViewModel).GetProperty($"Seo{key}Title")!.GetValue(seo))" maxlength="200" />
-                            <label class="form-label fw-bold mt-2">توضیح متا — @label</label>
-                            <textarea name="Seo@(key)Description" class="form-control" rows="2" maxlength="320">@((string?)typeof(final_p_01.Areas.Admin.Models.SiteSeoViewModel).GetProperty($"Seo{key}Description")!.GetValue(seo))</textarea>
+                        <div class="col-12">
+                            <label for="Seo@(key)Title" class="form-label fw-bold">عنوان سئو — @label</label>
+                            <input id="Seo@(key)Title" name="Seo@(key)Title" class="form-control" value="@((string?)typeof(final_p_01.Areas.Admin.Models.SiteSeoViewModel).GetProperty($"Seo{key}Title")!.GetValue(seo))" maxlength="200" />
+                            <label for="Seo@(key)Description" class="form-label fw-bold mt-2">توضیح متا — @label</label>
+                            <textarea id="Seo@(key)Description" name="Seo@(key)Description" class="form-control" rows="2" maxlength="320">@((string?)typeof(final_p_01.Areas.Admin.Models.SiteSeoViewModel).GetProperty($"Seo{key}Description")!.GetValue(seo))</textarea>
                         </div>
                     }
-                    <div class="col-md-12">
-                        <label class="form-label fw-bold">فاوآیکون سایت (ico/png/svg، حداکثر ۵۰۰KB)</label>
-                        <input type="file" name="favicon" class="form-control" accept=".ico,.png,.svg" />
+                    <div class="col-12">
+                        <label for="favicon" class="form-label fw-bold">فاوآیکون سایت (ico/png/svg، حداکثر ۵۰۰KB)</label>
+                        <input id="favicon" type="file" name="favicon" class="form-control" accept=".ico,.png,.svg" />
                         @if (!string.IsNullOrWhiteSpace(seo.CurrentFaviconPath))
                         {
-                            <small class="text-muted d-block mt-1">فاوآیکون فعلی: <img src="@seo.CurrentFaviconPath" alt="favicon" width="16" height="16" /> @seo.CurrentFaviconPath</small>
+                            <p class="text-muted mt-2">فاوآیکون فعلی: <img src="@seo.CurrentFaviconPath" alt="نشان سایت" width="32" height="32" /></p>
                         }
                         else
                         {
-                            <small class="text-muted d-block mt-1">در صورت خالی گذاشتن، فاوآیکون پیش‌فرض استفاده می‌شود.</small>
+                            <p class="text-muted mt-2">در صورت خالی گذاشتن، فاوآیکون پیش‌فرض استفاده می‌شود.</p>
                         }
                     </div>
                 </div>
-                <button type="submit" class="btn w-100 fw-bold mt-4" style="background: #121D35; color: #fff; padding: 12px;">
-                    ذخیره تنظیمات سئو
-                </button>
+                <button type="submit" class="pw-btn pw-btn--primary mt-4">ذخیره تنظیمات سئو</button>
             </form>
+        </section>
+    }
+    <section class="mt-4 pt-4 border-top" aria-labelledby="account-heading">
+        <h2 id="account-heading" class="h4">تنظیمات امنیتی</h2>
+        @if (ViewBag.SuccessMessage != null)
+        {
+            <div class="alert alert-success" role="status">@ViewBag.SuccessMessage</div>
         }
-
-        <hr class="my-4" />
-        <h3 class="fw-bold mb-4" style="color: #121D35;"><i class="bi bi-person-gear me-2"></i> تنظیمات امنیتی</h3>
-
-        <div class="mb-3">
-            <label class="form-label fw-bold">نام نمایشی</label>
-            <input asp-for="FullName" class="form-control" />
-            <span asp-validation-for="FullName" class="text-danger small"></span>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label fw-bold">ایمیل (نام کاربری)</label>
-            <input asp-for="Email" class="form-control" style="direction: ltr;" />
-            <span asp-validation-for="Email" class="text-danger small"></span>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label fw-bold">رمز عبور فعلی (جهت تایید تغییرات)</label>
-            <input type="password" asp-for="CurrentPassword" class="form-control" style="direction: ltr;" autocomplete="current-password" />
-            <span asp-validation-for="CurrentPassword" class="text-danger small"></span>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label fw-bold">رمز عبور جدید</label>
-            <input type="password" asp-for="NewPassword" class="form-control" style="direction: ltr;" autocomplete="new-password" placeholder="در صورت عدم تغییر، خالی بگذارید..." />
-            <span asp-validation-for="NewPassword" class="text-danger small"></span>
-        </div>
-
-        <div class="mb-4">
-            <label class="form-label fw-bold">تکرار رمز عبور جدید</label>
-            <input type="password" asp-for="ConfirmNewPassword" class="form-control" style="direction: ltr;" autocomplete="new-password" />
-            <span asp-validation-for="ConfirmNewPassword" class="text-danger small"></span>
-        </div>
-
-        <button type="submit" class="btn w-100 fw-bold" style="background: #121D35; color: #fff; padding: 12px;">
-            ذخیره تغییرات
-        </button>
-    </form>
+        <form asp-action="Index" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+            <div class="mb-3">
+                <label asp-for="FullName" class="form-label">نام نمایشی</label>
+                <input asp-for="FullName" class="form-control" autocomplete="name" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label">ایمیل (نام کاربری)</label>
+                <input asp-for="Email" class="form-control" dir="ltr" autocomplete="email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CurrentPassword" class="form-label">رمز عبور فعلی (جهت تایید تغییرات)</label>
+                <input type="password" asp-for="CurrentPassword" class="form-control" dir="ltr" autocomplete="current-password" />
+                <span asp-validation-for="CurrentPassword" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="NewPassword" class="form-label">رمز عبور جدید</label>
+                <input type="password" asp-for="NewPassword" class="form-control" dir="ltr" autocomplete="new-password" placeholder="در صورت عدم تغییر، خالی بگذارید" />
+                <span asp-validation-for="NewPassword" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="ConfirmNewPassword" class="form-label">تکرار رمز عبور جدید</label>
+                <input type="password" asp-for="ConfirmNewPassword" class="form-control" dir="ltr" autocomplete="new-password" />
+                <span asp-validation-for="ConfirmNewPassword" class="text-danger"></span>
+            </div>
+            <button type="submit" class="pw-btn pw-btn--primary">ذخیره تغییرات حساب</button>
+        </form>
+    </section>
 </div>

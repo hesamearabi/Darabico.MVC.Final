@@ -1,32 +1,31 @@
 @model final_p_01.ViewComponents.SiteNavViewModel
 @{
-    string currentPath = Context.Request.Path.Value?.ToLowerInvariant().TrimEnd('/') ?? "";
-    string guidePath = "/padel-court-construction-guide";
-    bool guideActive = currentPath == guidePath || (currentPath.Length > guidePath.Length && currentPath.StartsWith(guidePath));
+    var arabic = Context.Items[final_p_01.Application.Services.LanguageRouteHelper.CultureKey] as string == "ar";
+    var prefix = arabic ? "/ar" : "";
 }
-<ul class="workspace-nav-subtree">
-    <li>
-        <a href="@guidePath" class="nav-link @(guideActive ? "is-active" : "")">راهنمای جامع 0 تا 100 ساخت زمین پدل</a>
-        @if (Model.GuideChildren.Count > 0)
-        {
-            <ul class="workspace-nav-cluster" aria-label="فصل‌های راهنمای جامع">
-                @foreach (var child in Model.GuideChildren)
-                {
-                    <li><a href="/blog/@child.Slug" class="nav-link">دیواره‌ها و ابعاد: @child.Title</a></li>
-                }
-            </ul>
-        }
-    </li>
-</ul>
-@if (Model.LatestPosts.Count > 0)
-{
-    <div class="workspace-nav-latest">
-        <span class="workspace-nav-latest-title">آخرین مقالات مجله</span>
-        <ul>
-            @foreach (var post in Model.LatestPosts)
+<div class="workspace-nav-subtree">
+    <details class="workspace-nav-group">
+        <summary>@(arabic ? "دليل إنشاء ملعب البادل" : "راهنمای جامع 0 تا 100 ساخت زمین پدل")</summary>
+        <ul class="workspace-nav-cluster">
+            <li><a href="@prefix/padel-court-construction-guide" class="nav-link">@(arabic ? "الدليل الشامل" : "مشاهده راهنمای جامع")</a></li>
+            @foreach (var child in Model.GuideChildren)
             {
-                <li><a href="/blog/@post.Slug" class="nav-link">@post.Title</a></li>
+                <li><a href="@prefix/blog/@child.Slug" class="nav-link">@child.Title</a></li>
             }
         </ul>
-    </div>
-}
+    </details>
+    <details class="workspace-nav-group">
+        <summary>@(arabic ? "المقالات والتصنيفات" : "مقالات و دسته‌بندی‌ها")</summary>
+        <ul class="workspace-nav-cluster">
+            <li><a href="@prefix/blog" class="nav-link">@(arabic ? "جميع المقالات" : "همه مقالات")</a></li>
+            @foreach (var category in Model.Categories)
+            {
+                <li><a href="@prefix/blog?category=@category.Id" class="nav-link">@category.Name</a></li>
+            }
+            @foreach (var post in Model.LatestPosts)
+            {
+                <li><a href="@prefix/blog/@post.Slug" class="nav-link">@post.Title</a></li>
+            }
+        </ul>
+    </details>
+</div>

@@ -28,5 +28,7 @@ namespace final_p_01.ViewModels
         public List<PostCardViewModel> Posts { get; set; } = new List<PostCardViewModel>();
         public int CurrentPage { get; set; }
         public int TotalPages { get; set; }
+        public int? SelectedCategory { get; set; }
+        public List<Category> Categories { get; set; } = new();
     }
 }

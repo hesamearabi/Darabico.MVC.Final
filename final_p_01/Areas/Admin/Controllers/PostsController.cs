@@ -112,7 +112,7 @@ public class PostsController : Controller
         return $"/uploads/{subFolder}/{uniqueFileName}";
     }
 
-    private async Task<string> ProcessAndSaveAudioAsync(IFormFile file)
+    private async Task<string?> ProcessAndSaveAudioAsync(IFormFile file)
     {
         if (file == null || file.Length == 0) return null;
 
@@ -147,7 +147,7 @@ public class PostsController : Controller
         return $"/uploads/audios/{uniqueFileName}";
     }
 
-    private async Task<string> ProcessAndSaveAttachmentAsync(IFormFile file)
+    private async Task<string?> ProcessAndSaveAttachmentAsync(IFormFile file)
     {
         if (file == null || file.Length == 0) return null;
 
@@ -179,7 +179,7 @@ public class PostsController : Controller
         return $"/uploads/attachments/{uniqueFileName}";
     }
 
-    private void DeleteSecurely(string relativePath)
+    private void DeleteSecurely(string? relativePath)
     {
         if (string.IsNullOrEmpty(relativePath)) return;
 
@@ -317,6 +317,7 @@ public class PostsController : Controller
                 post.CreatedAt = DateTime.UtcNow;
                 _context.Posts.Add(post);
                 await _context.SaveChangesAsync();
+                final_p_01.ViewComponents.SiteNavigationCache.Invalidate();
 
                 await _outputCacheStore.EvictByTagAsync("BlogCache", default);
 
@@ -553,6 +554,7 @@ public class PostsController : Controller
                 }
 
                 await _context.SaveChangesAsync();
+                final_p_01.ViewComponents.SiteNavigationCache.Invalidate();
 
                 await _outputCacheStore.EvictByTagAsync("BlogCache", default);
 
@@ -611,6 +613,7 @@ public class PostsController : Controller
 
             _context.Posts.Remove(post);
             await _context.SaveChangesAsync();
+                final_p_01.ViewComponents.SiteNavigationCache.Invalidate();
 
             await _outputCacheStore.EvictByTagAsync("BlogCache", default);
 
@@ -668,7 +671,8 @@ public class PostsController : Controller
 
             using var stream = file.OpenReadStream();
             var buffer = new byte[8];
-            await stream.ReadAsync(buffer, 0, 8);
+            if (await stream.ReadAtLeastAsync(buffer, buffer.Length, throwOnEndOfStream: false) < buffer.Length)
+                return BadRequest("محتوای ویدیو ناقص است.");
 
             var signatures = new List<byte[]>
             {

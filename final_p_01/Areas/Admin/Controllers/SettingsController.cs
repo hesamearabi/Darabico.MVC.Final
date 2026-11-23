@@ -65,6 +65,10 @@ public class SettingsController : AdminBaseController
             SeoInquiryDescription = settings?.SeoInquiryDescription,
             SeoGuideTitle = settings?.SeoGuideTitle,
             SeoGuideDescription = settings?.SeoGuideDescription,
+            SeoAboutTitle = settings?.SeoAboutTitle,
+            SeoAboutDescription = settings?.SeoAboutDescription,
+            SeoContactTitle = settings?.SeoContactTitle,
+            SeoContactDescription = settings?.SeoContactDescription,
             CurrentFaviconPath = settings?.FaviconPath
         };
 
@@ -201,6 +205,10 @@ public class SettingsController : AdminBaseController
         settings.SeoInquiryDescription = model.SeoInquiryDescription?.Trim();
         settings.SeoGuideTitle = model.SeoGuideTitle?.Trim();
         settings.SeoGuideDescription = model.SeoGuideDescription?.Trim();
+        settings.SeoAboutTitle = model.SeoAboutTitle?.Trim();
+        settings.SeoAboutDescription = model.SeoAboutDescription?.Trim();
+        settings.SeoContactTitle = model.SeoContactTitle?.Trim();
+        settings.SeoContactDescription = model.SeoContactDescription?.Trim();
         settings.UpdatedAtUtc = DateTime.UtcNow;
 
         if (favicon != null && favicon.Length > 0)

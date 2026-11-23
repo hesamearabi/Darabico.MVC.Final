@@ -75,6 +75,10 @@ public class SiteSettings
     [MaxLength(320)] public string? SeoInquiryDescription { get; set; }
     [MaxLength(200)] public string? SeoGuideTitle { get; set; }
     [MaxLength(320)] public string? SeoGuideDescription { get; set; }
+    [MaxLength(200)] public string? SeoAboutTitle { get; set; }
+    [MaxLength(320)] public string? SeoAboutDescription { get; set; }
+    [MaxLength(200)] public string? SeoContactTitle { get; set; }
+    [MaxLength(320)] public string? SeoContactDescription { get; set; }
 
     /// <summary>مسیر فاوآیکون آپلودشده در wwwroot؛ خالی = favicon پیش‌فرض</summary>
     [MaxLength(500)] public string? FaviconPath { get; set; }

@@ -309,6 +309,22 @@ public class PhaseModulesIntegrationTests : IDisposable
     }
 
     [Fact]
+    public async Task SaveSeo_PersistsCompanyPageMetadata()
+    {
+        var controller = WithTempData(new final_p_01.Areas.Admin.Controllers.SettingsController(_context));
+        await controller.SaveSeo(new final_p_01.Areas.Admin.Models.SiteSeoViewModel
+        {
+            SeoAboutTitle = " About title ", SeoAboutDescription = " About description ",
+            SeoContactTitle = " Contact title ", SeoContactDescription = " Contact description "
+        }, null);
+        var settings = await _context.SiteSettings.AsNoTracking().SingleAsync();
+        Assert.Equal("About title", settings.SeoAboutTitle);
+        Assert.Equal("About description", settings.SeoAboutDescription);
+        Assert.Equal("Contact title", settings.SeoContactTitle);
+        Assert.Equal("Contact description", settings.SeoContactDescription);
+    }
+
+    [Fact]
     public async Task SaveSeo_RejectsDisallowedFaviconExtension()
     {
         var controller = WithTempData(new final_p_01.Areas.Admin.Controllers.SettingsController(_context));

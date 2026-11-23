@@ -12,7 +12,7 @@ public class Post
     public string Title { get; set; } = null!;
 
     [Required, MaxLength(200)]
-    public string Slug { get; set; }
+    public string Slug { get; set; } = string.Empty;
 
     [Required]
     public string Content { get; set; } = null!;

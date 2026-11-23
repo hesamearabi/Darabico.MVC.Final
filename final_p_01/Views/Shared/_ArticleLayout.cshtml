@@ -217,7 +217,8 @@
         ? Regex.Replace(Model.Post.Content ?? "", "\u003C(/?)h1(\\b[^\u003E]*)\u003E", "\u003C$1h2$2\u003E", RegexOptions.IgnoreCase)
         : "";
     string sanitizedRaw = Model?.Post != null ? sanitizer.Sanitize(demotedContent) : "";
-    string processedContent = ProcessAllVideos(sanitizedRaw);
+    var reading = final_p_01.Application.Services.ArticleReading.Prepare(ProcessAllVideos(sanitizedRaw));
+    string processedContent = reading.Html;
 
     string FormatFaqAnswer(string? rawAnswer)
     {
@@ -281,7 +282,7 @@
 
     @section Head {
         <link rel="preload" as="image" href="@coverImage" fetchpriority="high" />
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+        <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.css" asp-append-version="true" />
 
         @if (!string.IsNullOrEmpty(schemaJson))
         {
@@ -985,8 +986,21 @@
         </header>
 
         <article class="pd-container">
-            <div class="pd-body">
-                @Html.Raw(processedContent)
+            <p class="article-reading-time">زمان مطالعه: @reading.Minutes دقیقه</p>
+            <div class="article-reading">
+                <details class="article-toc" open>
+                    <summary>در این مقاله می‌خوانید</summary>
+                    <nav aria-label="فهرست مقاله">
+                        @foreach (var heading in reading.Headings)
+                        {
+                            <a href="#@heading.Id" data-level="@heading.Level">@heading.Title</a>
+                        }
+                        @if (!reading.Headings.Any()) { <a href="#article-body">متن مقاله</a> }
+                    </nav>
+                </details>
+                <div class="pd-body pd-content" id="article-body">
+                    @Html.Raw(processedContent)
+                </div>
             </div>
 
             @if (!string.IsNullOrEmpty(Model.Post.AudioFilePath))

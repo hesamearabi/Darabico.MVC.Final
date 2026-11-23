@@ -80,7 +80,7 @@ public class AfterSalesController : Controller
         if (!AfterSalesFormViewModel.AllowedVisitTypes.Contains(model.VisitType))
             ModelState.AddModelError(nameof(model.VisitType), "نوع مراجعه معتبر نیست.");
 
-        if (!ModelState.IsValid)
+        if (!ModelState.IsValid || mobile is null)
             return View(form);
 
         _context.InquiryLeads.Add(new InquiryLead

@@ -1,0 +1,15 @@
+@model final_p_01.ViewModels.PostCardViewModel
+@{
+    var image = string.IsNullOrWhiteSpace(Model.CoverImagePath) ? "/images/H-IMG/133.webp" : Model.CoverImagePath;
+    var alt = string.IsNullOrWhiteSpace(Model.CoverImageAlt) ? Model.Title : Model.CoverImageAlt;
+}
+<article class="editorial-card">
+    <a asp-controller="Home" asp-action="Post" asp-route-slug="@Model.Slug">
+        <img src="@Url.Content(image)" alt="@alt" width="640" height="360" loading="lazy" decoding="async" />
+        <div class="editorial-card__body">
+            <span class="editorial-eyebrow">@(Model.CategoryName ?? "راهنمای ساخت پدل")</span>
+            <h2>@Model.Title</h2>
+            <span class="editorial-card__more">مطالعه مقاله <span aria-hidden="true">←</span></span>
+        </div>
+    </a>
+</article>

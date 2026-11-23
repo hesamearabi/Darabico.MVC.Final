@@ -19,8 +19,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using final_p_01.Domain.Entities;
-using final_p_01.Infrastructure.Data;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace final_p_01.Tests;
 
@@ -399,6 +397,138 @@ public sealed class SeoIntegrationTests(SeoApplication app) : IClassFixture<SeoA
         var sitemap = await Get("/sitemap.xml");
         Assert.Contains("/blog/padel-court-walls-test", sitemap);
         Assert.Contains("/padel-court-construction-guide", sitemap);
+    }
+
+    [Theory]
+    [InlineData("/about", "/about-us")]
+    [InlineData("/contact", "/contact-us")]
+    [InlineData("/ar/about", "/ar/about-us")]
+    [InlineData("/ar/contact", "/ar/contact-us")]
+    public async Task ShortCompanyRoutesRedirectPermanentlyToCanonical(string path, string destination)
+    {
+        using var response = await app.Client.GetAsync(path);
+        Assert.Equal(HttpStatusCode.MovedPermanently, response.StatusCode);
+        Assert.Equal(destination, response.Headers.Location?.OriginalString);
+    }
+
+    [Theory]
+    [InlineData("/", "Home")]
+    [InlineData("/blog", "Blog")]
+    [InlineData("/projects", "Projects")]
+    [InlineData("/about-us", "About")]
+    [InlineData("/contact-us", "Contact")]
+    [InlineData("/padel-court-construction-guide", "Guide")]
+    public async Task ConfiguredMetaDescriptionOverridesPageFallback(string path, string page)
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var settings = await db.SiteSettings.SingleAsync(s => s.Id == 1);
+        var property = settings.GetType().GetProperty($"Seo{page}Description")!;
+        var original = property.GetValue(settings);
+        var cache = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>();
+        property.SetValue(settings, "Custom editorial description");
+        await db.SaveChangesAsync();
+        cache.Remove("SiteSettingsProvider:Snapshot");
+        try
+        {
+            var html = await Get(path);
+            Assert.Contains("name=\"description\" content=\"Custom editorial description\"", html);
+        }
+        finally
+        {
+            property.SetValue(settings, original);
+            await db.SaveChangesAsync();
+            cache.Remove("SiteSettingsProvider:Snapshot");
+        }
+    }
+
+    [Fact]
+    public async Task BlogFirstPageCanonicalDoesNotPointToRedirect()
+    {
+        var html = await Get("/blog");
+        Assert.Equal($"{SeoApplication.Origin}/blog", Canonical(html));
+    }
+
+    [Theory]
+    [InlineData("/technical-docs", "/blog")]
+    [InlineData("/technical-docs/download/1", "/blog")]
+    [InlineData("/process", "/projects")]
+    public async Task RetiredModulesRedirectPermanently(string path, string destination)
+    {
+        var response = await app.Client.GetAsync(path);
+        Assert.Equal(HttpStatusCode.MovedPermanently, response.StatusCode);
+        Assert.Equal(destination, response.Headers.Location?.OriginalString);
+    }
+
+    [Theory]
+    [InlineData(0, 1)]
+    [InlineData(200, 1)]
+    [InlineData(201, 2)]
+    public void ArticleReadingUsesTwoHundredWordsPerMinute(int wordCount, int minutes)
+    {
+        var html = "<p>" + string.Join(" ", Enumerable.Repeat("پدل", wordCount)) + "</p>";
+        Assert.Equal(minutes, final_p_01.Application.Services.ArticleReading.Prepare(html).Minutes);
+    }
+
+    [Fact]
+    public void ArticleReadingPreservesAnchorsAndAvoidsGeneratedCollisions()
+    {
+        var reading = final_p_01.Application.Services.ArticleReading.Prepare("<h2 id=\"article-section-1\">ابعاد</h2><h3>دیوار &amp; شیشه</h3>");
+        Assert.Equal(new[] { "article-section-1", "article-section-2" }, reading.Headings.Select(h => h.Id));
+        Assert.Equal("دیوار & شیشه", reading.Headings[1].Title);
+        Assert.Contains("id=\"article-section-2\"", reading.Html);
+    }
+
+    [Theory]
+    [InlineData("/ar", "/")]
+    [InlineData("/ar/blog", "/blog")]
+    [InlineData("/ar/projects", "/projects")]
+    [InlineData("/ar/projects/project-1", "/projects/project-1")]
+    [InlineData("/ar/padel-court-construction-guide", "/padel-court-construction-guide")]
+    public async Task ArabicPagesKeepLocaleInCanonicalAndSwitchBackToPersian(string path, string persianPath)
+    {
+        var html = await Get(path);
+        Assert.Equal(SeoApplication.Origin + path, Canonical(html));
+        var switches = Tags(html, "<a\\b[^>]*class=\"[^\"]*lang-switcher[^\"]*\"[^>]*>");
+        Assert.Equal(2, switches.Length);
+        Assert.All(switches, tag =>
+        {
+            Assert.Equal(persianPath, Attribute(tag, "href"));
+            Assert.Equal("fa", Attribute(tag, "hreflang"));
+        });
+        Assert.Contains(">FA</span>", html);
+    }
+
+    [Fact]
+    public async Task ArticleIconsUseExistingLocalStylesheet()
+    {
+        var html = await Get("/padel-court-construction-guide");
+        Assert.DoesNotContain("cdn.jsdelivr.net", html);
+        Assert.Contains("/lib/bootstrap-icons/bootstrap-icons.css", html);
+        using var response = await app.Client.GetAsync("/lib/bootstrap-icons/bootstrap-icons.css");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task NavigationComponentRendersInDesktopDrawerAndFooter()
+    {
+        var html = await Get("/");
+        Assert.DoesNotContain("<vc:site-nav", html);
+        var desktop = Regex.Match(html, "<nav class=\"desktop-nav\">(.*?)</nav>", RegexOptions.Singleline).Value;
+        var drawer = Regex.Match(html, "<div class=\"mobile-menu\".*?</nav>", RegexOptions.Singleline).Value;
+        var footer = Regex.Match(html, "<footer\\b.*?</footer>", RegexOptions.Singleline).Value;
+        foreach (var section in new[] { desktop, drawer, footer })
+            Assert.Contains("workspace-nav-subtree", section);
+    }
+
+    [Fact]
+    public async Task DesktopNavigationDoesNotDuplicateDynamicGuideAndBlogLinks()
+    {
+        var html = await Get("/");
+        var desktop = Regex.Match(html, "<nav class=\"desktop-nav\">(.*?)</nav>", RegexOptions.Singleline).Value;
+        Assert.Single(Tags(desktop, "<a\\b[^>]*href=\"/padel-court-construction-guide\"[^>]*>"));
+        Assert.Single(Tags(desktop, "<a\\b[^>]*href=\"/blog\"[^>]*>"));
+        Assert.DoesNotContain("nav-has-mega", desktop);
     }
 
     [Fact]

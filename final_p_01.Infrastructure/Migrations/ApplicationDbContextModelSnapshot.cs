@@ -1012,6 +1012,22 @@ namespace final_p_01.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("SeoAboutTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("SeoAboutDescription")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("SeoContactTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("SeoContactDescription")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
                     b.Property<string>("SeoGuideDescription")
                         .HasMaxLength(320)
                         .HasColumnType("nvarchar(320)");

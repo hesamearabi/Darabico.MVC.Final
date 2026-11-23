@@ -74,7 +74,7 @@ public class FeasibilityController : Controller
         if (mobile is null)
             ModelState.AddModelError(nameof(model.Mobile), "شماره موبایل معتبر نیست. مثال: 09123456789");
 
-        if (!ModelState.IsValid)
+        if (!ModelState.IsValid || mobile is null)
             return View(model);
 
         var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));

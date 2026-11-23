@@ -49,6 +49,10 @@ public class SiteSettingsProvider : ISiteSettingsProvider
                         x.SeoInquiryDescription,
                         x.SeoGuideTitle,
                         x.SeoGuideDescription,
+                        x.SeoAboutTitle,
+                        x.SeoAboutDescription,
+                        x.SeoContactTitle,
+                        x.SeoContactDescription,
                         x.FaviconPath,
                         x.UpdatedAtUtc
                     })
@@ -70,6 +74,10 @@ public class SiteSettingsProvider : ISiteSettingsProvider
                     SeoInquiryDescription = s?.SeoInquiryDescription,
                     SeoGuideTitle = s?.SeoGuideTitle,
                     SeoGuideDescription = s?.SeoGuideDescription,
+                    SeoAboutTitle = s?.SeoAboutTitle,
+                    SeoAboutDescription = s?.SeoAboutDescription,
+                    SeoContactTitle = s?.SeoContactTitle,
+                    SeoContactDescription = s?.SeoContactDescription,
                     FaviconPath = s?.FaviconPath,
                     CacheBust = cacheBust
                 };
@@ -78,7 +86,7 @@ public class SiteSettingsProvider : ISiteSettingsProvider
             {
                 return new SiteSettingsSnapshot();
             }
-        }).GetAwaiter().GetResult();
+        }).GetAwaiter().GetResult() ?? new SiteSettingsSnapshot();
     }
 }
 
@@ -97,6 +105,10 @@ public class SiteSettingsSnapshot
     public string? SeoInquiryDescription { get; set; }
     public string? SeoGuideTitle { get; set; }
     public string? SeoGuideDescription { get; set; }
+    public string? SeoAboutTitle { get; set; }
+    public string? SeoAboutDescription { get; set; }
+    public string? SeoContactTitle { get; set; }
+    public string? SeoContactDescription { get; set; }
     public string? FaviconPath { get; set; }
     public string? CacheBust { get; set; }
 
@@ -108,6 +120,8 @@ public class SiteSettingsSnapshot
         "estimator" => (SeoEstimatorTitle, SeoEstimatorDescription),
         "inquiry" => (SeoInquiryTitle, SeoInquiryDescription),
         "guide" => (SeoGuideTitle, SeoGuideDescription),
+        "about" => (SeoAboutTitle, SeoAboutDescription),
+        "contact" => (SeoContactTitle, SeoContactDescription),
         _ => (null, null)
     };
 }

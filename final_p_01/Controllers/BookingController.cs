@@ -61,7 +61,7 @@ public class BookingController : Controller
         if (model.SlotId < 1)
             ModelState.AddModelError(nameof(model.SlotId), "انتخاب اسلات الزامی است.");
 
-        if (!ModelState.IsValid)
+        if (!ModelState.IsValid || mobile is null)
             return View(await BuildFormAsync(model));
 
         // رزرو اتمیک: فقط وقتی ظرفیت باقی مانده باشد BookedCount افزایش می‌یابد.

@@ -26,7 +26,42 @@ public class PhaseModulesController : Controller
     private async Task PurgePublicCacheAsync() =>
         await _outputCacheStore.EvictByTagAsync("BlogCache", default);
 
-    // ---------- Site settings (video, feasibility page, process texts, language toggle) ----------
+    [HttpGet("admin/booking-slots")]
+    public async Task<IActionResult> BookingSlots() => View(await ListBookingSlotsAsync());
+
+    [HttpPost("admin/booking-slots/create"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateBookingSlot(BookingSlot model)
+    {
+        if (model.Date < DateOnly.FromDateTime(DateTime.UtcNow)) ModelState.AddModelError(nameof(model.Date), "تاریخ بازدید نباید در گذشته باشد.");
+        if (!TimeOnly.TryParseExact(model.StartTime, "HH:mm", out var start) || !TimeOnly.TryParseExact(model.EndTime, "HH:mm", out var end) || end <= start)
+            ModelState.AddModelError(nameof(model.EndTime), "ساعت پایان باید پس از ساعت شروع باشد؛ قالب معتبر 09:00 است.");
+        if (model.Capacity < 1) ModelState.AddModelError(nameof(model.Capacity), "ظرفیت باید حداقل یک نفر باشد.");
+        if (!ModelState.IsValid) return View("BookingSlots", await ListBookingSlotsAsync());
+        _context.BookingSlots.Add(model);
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(BookingSlots));
+    }
+
+    [HttpPost("admin/booking-slots/{id:int}/toggle"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleBookingSlot(int id)
+    {
+        var slot = await _context.BookingSlots.FindAsync(id);
+        if (slot is not null)
+        {
+            slot.IsActive = !slot.IsActive;
+            await _context.SaveChangesAsync();
+        }
+        return RedirectToAction(nameof(BookingSlots));
+    }
+
+    private Task<List<BookingSlot>> ListBookingSlotsAsync()
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        return _context.BookingSlots.AsNoTracking().Where(s => s.Date >= today)
+            .OrderBy(s => s.Date).ThenBy(s => s.StartTime).ToListAsync();
+    }
+
+    // ---------- Site settings (video, feasibility page, language toggle) ----------
     [HttpGet("admin/site-settings")]
     public async Task<IActionResult> SiteSettingsForm()
     {
@@ -248,113 +283,6 @@ public class PhaseModulesController : Controller
         return RedirectToAction(nameof(PillarPages));
     }
 
-    // ---------- Process stages ----------
-    [HttpGet("admin/process-stages")]
-    public async Task<IActionResult> ProcessStages() =>
-        View(await _context.ProcessStages.AsNoTracking().OrderBy(s => s.SortOrder).ToListAsync());
-
-    [HttpPost("admin/process-stages/create"), ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateProcessStage(ProcessStage model)
-    {
-        if (!ModelState.IsValid)
-            return View("ProcessStages", await _context.ProcessStages.AsNoTracking().OrderBy(s => s.SortOrder).ToListAsync());
-
-        _context.ProcessStages.Add(model);
-        await _context.SaveChangesAsync();
-        await PurgePublicCacheAsync();
-        return RedirectToAction(nameof(ProcessStages));
-    }
-
-    [HttpPost("admin/process-stages/{id:int}/toggle"), ValidateAntiForgeryToken]
-    public async Task<IActionResult> ToggleProcessStage(int id)
-    {
-        var stage = await _context.ProcessStages.FindAsync(id);
-        if (stage is not null)
-        {
-            stage.IsActive = !stage.IsActive;
-            await _context.SaveChangesAsync();
-            await PurgePublicCacheAsync();
-        }
-        return RedirectToAction(nameof(ProcessStages));
-    }
-
-    // ---------- Documents ----------
-    [HttpGet("admin/documents")]
-    public async Task<IActionResult> Documents() =>
-        View(await _context.DocumentItems.AsNoTracking().OrderBy(d => d.SortOrder).ToListAsync());
-
-    [HttpPost("admin/documents/create"), ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateDocument(DocumentItem model)
-    {
-        if (!ModelState.IsValid)
-            return View("Documents", await _context.DocumentItems.AsNoTracking().OrderBy(d => d.SortOrder).ToListAsync());
-
-        _context.DocumentItems.Add(model);
-        await _context.SaveChangesAsync();
-        await PurgePublicCacheAsync();
-        return RedirectToAction(nameof(Documents));
-    }
-
-    [HttpPost("admin/documents/{id:int}/toggle"), ValidateAntiForgeryToken]
-    public async Task<IActionResult> ToggleDocument(int id)
-    {
-        var document = await _context.DocumentItems.FindAsync(id);
-        if (document is not null)
-        {
-            document.IsPublished = !document.IsPublished;
-            await _context.SaveChangesAsync();
-            await PurgePublicCacheAsync();
-        }
-        return RedirectToAction(nameof(Documents));
-    }
-
-    // ---------- Booking slots ----------
-    [HttpGet("admin/booking-slots")]
-    public async Task<IActionResult> BookingSlots()
-    {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        return View(await _context.BookingSlots.AsNoTracking()
-            .Where(s => s.Date >= today)
-            .OrderBy(s => s.Date).ThenBy(s => s.StartTime)
-            .ToListAsync());
-    }
-
-    [HttpPost("admin/booking-slots/create"), ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateBookingSlot(BookingSlot model)
-    {
-        if (model.Date < DateOnly.FromDateTime(DateTime.UtcNow)) ModelState.AddModelError(nameof(model.Date), "تاریخ بازدید نباید در گذشته باشد.");
-        if (!TimeOnly.TryParseExact(model.StartTime, "HH:mm", out var start) || !TimeOnly.TryParseExact(model.EndTime, "HH:mm", out var end) || end <= start)
-            ModelState.AddModelError(nameof(model.EndTime), "ساعت پایان باید پس از ساعت شروع باشد؛ قالب معتبر 09:00 است.");
-        if (model.Capacity < 1) ModelState.AddModelError(nameof(model.Capacity), "ظرفیت باید حداقل یک نفر باشد.");
-        if (!ModelState.IsValid)
-            return View("BookingSlots", await ListBookingSlotsAsync());
-
-        _context.BookingSlots.Add(model);
-        await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(BookingSlots));
-    }
-
-    [HttpPost("admin/booking-slots/{id:int}/toggle"), ValidateAntiForgeryToken]
-    public async Task<IActionResult> ToggleBookingSlot(int id)
-    {
-        var slot = await _context.BookingSlots.FindAsync(id);
-        if (slot is not null)
-        {
-            slot.IsActive = !slot.IsActive;
-            await _context.SaveChangesAsync();
-        }
-        return RedirectToAction(nameof(BookingSlots));
-    }
-
-    private async Task<List<BookingSlot>> ListBookingSlotsAsync()
-    {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        return await _context.BookingSlots.AsNoTracking()
-            .Where(s => s.Date >= today)
-            .OrderBy(s => s.Date).ThenBy(s => s.StartTime)
-            .ToListAsync();
-    }
-
     // ---------- City pages ----------
     [HttpGet("admin/city-pages")]
     public async Task<IActionResult> CityPages()
@@ -425,41 +353,6 @@ public class PhaseModulesController : Controller
         await PurgePublicCacheAsync();
         return RedirectToAction(nameof(CityPages));
     }
-
-    // ---------- FAQ manager ----------
-    [HttpGet("admin/faqs")]
-    public async Task<IActionResult> Faqs() =>
-        View(await _context.Set<Faq>().AsNoTracking().OrderBy(f => f.PageKey).ThenBy(f => f.SortOrder).ToListAsync());
-
-    [HttpPost("admin/faqs/create"), ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateFaq(Faq model, string? pageKey)
-    {
-        if (!ModelState.IsValid)
-            return View("Faqs", await ListFaqsAsync());
-
-        model.PageKey = string.IsNullOrWhiteSpace(pageKey) ? null : pageKey.Trim();
-        if (model.PostId == 0) model.PostId = null;
-        _context.Set<Faq>().Add(model);
-        await _context.SaveChangesAsync();
-        await PurgePublicCacheAsync();
-        return RedirectToAction(nameof(Faqs));
-    }
-
-    [HttpPost("admin/faqs/{id:int}/delete"), ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteFaq(int id)
-    {
-        var faq = await _context.Set<Faq>().FindAsync(id);
-        if (faq is not null)
-        {
-            _context.Set<Faq>().Remove(faq);
-            await _context.SaveChangesAsync();
-            await PurgePublicCacheAsync();
-        }
-        return RedirectToAction(nameof(Faqs));
-    }
-
-    private async Task<List<Faq>> ListFaqsAsync() =>
-        await _context.Set<Faq>().AsNoTracking().OrderBy(f => f.PageKey).ThenBy(f => f.SortOrder).ToListAsync();
 
     // ---------- Leads inbox ----------
     [NonAction]

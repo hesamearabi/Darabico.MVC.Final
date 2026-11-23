@@ -30,7 +30,6 @@ builder.Services.Configure<FormOptions>(options =>
 
 builder.Services.AddSingleton<ISiteUrlBuilder, SiteUrlBuilder>();
 builder.Services.AddSingleton<ISiteSettingsProvider, SiteSettingsProvider>();
-builder.Services.AddSingleton<ISiteSettingsProvider, SiteSettingsProvider>();
 builder.Services.AddFileStorage();
 
 builder.Services.AddWebEncoders(options =>
