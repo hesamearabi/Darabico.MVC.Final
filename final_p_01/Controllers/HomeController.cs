@@ -558,7 +558,9 @@ namespace final_p_01.Controllers
             Response.Headers["X-Robots-Tag"] = "noindex, follow";
             ViewData["Robots"] = "noindex, follow";
             ViewBag.StatusCode = resolvedStatusCode;
-            return View("NotFound");
+            return resolvedStatusCode is 400 or 429
+                ? View("StatusCode", resolvedStatusCode)
+                : View("NotFound");
         }
 
         [Route("home/error")]

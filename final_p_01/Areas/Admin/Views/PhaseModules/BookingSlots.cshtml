@@ -29,10 +29,10 @@
     <h2 class="mt-4">اسلات جدید</h2>
     <form method="post" asp-action="CreateBookingSlot" class="row g-2">
         @Html.AntiForgeryToken()
-        <div class="col-md-3"><label class="form-label">تاریخ (میلادی)</label><input name="Date" type="date" class="form-control" required /></div>
-        <div class="col-md-2"><label class="form-label">از ساعت</label><input name="StartTime" class="form-control" dir="ltr" value="09:00" required /></div>
-        <div class="col-md-2"><label class="form-label">تا ساعت</label><input name="EndTime" class="form-control" dir="ltr" value="10:00" required /></div>
-        <div class="col-md-2"><label class="form-label">ظرفیت</label><input name="Capacity" type="number" min="1" class="form-control" value="1" /></div>
+        <div class="col-md-3"><label for="Date">تاریخ (میلادی)</label>@Html.TextBox("Date", null, new { type = "date", @class = "form-control", required = "required" })</div>
+        <div class="col-md-2"><label for="StartTime">از ساعت</label>@Html.TextBox("StartTime", "09:00", new { type = "time", @class = "form-control", dir = "ltr", required = "required" })</div>
+        <div class="col-md-2"><label for="EndTime">تا ساعت</label>@Html.TextBox("EndTime", "10:00", new { type = "time", @class = "form-control", dir = "ltr", required = "required" })</div>
+        <div class="col-md-2"><label for="Capacity">ظرفیت</label>@Html.TextBox("Capacity", 1, new { type = "number", min = "1", @class = "form-control" })</div>
         <div class="col-md-2 d-flex align-items-end"><button class="btn btn-outline-primary">افزودن</button></div>
     </form>
 </div>

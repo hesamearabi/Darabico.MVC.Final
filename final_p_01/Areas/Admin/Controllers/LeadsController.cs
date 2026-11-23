@@ -55,23 +55,33 @@ public class LeadsController(ApplicationDbContext db, IInquiryAttachmentStorage 
     [HttpPost("{id:int}/update"), ValidateAntiForgeryToken]
     public async Task<IActionResult> Update(int id, LeadUpdateViewModel model, string? returnUrl, CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        var lead = await db.InquiryLeads.FindAsync([id], cancellationToken);
+        if (!model.Status.HasValue || !Enum.IsDefined(model.Status.Value))
+            ModelState.AddModelError(nameof(model.Status), "وضعیت پیگیری معتبر نیست.");
+        var lead = await db.InquiryLeads.Include(l => l.Attachments).Include(l => l.Notes).FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
         if (lead == null) return NotFound();
+        if (!ModelState.IsValid) return View("Details", lead);
         lead.Status = model.Status!.Value;
         lead.IsHandled = lead.Status != LeadStatus.New;
         lead.AssignedTo = model.AssignedTo?.Trim();
         await db.SaveChangesAsync(cancellationToken);
+        TempData["Success"] = "وضعیت پیگیری ذخیره شد.";
         return !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction(nameof(Details), new { id });
     }
     [HttpPost("{id:int}/notes"), ValidateAntiForgeryToken]
     public async Task<IActionResult> AddNote(int id, string? text, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(text) || text.Trim().Length > 2000) return BadRequest("یادداشت باید بین ۱ تا ۲۰۰۰ کاراکتر باشد.");
-        if (!await db.InquiryLeads.AnyAsync(l => l.Id == id, cancellationToken)) return NotFound();
+        var lead = await db.InquiryLeads.Include(l => l.Attachments).Include(l => l.Notes).FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
+        if (lead == null) return NotFound();
+        if (string.IsNullOrWhiteSpace(text) || text.Trim().Length > 2000)
+        {
+            ModelState.AddModelError("text", "یادداشت باید بین ۱ تا ۲۰۰۰ کاراکتر باشد.");
+            ViewData["NoteText"] = text;
+            return View("Details", lead);
+        }
         var author = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.Identity?.Name ?? "Admin";
         db.InquiryLeadNotes.Add(new InquiryLeadNote { InquiryLeadId = id, Text = text.Trim(), Author = author[..Math.Min(author.Length, 200)] });
         await db.SaveChangesAsync(cancellationToken);
+        TempData["Success"] = "یادداشت پیگیری ثبت شد.";
         return RedirectToAction(nameof(Details), new { id });
     }
     [HttpGet("attachments/{id:int}")]

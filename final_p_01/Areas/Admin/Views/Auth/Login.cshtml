@@ -1,254 +1,30 @@
 ﻿@model final_p_01.Areas.Admin.Models.LoginViewModel
-@{
-    ViewData["Title"] = "ورود به اتاق فرمان دارابیکو";
-    Layout = null; // بدون قالب اصلی تا کاملاً مستقل باشد
-}
-
+@{ Layout = null; }
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
-
-    <link rel="stylesheet" href="~/vendor/bootstrap/bootstrap.rtl.min.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/vendor/bootstrap-icons/bootstrap-icons.css" asp-append-version="true" />
-
-    <style>
-        :root {
-            --brand-navy: #121D35;
-            --brand-red: #d11e32;
-            --text-dark: #1E293B;
-            --text-muted: #64748B;
-            --input-border: #CBD5E1;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            /* پس‌زمینه سرمه‌ای دارابیکو با یک پترن نوری بسیار محو */
-            background: radial-gradient(circle at top right, #1a2a4c 0%, var(--brand-navy) 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: system-ui, -apple-system, sans-serif;
-        }
-
-        .login-wrapper {
-            width: 100%;
-            max-width: 420px;
-            padding: 20px;
-            z-index: 10;
-        }
-
-        .login-card {
-            background: #ffffff;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-            position: relative;
-            overflow: hidden;
-        }
-
-            /* خط قرمز هویتی بالای کارت */
-            .login-card::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 6px;
-                background: var(--brand-red);
-            }
-
-        .brand-header {
-            text-align: center;
-            margin-bottom: 35px;
-        }
-
-        .brand-icon {
-            width: 64px;
-            height: 64px;
-            background: rgba(209, 30, 50, 0.1);
-            color: var(--brand-red);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            margin: 0 auto 15px;
-            transform: rotate(-5deg);
-            transition: 0.3s;
-        }
-
-        .login-card:hover .brand-icon {
-            transform: rotate(0);
-        }
-
-        .brand-header h1 {
-            font-size: 1.5rem;
-            font-weight: 900;
-            color: var(--brand-navy);
-            margin: 0;
-            letter-spacing: -0.5px;
-        }
-
-        .brand-header p {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-top: 8px;
-        }
-
-        /* استایل فرم‌ها هماهنگ با پنل ادمین */
-        .form-group-custom {
-            margin-bottom: 20px;
-            position: relative;
-        }
-
-            .form-group-custom label {
-                display: block;
-                font-size: 0.85rem;
-                font-weight: 700;
-                color: var(--brand-navy);
-                margin-bottom: 8px;
-            }
-
-        .input-icon-wrapper {
-            position: relative;
-        }
-
-        .input-custom {
-            width: 100%;
-            padding: 14px 45px 14px 15px;
-            border: 1px solid var(--input-border);
-            border-radius: 10px;
-            font-size: 0.95rem;
-            outline: none;
-            color: var(--text-dark);
-            transition: all 0.3s ease;
-            background: #F8FAFC;
-        }
-
-            .input-custom:focus {
-                background: #fff;
-                border-color: var(--brand-red);
-                box-shadow: 0 0 0 4px rgba(209, 30, 50, 0.1);
-            }
-
-        .input-field-icon {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-            font-size: 1.2rem;
-            transition: 0.3s;
-        }
-
-        .input-custom:focus + .input-field-icon {
-            color: var(--brand-red);
-        }
-
-        /* دکمه ورود اختصاصی */
-        .btn-login {
-            width: 100%;
-            padding: 14px;
-            background: var(--brand-navy);
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-        }
-
-            .btn-login:hover {
-                background: var(--brand-red);
-                transform: translateY(-2px);
-                box-shadow: 0 8px 15px rgba(209, 30, 50, 0.2);
-            }
-
-        .validation-summary-errors {
-            background: #FEF2F2;
-            color: #DC2626;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            margin-bottom: 20px;
-            border: 1px solid #FCA5A5;
-        }
-
-            .validation-summary-errors ul {
-                margin: 0;
-                padding-right: 20px;
-            }
-
-        /* واتر مارک بک‌گراند */
-        .bg-watermark {
-            position: fixed;
-            bottom: -50px;
-            left: -50px;
-            font-size: 30rem;
-            color: rgba(255,255,255,0.02);
-            z-index: 1;
-            pointer-events: none;
-        }
-    </style>
+    <meta name="robots" content="noindex, nofollow" />
+    <title>ورود به پنل مدیریت · دارابیکو</title>
+    <link rel="stylesheet" href="~/vendor/bootstrap/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="~/CSS-SOURCE/workspace.css" asp-append-version="true" />
 </head>
-<body>
-
-    <!-- آیکون تزئینی پس‌زمینه -->
-    <i class="bi bi-shield-lock-fill bg-watermark"></i>
-
-    <div class="login-wrapper">
-        <div class="login-card">
-
-            <div class="brand-header">
-                <div class="brand-icon">
-                    <i class="bi bi-fingerprint"></i>
-                </div>
-                <h1>هلدینگ دارابیکو</h1>
-                <p>ورود به پنل مدیریت محتوا</p>
-            </div>
-
-            <form asp-controller="Auth" asp-action="Login" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post">
-                @Html.AntiForgeryToken()
-
-                @if (!ViewData.ModelState.IsValid)
-                {
-                    <div asp-validation-summary="All" class="validation-summary-errors"></div>
-                }
-
-                <div class="form-group-custom">
-                    <label>نام کاربری</label>
-                    <div class="input-icon-wrapper">
-                        <input type="text" asp-for="Email" class="input-custom" placeholder="admin@darabico.com" required autofocus />                        <i class="bi bi-person input-field-icon"></i>
-                    </div>
-                </div>
-
-                <div class="form-group-custom">
-                    <label>رمز عبور</label>
-                    <div class="input-icon-wrapper">
-                        <input type="password" asp-for="Password" class="input-custom" placeholder="••••••••" required />
-                        <i class="bi bi-key input-field-icon"></i>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-login">
-                    <span>ورود به اتاق فرمان</span>
-                    <i class="bi bi-arrow-left"></i>
-                </button>
-            </form>
-
-        </div>
-    </div>
-
+<body class="workspace workspace-login">
+    <main class="workspace-login-card">
+        <a href="/" class="workspace-brand"><span class="workspace-mark">د</span><span>دارابیکو<small>فضای کاری مدیریت</small></span></a>
+        <h1>ورود به پنل مدیریت</h1>
+        <p class="text-muted">برای بررسی درخواست‌ها و مدیریت محتوای سایت وارد شوید.</p>
+        <form asp-area="Admin" asp-controller="Auth" asp-action="Login" method="post">
+            <input type="hidden" name="returnUrl" value="@Context.Request.Query["returnUrl"]" />
+            <div asp-validation-summary="All" class="validation-summary-errors" role="alert"></div>
+            <div class="mb-3"><label asp-for="Email">ایمیل مدیریت</label><input asp-for="Email" class="form-control" dir="ltr" type="email" autocomplete="username" required /><span asp-validation-for="Email"></span></div>
+            <div class="mb-3"><label asp-for="Password">رمز عبور</label><input asp-for="Password" class="form-control" dir="ltr" type="password" autocomplete="current-password" required /><span asp-validation-for="Password"></span></div>
+            <label class="d-flex gap-2 align-items-center"><input asp-for="RememberMe" />مرا به خاطر بسپار</label>
+            <button type="submit" class="btn btn-primary">ورود به مدیریت</button>
+        </form>
+        <a href="/">بازگشت به سایت دارابیکو</a>
+    </main>
+    <script src="~/JS-SOURCE/workspace.js" asp-append-version="true" defer></script>
 </body>
 </html>

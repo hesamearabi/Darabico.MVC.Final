@@ -27,10 +27,10 @@
     <h2 class="mt-4">سوال جدید</h2>
     <form method="post" asp-action="CreateFaq" class="row g-2">
         @Html.AntiForgeryToken()
-        <div class="col-md-4"><input name="Question" class="form-control" placeholder="سوال" required /></div>
-        <div class="col-md-5"><textarea name="Answer" class="form-control" placeholder="پاسخ" required></textarea></div>
-        <div class="col-md-2"><input name="pageKey" class="form-control" dir="ltr" placeholder="pillar:slug" /></div>
-        <div class="col-md-1"><input name="SortOrder" type="number" class="form-control" placeholder="ترتیب" /></div>
+        <div class="col-md-4"><label for="Question">متن پرسش</label>@Html.TextBox("Question", null, new { @class = "form-control", required = "required" })</div>
+        <div class="col-md-5"><label for="Answer">پاسخ</label>@Html.TextArea("Answer", null, new { @class = "form-control", required = "required" })</div>
+        <div class="col-md-2"><label for="pageKey">کلید صفحه (اختیاری)</label>@Html.TextBox("pageKey", null, new { @class = "form-control", dir = "ltr", placeholder = "pillar:slug" })</div>
+        <div class="col-md-1"><label for="SortOrder">ترتیب</label>@Html.TextBox("SortOrder", null, new { @class = "form-control", type = "number" })</div>
         <div class="col-12"><button class="btn btn-outline-primary">افزودن</button></div>
     </form>
 </div>

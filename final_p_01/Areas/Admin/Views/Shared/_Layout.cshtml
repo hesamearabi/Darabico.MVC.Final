@@ -1,299 +1,73 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var currentPath = Context.Request.Path.Value ?? "";
+    var navigation = new (string Path, string Title, string Icon)[] {
+        ("/admin/leads", "درخواست‌ها و پیگیری", "inbox"),
+        ("/admin/inquiry-settings", "تنظیمات استعلام", "sliders"),
+        ("/Admin/Projects", "پروژه‌ها", "grid"),
+        ("/Admin/Posts", "مقالات", "journal-text"),
+        ("/Admin/Categories", "دسته‌بندی‌ها", "folder"),
+        ("/admin/pillar-pages", "راهنماهای جامع", "book"),
+        ("/admin/city-pages", "صفحات شهرها", "geo-alt"),
+        ("/admin/process-stages", "مراحل اجرا", "list-check"),
+        ("/admin/documents", "کاتالوگ و دیتاشیت", "file-earmark-text"),
+        ("/admin/booking-slots", "زمان‌های بازدید", "calendar3"),
+        ("/admin/faqs", "پرسش‌های متداول", "question-circle"),
+        ("/admin/estimator-settings", "تنظیمات برآورد هزینه", "calculator"),
+        ("/admin/site-settings", "تنظیمات سایت", "gear"),
+        ("/Admin/Settings", "امنیت حساب", "shield-lock")
+    };
+}
+<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow, noarchive" />
-    <title>@ViewData["Title"] - اتاق فرمان دارابیکو</title>
+    <title>@ViewData["Title"] · دارابیکو</title>
     <link rel="stylesheet" href="~/vendor/bootstrap/bootstrap.rtl.min.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/vendor/bootstrap-icons/bootstrap-icons.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/CSS-SOURCE/layouts.css" asp-append-version="true" />
-
-    <style>
-        @@font-face {
-            font-family: 'Dana';
-            src: url('/fonts/Dana-Medium.woff2?v=1000') format('woff2');
-            font-weight: normal;
-            font-display: swap;
-        }
-
-        @@font-face {
-            font-family: 'Dana';
-            src: url('/fonts/DanaFaNum-ExtraBold.woff2?v=1000') format('woff2');
-            font-weight: 600;
-            font-display: swap;
-        }
-
-        :root {
-            --brand-navy: #0a0c12;
-            --brand-red: #d11e32;
-            --brand-blue: #0056b3;
-            --bg-light: #f8fafc;
-            --text-dark: #0f172a;
-            --sidebar-width: 280px;
-        }
-
-        body {
-            background-color: var(--bg-light);
-            font-family: 'Dana', system-ui, -apple-system, sans-serif;
-            overflow-x: hidden;
-            color: var(--text-dark);
-        }
-
-        .admin-sidebar {
-            position: fixed;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            width: var(--sidebar-width);
-            background: var(--brand-navy);
-            color: #fff;
-            z-index: 1050;
-            box-shadow: -4px 0 25px rgba(0,0,0,0.1);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .sidebar-brand {
-            padding: 30px 25px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-            margin-bottom: 20px;
-        }
-
-        .brand-icon {
-            width: 45px;
-            height: 45px;
-            background: linear-gradient(135deg, var(--brand-blue), #004494);
-            border-radius: 12px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.5rem;
-            box-shadow: 0 4px 15px rgba(0, 86, 179, 0.4);
-        }
-
-        .sidebar-menu {
-            padding: 0 15px;
-            list-style: none;
-            margin: 0;
-            flex-grow: 1;
-            overflow-y: auto;
-        }
-
-            .sidebar-menu::-webkit-scrollbar {
-                width: 4px;
-            }
-
-            .sidebar-menu::-webkit-scrollbar-thumb {
-                background: rgba(255,255,255,0.1);
-                border-radius: 4px;
-            }
-
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 18px;
-            color: rgba(255,255,255,0.65);
-            text-decoration: none;
-            border-radius: 12px;
-            margin-bottom: 8px;
-            transition: all 0.3s ease;
-            font-size: 0.95rem;
-            font-weight: 500;
-        }
-
-            .sidebar-link i {
-                font-size: 1.2rem;
-            }
-
-            .sidebar-link:hover, .sidebar-link.active {
-                background: rgba(255,255,255,0.1);
-                color: #fff;
-                transform: translateX(-5px);
-            }
-
-            .sidebar-link.active {
-                border-right: 4px solid var(--brand-blue);
-                background: linear-gradient(90deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.1) 100%);
-            }
-
-        .logout-form {
-            padding: 0 15px 25px 15px;
-            margin-top: auto;
-        }
-
-        .admin-main {
-            margin-right: var(--sidebar-width);
-            transition: margin 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .admin-topbar {
-            height: 80px;
-            background: #fff;
-            padding: 0 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 20px rgba(0,0,0,0.03);
-            position: sticky;
-            top: 0;
-            z-index: 999;
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 600;
-            color: var(--brand-navy);
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            background: var(--bg-light);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #e2e8f0;
-            color: var(--brand-blue);
-            font-size: 1.2rem;
-        }
-
-        .admin-content {
-            padding: 40px;
-            flex-grow: 1;
-        }
-
-        .sidebar-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(10, 12, 18, 0.6);
-            backdrop-filter: blur(4px);
-            z-index: 1040;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-
-            .sidebar-overlay.show {
-                opacity: 1;
-                visibility: visible;
-            }
-
-        @@media (max-width: 992px) {
-            .admin-sidebar {
-                transform: translateX(100%);
-            }
-
-                .admin-sidebar.show {
-                    transform: translateX(0);
-                }
-
-            .admin-main {
-                margin-right: 0;
-            }
-
-            .admin-topbar {
-                padding: 0 20px;
-            }
-
-            .admin-content {
-                padding: 20px;
-            }
-        }
-    </style>
-    @RenderSection("Head", required: false)
+    @await RenderSectionAsync("Styles", required: false)
+    <link rel="stylesheet" href="~/CSS-SOURCE/workspace.css" asp-append-version="true" />
 </head>
-<body>
-
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-    <aside class="admin-sidebar" id="adminSidebar">
-        <div class="sidebar-brand">
-            <div class="brand-icon"><i class="bi bi-buildings"></i></div>
-            <div>
-                <h5 class="m-0 fw-bold">هلدینگ دارابیکو</h5>
-                <small style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">اتاق فرمان مدیریت</small>
-            </div>
-        </div>
-
-        <ul class="sidebar-menu">
-            <li><a href="/Admin/Home" class="sidebar-link"><i class="bi bi-grid-1x2-fill"></i> داشبورد</a></li>
-            <li><a href="/Admin/Categories" class="sidebar-link"><i class="bi bi-tags-fill"></i> دسته‌بندی‌ها</a></li>
-            <li><a href="/Admin/Posts" class="sidebar-link"><i class="bi bi-journal-richtext"></i> مقالات وبلاگ</a></li>
-            <li><a href="/admin/leads" class="sidebar-link">مدیریت لیدها</a></li>
-            <li><a href="/admin/inquiry-settings" class="sidebar-link">تنظیمات درخواست مشاوره</a></li>
-            <li><a href="/Admin/Settings" class="sidebar-link text-warning"><i class="bi bi-shield-lock-fill"></i> تنظیمات امنیتی</a></li>
-            <li style="margin-top: 20px;">
-                <a href="/" class="sidebar-link text-info" target="_blank"><i class="bi bi-globe"></i> مشاهده سایت</a>
-            </li>
-        </ul>
-
-        <div class="logout-form">
-            <form asp-area="Admin" asp-controller="Auth" asp-action="Logout" method="post">
-                <button type="submit" class="sidebar-link text-danger w-100 text-start border-0 bg-transparent" style="cursor: pointer;">
-                    <i class="bi bi-box-arrow-right"></i> خروج از حساب
-                </button>
-            </form>
-        </div>
-    </aside>
-
-    <main class="admin-main">
-        <header class="admin-topbar">
-            <div>
-                <button class="btn btn-light d-lg-none shadow-sm" id="sidebarToggle" aria-label="منو">
-                    <i class="bi bi-list fs-4"></i>
-                </button>
-            </div>
-            <div class="user-profile">
-                <span class="d-none d-sm-inline">مدیر سیستم</span>
-                <div class="user-avatar"><i class="bi bi-person-fill"></i></div>
-            </div>
-        </header>
-
-        <div class="admin-content">
-            @RenderBody()
-        </div>
-    </main>
-
-    <script src="~/vendor/bootstrap/bootstrap.bundle.min.js" asp-append-version="true"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const sidebar = document.getElementById('adminSidebar');
-            const toggleBtn = document.getElementById('sidebarToggle');
-            const overlay = document.getElementById('sidebarOverlay');
-
-            function toggleSidebar() {
-                sidebar.classList.toggle('show');
-                overlay.classList.toggle('show');
+<body class="workspace admin-workspace">
+    <a class="workspace-skip" href="#main-content">رفتن به محتوای اصلی</a>
+    <aside class="workspace-sidebar" id="admin-navigation" aria-label="منوی مدیریت">
+        <a href="/admin/leads" class="workspace-brand"><span class="workspace-mark">د</span><span>دارابیکو<small>پنل مدیریت</small></span></a>
+        <p class="workspace-eyebrow">فضای کاری شما</p>
+        <nav aria-label="بخش‌های مدیریت">
+            @foreach (var item in navigation)
+            {
+                var active = currentPath.StartsWith(item.Path, StringComparison.OrdinalIgnoreCase);
+                <a href="@item.Path" class="workspace-nav-link @(active ? "is-active" : "")" aria-current="@(active ? "page" : null)"><i class="bi bi-@item.Icon" aria-hidden="true"></i>@item.Title</a>
             }
-
-            if (toggleBtn) toggleBtn.addEventListener('click', toggleSidebar);
-            if (overlay) overlay.addEventListener('click', toggleSidebar);
-
-            const currentPath = window.location.pathname.toLowerCase();
-            const navLinks = document.querySelectorAll('.sidebar-link');
-
-            navLinks.forEach(link => {
-                const rawHref = link.getAttribute('href');
-                if (!rawHref) return;
-                const linkPath = rawHref.toLowerCase();
-                if (currentPath === linkPath || (currentPath.startsWith(linkPath) && linkPath !== '/admin/home' && linkPath !== '/')) {
-                    link.classList.add('active');
-                }
-            });
-        });
-    </script>
-    @RenderSection("Scripts", required: false)
+        </nav>
+        <a class="workspace-nav-link workspace-site-link" href="/" target="_blank" rel="noopener"><i class="bi bi-arrow-up-left" aria-hidden="true"></i>مشاهده سایت</a>
+    </aside>
+    <button class="workspace-backdrop" type="button" aria-label="بستن منوی مدیریت" tabindex="-1" hidden></button>
+    <div class="workspace-main">
+        <header class="workspace-topbar">
+            <button type="button" class="workspace-menu btn" aria-controls="admin-navigation" aria-expanded="false"><i class="bi bi-list" aria-hidden="true"></i><span>منو</span></button>
+            <div><p class="workspace-eyebrow">پنل مدیریت دارابیکو</p><span>@ViewData["Title"]</span></div>
+            <form asp-area="Admin" asp-controller="Auth" asp-action="Logout" method="post"><button class="btn btn-outline-secondary" type="submit">خروج</button></form>
+        </header>
+        <main id="main-content" class="workspace-content" tabindex="-1">
+            @if (TempData["Success"] is string success)
+            {
+                <div class="workspace-alert workspace-alert--success" role="status">@success</div>
+            }
+            @if (TempData["Error"] is string error)
+            {
+                <div class="workspace-alert workspace-alert--error" role="alert">@error</div>
+            }
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="workspace-alert workspace-alert--error" role="alert" tabindex="-1" data-validation-alert><strong>اطلاعات نیاز به اصلاح دارد</strong><div asp-validation-summary="All"></div></div>
+            }
+            @RenderBody()
+        </main>
+    </div>
+    <script src="~/vendor/bootstrap/bootstrap.bundle.min.js" asp-append-version="true"></script>
+    <script src="~/JS-SOURCE/workspace.js" asp-append-version="true" defer></script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -5,7 +5,7 @@
     string Link(int? page = null, bool export = false) => "/admin/leads" + (export ? "/export" : "") + Microsoft.AspNetCore.Http.QueryString.Create(new Dictionary<string,string?> { ["status"] = f.Status?.ToString(), ["from"] = f.From, ["to"] = f.To, ["city"] = f.City, ["source"] = f.Source, ["leadType"] = f.LeadType, ["search"] = f.Search, ["page"] = page?.ToString() });
 }
 <section class="lead-panel">
-<header class="lead-heading"><div><h1>مدیریت لیدها</h1><p>@Model.Total درخواست · تاریخ‌ها به وقت تهران و شمسی</p></div><a class="btn-submit" href="@Link(export: true)">خروجی CSV فیلترشده</a></header>
+<header class="lead-heading"><div><p class="workspace-eyebrow">پنل مدیریت دارابیکو</p><h1>همه درخواست‌ها، در یک نگاه</h1><p>استعلام‌ها، وضعیت پیگیری و فایل‌های پیوست؛ منظم و در دسترس.</p><p>@Model.Total درخواست · تاریخ‌ها به وقت تهران و شمسی</p></div><div class="inquiry-actions"><a class="btn btn-primary" href="/inquiry">ثبت درخواست جدید</a><a class="btn btn-outline-secondary" href="@Link(export: true)">خروجی CSV</a></div></header>
 <form method="get" action="/admin/leads" class="lead-filters">
     <div class="form-field"><label for="status">وضعیت</label><select id="status" name="status" class="form-select"><option value="">همه وضعیت‌ها</option>@foreach(var status in Enum.GetValues<LeadStatus>()){<option value="@status" selected="@(f.Status == status)">@LeadPresentation.Status(status)</option>}</select></div>
     <div class="form-field"><label for="search">نام یا موبایل</label><input id="search" name="search" value="@f.Search" maxlength="150" class="form-input" /></div>

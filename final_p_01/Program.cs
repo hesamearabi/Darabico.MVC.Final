@@ -88,8 +88,7 @@ builder.Services.AddHsts(options =>
 
 builder.Services.AddOutputCache(options =>
 {
-    options.AddBasePolicy(policyBuilder =>
-        policyBuilder.With(c => c.HttpContext.User?.Identity?.IsAuthenticated != true));
+    options.AddBasePolicy(policyBuilder => policyBuilder.NoCache());
 });
 
 builder.Services.AddMemoryCache();
@@ -139,7 +138,25 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add<AdminFeedbackFilter>();
+    var messages = options.ModelBindingMessageProvider;
+    messages.SetAttemptedValueIsInvalidAccessor((value, field) => $"مقدار واردشده برای «{field}» معتبر نیست.");
+    messages.SetNonPropertyAttemptedValueIsInvalidAccessor(value => "مقدار واردشده معتبر نیست.");
+    messages.SetValueMustBeANumberAccessor(field => $"برای «{field}» یک عدد معتبر وارد کنید.");
+    messages.SetValueMustNotBeNullAccessor(value => "تکمیل این مقدار الزامی است.");
+    messages.SetMissingBindRequiredValueAccessor(field => $"تکمیل «{field}» الزامی است.");
+    messages.SetValueIsInvalidAccessor(value => "مقدار واردشده معتبر نیست.");
+    messages.SetUnknownValueIsInvalidAccessor(field => $"مقدار «{field}» معتبر نیست.");
+    options.ModelMetadataDetailsProviders.Add(new final_p_01.Models.PersianValidationMetadataProvider());
+}).AddCookieTempDataProvider(options =>
+{
+    options.Cookie.IsEssential = true;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+});
 
 // ثبت یکتای ApplicationDbContext همراه با اسمبلی مایگریشن‌ها
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -158,7 +175,7 @@ builder.Services.AddAuthentication("DarabicoAuth")
         options.ExpireTimeSpan = TimeSpan.FromHours(adminSessionTimeoutHours);
         options.SlidingExpiration = true;
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.Strict;
         options.Events = new CookieAuthenticationEvents
         {

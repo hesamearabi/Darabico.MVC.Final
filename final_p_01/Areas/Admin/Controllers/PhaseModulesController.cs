@@ -32,12 +32,13 @@ public class PhaseModulesController : Controller
     {
         var settings = await _context.SiteSettings
             .FirstOrDefaultAsync(s => s.Id == SiteSettings.SingletonId);
-        return View(settings ?? new SiteSettings { Id = SiteSettings.SingletonId });
+        return View("SiteSettings", settings ?? new SiteSettings { Id = SiteSettings.SingletonId });
     }
 
     [HttpPost("admin/site-settings"), ValidateAntiForgeryToken]
     public async Task<IActionResult> SiteSettingsForm(SiteSettings model)
     {
+        if (!ModelState.IsValid) return View("SiteSettings", model);
         var settings = await _context.SiteSettings
             .FirstOrDefaultAsync(s => s.Id == SiteSettings.SingletonId);
 
@@ -80,7 +81,7 @@ public class PhaseModulesController : Controller
             .Include(s => s.MaterialTiers)
             .Include(s => s.CityMultipliers)
             .FirstOrDefaultAsync(s => s.Id == EstimatorSettings.SingletonId);
-        return View(settings ?? new EstimatorSettings { Id = EstimatorSettings.SingletonId });
+        return View("EstimatorSettings", settings ?? new EstimatorSettings { Id = EstimatorSettings.SingletonId });
     }
 
     [HttpPost("admin/estimator-settings"), ValidateAntiForgeryToken]
@@ -89,7 +90,7 @@ public class PhaseModulesController : Controller
         if (!ModelState.IsValid)
         {
             await LoadEstimatorChildrenAsync(model);
-            return View(model);
+            return View("EstimatorSettings", model);
         }
 
         var settings = await _context.EstimatorSettings
@@ -119,25 +120,18 @@ public class PhaseModulesController : Controller
     [HttpPost("admin/estimator-tiers/add"), ValidateAntiForgeryToken]
     public async Task<IActionResult> AddTier(string title, decimal multiplier, int sortOrder)
     {
-        if (!string.IsNullOrWhiteSpace(title))
+        var settings = await _context.EstimatorSettings.Include(s => s.MaterialTiers).Include(s => s.CityMultipliers)
+            .FirstOrDefaultAsync(s => s.Id == EstimatorSettings.SingletonId);
+        if (string.IsNullOrWhiteSpace(title) || title.Trim().Length > 100) ModelState.AddModelError("title", "عنوان متریال باید بین ۱ تا ۱۰۰ کاراکتر باشد.");
+        if (multiplier <= 0) ModelState.AddModelError("multiplier", "ضریب باید بزرگ‌تر از صفر باشد.");
+        if (settings == null) ModelState.AddModelError(string.Empty, "ابتدا تنظیمات اصلی برآورد هزینه را ذخیره کنید.");
+        if (!ModelState.IsValid) return View("EstimatorSettings", settings ?? new EstimatorSettings());
+        _context.Set<EstimatorMaterialTier>().Add(new EstimatorMaterialTier
         {
-            var settingsId = await _context.EstimatorSettings
-                .Where(s => s.Id == EstimatorSettings.SingletonId)
-                .Select(s => s.Id)
-                .FirstOrDefaultAsync();
-            if (settingsId > 0)
-            {
-                _context.Set<EstimatorMaterialTier>().Add(new EstimatorMaterialTier
-                {
-                    Title = title.Trim(),
-                    Multiplier = multiplier <= 0 ? 1 : multiplier,
-                    SortOrder = sortOrder,
-                    IsActive = true,
-                    EstimatorSettingsId = settingsId
-                });
-                await _context.SaveChangesAsync();
-            }
-        }
+            Title = title.Trim(), Multiplier = multiplier, SortOrder = sortOrder,
+            IsActive = true, EstimatorSettingsId = settings!.Id
+        });
+        await _context.SaveChangesAsync();
         return RedirectToAction(nameof(EstimatorSettingsForm));
     }
 
@@ -156,24 +150,17 @@ public class PhaseModulesController : Controller
     [HttpPost("admin/estimator-cities/add"), ValidateAntiForgeryToken]
     public async Task<IActionResult> AddCity(string city, decimal multiplier)
     {
-        if (!string.IsNullOrWhiteSpace(city))
+        var settings = await _context.EstimatorSettings.Include(s => s.MaterialTiers).Include(s => s.CityMultipliers)
+            .FirstOrDefaultAsync(s => s.Id == EstimatorSettings.SingletonId);
+        if (string.IsNullOrWhiteSpace(city) || city.Trim().Length > 100) ModelState.AddModelError("city", "نام شهر باید بین ۱ تا ۱۰۰ کاراکتر باشد.");
+        if (multiplier <= 0) ModelState.AddModelError("multiplier", "ضریب باید بزرگ‌تر از صفر باشد.");
+        if (settings == null) ModelState.AddModelError(string.Empty, "ابتدا تنظیمات اصلی برآورد هزینه را ذخیره کنید.");
+        if (!ModelState.IsValid) return View("EstimatorSettings", settings ?? new EstimatorSettings());
+        _context.Set<EstimatorCityMultiplier>().Add(new EstimatorCityMultiplier
         {
-            var settingsId = await _context.EstimatorSettings
-                .Where(s => s.Id == EstimatorSettings.SingletonId)
-                .Select(s => s.Id)
-                .FirstOrDefaultAsync();
-            if (settingsId > 0)
-            {
-                _context.Set<EstimatorCityMultiplier>().Add(new EstimatorCityMultiplier
-                {
-                    City = city.Trim(),
-                    Multiplier = multiplier <= 0 ? 1 : multiplier,
-                    IsActive = true,
-                    EstimatorSettingsId = settingsId
-                });
-                await _context.SaveChangesAsync();
-            }
-        }
+            City = city.Trim(), Multiplier = multiplier, IsActive = true, EstimatorSettingsId = settings!.Id
+        });
+        await _context.SaveChangesAsync();
         return RedirectToAction(nameof(EstimatorSettingsForm));
     }
 
@@ -227,14 +214,20 @@ public class PhaseModulesController : Controller
     public async Task<IActionResult> EditPillarPage(int id)
     {
         var page = await _context.PillarPages.FindAsync(id);
-        return page is null ? NotFound() : View(page);
+        return page is null ? NotFound() : View("CreatePillarPage", page);
     }
 
     [HttpPost("admin/pillar-pages/edit/{id:int}"), ValidateAntiForgeryToken]
     public async Task<IActionResult> EditPillarPage(int id, PillarPage model)
     {
         if (id != model.Id) return NotFound();
-        if (!ModelState.IsValid) return View(model);
+        if (!ModelState.IsValid) return View("CreatePillarPage", model);
+        model.Slug = model.Slug.Trim();
+        if (await _context.PillarPages.AnyAsync(p => p.Id != id && p.Slug == model.Slug))
+        {
+            ModelState.AddModelError(nameof(model.Slug), "این نامک قبلاً استفاده شده است.");
+            return View("CreatePillarPage", model);
+        }
 
         var page = await _context.PillarPages.FindAsync(id);
         if (page is null) return NotFound();
@@ -329,6 +322,10 @@ public class PhaseModulesController : Controller
     [HttpPost("admin/booking-slots/create"), ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateBookingSlot(BookingSlot model)
     {
+        if (model.Date < DateOnly.FromDateTime(DateTime.UtcNow)) ModelState.AddModelError(nameof(model.Date), "تاریخ بازدید نباید در گذشته باشد.");
+        if (!TimeOnly.TryParseExact(model.StartTime, "HH:mm", out var start) || !TimeOnly.TryParseExact(model.EndTime, "HH:mm", out var end) || end <= start)
+            ModelState.AddModelError(nameof(model.EndTime), "ساعت پایان باید پس از ساعت شروع باشد؛ قالب معتبر 09:00 است.");
+        if (model.Capacity < 1) ModelState.AddModelError(nameof(model.Capacity), "ظرفیت باید حداقل یک نفر باشد.");
         if (!ModelState.IsValid)
             return View("BookingSlots", await ListBookingSlotsAsync());
 

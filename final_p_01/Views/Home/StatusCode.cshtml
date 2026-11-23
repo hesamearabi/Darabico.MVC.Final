@@ -1,0 +1,20 @@
+@model int
+@{
+    ViewData["Title"] = Model == 429 ? "کمی صبر کنید" : "فرم نیاز به تازه‌سازی دارد";
+}
+<main class="form-page">
+    <section class="result-card" role="alert">
+        <p class="workspace-eyebrow">دارابیکو · @Model</p>
+        <h1>@ViewData["Title"]</h1>
+        @if (Model == 429)
+        {
+            <p>تعداد درخواست‌ها بیش از حد مجاز است. چند دقیقه صبر کنید و سپس دوباره تلاش کنید. درخواست اخیر ثبت نشده است.</p>
+        }
+        else
+        {
+            <p>فرم منقضی شده یا اطلاعات امنیتی آن معتبر نیست. درخواست ثبت نشده است. به فرم برگردید، اطلاعات خود را نگه دارید و صفحه را تازه‌سازی کنید.</p>
+        }
+        <a class="btn-submit" href="/inquiry">باز کردن فرم جدید</a>
+        <a class="inquiry-back" href="/">بازگشت به سایت</a>
+    </section>
+</main>

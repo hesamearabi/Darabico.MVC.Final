@@ -28,6 +28,135 @@ public class PhaseModulesIntegrationTests : IDisposable
         _context.Database.EnsureCreated();
     }
 
+    private final_p_01.Areas.Admin.Controllers.PhaseModulesController AdminController() =>
+        new(_context, new CacheStore());
+
+    private sealed class CacheStore : Microsoft.AspNetCore.OutputCaching.IOutputCacheStore
+    {
+        public ValueTask<byte[]?> GetAsync(string key, CancellationToken token) => ValueTask.FromResult<byte[]?>(null);
+        public ValueTask SetAsync(string key, byte[] value, string[]? tags, TimeSpan validFor, CancellationToken token) => ValueTask.CompletedTask;
+        public ValueTask EvictByTagAsync(string tag, CancellationToken token) => ValueTask.CompletedTask;
+    }
+
+    [Fact]
+    public async Task AdminSettings_ResolveExistingViews()
+    {
+        var controller = AdminController();
+        Assert.Equal("SiteSettings", Assert.IsType<ViewResult>(await controller.SiteSettingsForm()).ViewName);
+        Assert.Equal("EstimatorSettings", Assert.IsType<ViewResult>(await controller.EstimatorSettingsForm()).ViewName);
+    }
+
+    [Fact]
+    public async Task EditPillarPage_UsesSharedEditorIncludingInvalidSubmission()
+    {
+        var page = new PillarPage { Slug = "regression", Title = "راهنمای پدل" };
+        _context.PillarPages.Add(page);
+        await _context.SaveChangesAsync();
+        var controller = AdminController();
+        Assert.Equal("CreatePillarPage", Assert.IsType<ViewResult>(await controller.EditPillarPage(page.Id)).ViewName);
+        controller.ModelState.AddModelError("Title", "عنوان الزامی است.");
+        Assert.Equal("CreatePillarPage", Assert.IsType<ViewResult>(await controller.EditPillarPage(page.Id, page)).ViewName);
+    }
+
+    [Fact]
+    public async Task InvalidSettings_DoNotPersistAndReturnEditor()
+    {
+        var original = await _context.SiteSettings.AsNoTracking().Select(s => s.WorkshopVideoTitle).SingleAsync();
+        var controller = AdminController();
+        controller.ModelState.AddModelError("WorkshopVideoTitle", "عنوان معتبر نیست.");
+        var result = Assert.IsType<ViewResult>(await controller.SiteSettingsForm(new SiteSettings { WorkshopVideoTitle = "نباید ذخیره شود" }));
+        Assert.Equal("SiteSettings", result.ViewName);
+        Assert.Equal(original, await _context.SiteSettings.AsNoTracking().Select(s => s.WorkshopVideoTitle).SingleAsync());
+    }
+
+    [Fact]
+    public async Task InvalidLeadUpdate_PreservesInputAndReturnsDetails()
+    {
+        var lead = new InquiryLead { FullName = "آزمون", Mobile = "09123456789" };
+        _context.InquiryLeads.Add(lead);
+        await _context.SaveChangesAsync();
+        var controller = new final_p_01.Areas.Admin.Controllers.LeadsController(_context, null!);
+        controller.ModelState.AddModelError("Status", "وضعیت معتبر نیست.");
+        var result = Assert.IsType<ViewResult>(await controller.Update(lead.Id, new final_p_01.Models.LeadUpdateViewModel { AssignedTo = "پیگیری" }, null, default));
+        Assert.Equal("Details", result.ViewName);
+        Assert.Equal(final_p_01.Domain.Enums.LeadStatus.New, lead.Status);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task EmptyLeadNote_ReturnsDetailsWithValidation(string text)
+    {
+        var lead = new InquiryLead { FullName = "آزمون", Mobile = "09123456789" };
+        _context.InquiryLeads.Add(lead);
+        await _context.SaveChangesAsync();
+        var controller = new final_p_01.Areas.Admin.Controllers.LeadsController(_context, null!);
+        var result = Assert.IsType<ViewResult>(await controller.AddNote(lead.Id, text, default));
+        Assert.Equal("Details", result.ViewName);
+        Assert.False(controller.ModelState.IsValid);
+        Assert.False(await _context.InquiryLeadNotes.AnyAsync());
+    }
+
+    [Theory]
+    [InlineData(400, "StatusCode")]
+    [InlineData(429, "StatusCode")]
+    [InlineData(404, "NotFound")]
+    [InlineData(399, "NotFound")]
+    [InlineData(600, "NotFound")]
+    public void ErrorPages_ExplainSubmissionFailures(int status, string view)
+    {
+        var controller = new HomeController(null!, null!, null!, null!)
+        {
+            ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext { HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext() }
+        };
+        Assert.Equal(view, Assert.IsType<ViewResult>(controller.PageNotFound(status)).ViewName);
+        Assert.Equal(status is >= 400 and <= 599 ? status : 404, controller.Response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("09:00", "09:00", 1)]
+    [InlineData("10:00", "09:00", 1)]
+    [InlineData("09:00", "10:00", 0)]
+    [InlineData("invalid", "10:00", 1)]
+    public async Task InvalidBookingSlot_DoesNotPersist(string start, string end, int capacity)
+    {
+        var controller = AdminController();
+        var count = await _context.BookingSlots.CountAsync();
+        var result = Assert.IsType<ViewResult>(await controller.CreateBookingSlot(new BookingSlot
+        {
+            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)), StartTime = start, EndTime = end, Capacity = capacity
+        }));
+        Assert.Equal("BookingSlots", result.ViewName);
+        Assert.False(controller.ModelState.IsValid);
+        Assert.Equal(count, await _context.BookingSlots.CountAsync());
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task InvalidEstimatorMultiplier_ReturnsFeedback(decimal multiplier)
+    {
+        var controller = AdminController();
+        var result = Assert.IsType<ViewResult>(await controller.AddTier("استاندارد", multiplier, 1));
+        Assert.Equal("EstimatorSettings", result.ViewName);
+        Assert.False(controller.ModelState.IsValid);
+    }
+
+    [Fact]
+    public void PersianValidation_TranslatesDefaultMessagesWithoutReplacingExplicitOnes()
+    {
+        var key = Microsoft.AspNetCore.Mvc.ModelBinding.Metadata.ModelMetadataIdentity.ForType(typeof(string));
+        var context = new Microsoft.AspNetCore.Mvc.ModelBinding.Metadata.ValidationMetadataProviderContext(key,
+            Microsoft.AspNetCore.Mvc.ModelBinding.ModelAttributes.GetAttributesForType(typeof(string)));
+        var length = new System.ComponentModel.DataAnnotations.MaxLengthAttribute(12);
+        var required = new System.ComponentModel.DataAnnotations.RequiredAttribute { ErrorMessage = "پیام اختصاصی" };
+        context.ValidationMetadata.ValidatorMetadata.Add(length);
+        context.ValidationMetadata.ValidatorMetadata.Add(required);
+        new final_p_01.Models.PersianValidationMetadataProvider().CreateValidationMetadata(context);
+        Assert.Equal("«نام» نباید بیش از 12 کاراکتر باشد.", length.FormatErrorMessage("نام"));
+        Assert.Equal("پیام اختصاصی", required.ErrorMessage);
+    }
+
     public void Dispose()
     {
         _context.Dispose();

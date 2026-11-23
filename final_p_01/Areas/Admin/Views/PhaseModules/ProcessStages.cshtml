@@ -28,11 +28,11 @@
     <h2 class="mt-4">مرحله جدید</h2>
     <form method="post" asp-action="CreateProcessStage" class="row g-2">
         @Html.AntiForgeryToken()
-        <div class="col-md-4"><input name="Title" class="form-control" placeholder="عنوان" required /></div>
-        <div class="col-md-6"><textarea name="Description" class="form-control" placeholder="توضیحات" required></textarea></div>
-        <div class="col-md-2"><input name="EstimatedDuration" class="form-control" placeholder="مثلا ۲ هفته" /></div>
-        <div class="col-md-2"><input name="StepNumber" type="number" class="form-control" placeholder="شماره" /></div>
-        <div class="col-md-2"><input name="SortOrder" type="number" class="form-control" placeholder="ترتیب" /></div>
+        <div class="col-md-4"><label for="Title">عنوان مرحله</label>@Html.TextBox("Title", null, new { @class = "form-control", required = "required" })</div>
+        <div class="col-md-6"><label for="Description">توضیحات اجرا</label>@Html.TextArea("Description", null, new { @class = "form-control", required = "required" })</div>
+        <div class="col-md-2"><label for="EstimatedDuration">مدت تقریبی</label>@Html.TextBox("EstimatedDuration", null, new { @class = "form-control", placeholder = "مثلا ۲ هفته" })</div>
+        <div class="col-md-2"><label for="StepNumber">شماره مرحله</label>@Html.TextBox("StepNumber", null, new { @class = "form-control", type = "number" })</div>
+        <div class="col-md-2"><label for="SortOrder">ترتیب نمایش</label>@Html.TextBox("SortOrder", null, new { @class = "form-control", type = "number" })</div>
         <div class="col-md-2"><button class="btn btn-outline-primary">افزودن</button></div>
     </form>
 </div>
