@@ -67,6 +67,17 @@ namespace final_p_01.Controllers
                 })
                 .ToListAsync();
 
+            var estimatorSettings = await _context.EstimatorSettings.AsNoTracking()
+                .Include(s => s.MaterialTiers)
+                .Include(s => s.CityMultipliers)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync(s => s.Id == final_p_01.Domain.Entities.EstimatorSettings.SingletonId);
+            ViewData["Estimator"] = new EstimatorFormViewModel
+            {
+                MaterialTiers = estimatorSettings?.MaterialTiers.Where(t => t.IsActive).OrderBy(t => t.SortOrder).ToList() ?? new(),
+                CityMultipliers = estimatorSettings?.CityMultipliers.Where(c => c.IsActive).OrderBy(c => c.City).ToList() ?? new(),
+                Disclaimer = estimatorSettings?.Disclaimer
+            };
             return View(latestPosts);
         }
 

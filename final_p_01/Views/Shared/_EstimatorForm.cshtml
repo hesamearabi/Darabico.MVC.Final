@@ -1,0 +1,59 @@
+@model final_p_01.Controllers.EstimatorFormViewModel
+<div class="dc-estimator" dir="rtl">
+    <header class="dc-estimator-header">
+        <p class="dc-estimator-eyebrow">از ایده تا برنامه‌ریزی سرمایه‌گذاری</p>
+        <h2 id="estimator-title">برآوردگر هزینه احداث زمین پدل</h2>
+        <p>نوع زمین، شهر و سطح متریال را انتخاب کنید تا بازه اولیه هزینه پروژه را ببینید.</p>
+    </header>
+    <form asp-controller="Estimator" asp-action="Index" method="post" class="dc-estimator-form" data-estimator>
+        <div class="dc-estimator-grid">
+            <div class="dc-estimator-field">
+                <label for="estimate-name">نام و نام خانوادگی</label>
+                <input asp-for="FullName" id="estimate-name" required maxlength="150" autocomplete="name" aria-describedby="estimate-name-error" />
+                <span asp-validation-for="FullName" id="estimate-name-error"></span>
+            </div>
+            <div class="dc-estimator-field">
+                <label for="estimate-mobile">شماره موبایل</label>
+                <input asp-for="Mobile" id="estimate-mobile" required maxlength="20" inputmode="tel" autocomplete="tel" dir="ltr" aria-describedby="estimate-mobile-error" />
+                <span asp-validation-for="Mobile" id="estimate-mobile-error"></span>
+            </div>
+            <div class="dc-estimator-field">
+                <label for="estimate-type">نوع زمین</label>
+                <select asp-for="CourtType" id="estimate-type"><option value="1">روباز</option><option value="2">سرپوشیده</option></select>
+            </div>
+            <div class="dc-estimator-field">
+                <label for="estimate-count">تعداد زمین</label>
+                <input asp-for="CourtCount" id="estimate-count" type="number" min="1" max="50" required inputmode="numeric" aria-describedby="estimate-count-error" />
+                <span asp-validation-for="CourtCount" id="estimate-count-error"></span>
+            </div>
+            <div class="dc-estimator-field">
+                <label for="estimate-city">شهر پروژه</label>
+                <select asp-for="City" id="estimate-city">
+                    <option value="">سایر شهرها (ضریب پایه)</option>
+                    @foreach (var city in Model.CityMultipliers) { <option value="@city.City">@city.City</option> }
+                </select>
+            </div>
+            <div class="dc-estimator-field">
+                <label for="estimate-tier">سطح متریال</label>
+                <select asp-for="MaterialTier" id="estimate-tier">
+                    <option value="">متریال پایه</option>
+                    @foreach (var tier in Model.MaterialTiers) { <option value="@tier.Title">@tier.Title</option> }
+                </select>
+            </div>
+        </div>
+        <input type="text" name="Website" value="" tabindex="-1" autocomplete="off" hidden aria-hidden="true" />
+        <p class="dc-estimator-note">با محاسبه هزینه، اطلاعات تماس و برآورد شما برای پیگیری تیم دارابیکو ثبت می‌شود.</p>
+        <div class="dc-estimator-actions"><button type="submit" class="dc-estimator-button">محاسبه هزینه</button><span data-estimator-loading hidden role="status">در حال محاسبه…</span></div>
+        <div class="dc-estimator-errors" data-estimator-errors role="alert" tabindex="-1" hidden="@(ViewData.ModelState.IsValid && Model.ErrorMessage is null)">
+            <div asp-validation-summary="All"></div>@Model.ErrorMessage
+        </div>
+        <section class="dc-estimator-result" data-estimator-result hidden="@(Model.Result is null)" aria-live="polite" aria-labelledby="estimate-result-title" tabindex="-1">
+            <h3 id="estimate-result-title">بازه برآورد هزینه پروژه</h3>
+            <p class="dc-estimator-amount" data-estimator-amount>@Model.Result?.MinCost.ToString("N0") تا @Model.Result?.MaxCost.ToString("N0") تومان</p>
+            <p data-estimator-detail>تعداد زمین: @Model.CourtCount</p>
+            <p>اطلاعات شما ثبت شد. این مبلغ برآورد اولیه است؛ قیمت نهایی پس از بررسی مشخصات پروژه اعلام می‌شود.</p>
+            <a href="/inquiry" class="dc-estimator-link">گفت‌وگو درباره جزئیات پروژه ←</a>
+        </section>
+        @if (!string.IsNullOrWhiteSpace(Model.Disclaimer)) { <p class="dc-estimator-note">@Model.Disclaimer</p> }
+    </form>
+</div>

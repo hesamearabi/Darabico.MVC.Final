@@ -756,6 +756,10 @@
     </div>
 </section>
 
+<section class="dc-estimator-section" id="cost-estimator" aria-labelledby="estimator-title">
+    @await Html.PartialAsync("_EstimatorForm", (final_p_01.Controllers.EstimatorFormViewModel)ViewData["Estimator"]!)
+</section>
+
 <section class="community-section-wrap">
     <div class="community-grid">
         <div class="community-media">

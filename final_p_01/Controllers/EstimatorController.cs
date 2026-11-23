@@ -74,7 +74,7 @@ public class EstimatorController : Controller
             ModelState.AddModelError(nameof(model.Mobile), "شماره موبایل معتبر نیست. مثال: 09123456789");
 
         if (!ModelState.IsValid)
-            return View(form);
+            return FormResponse(form);
 
         var settings = await _context.EstimatorSettings.AsNoTracking()
             .Include(s => s.MaterialTiers)
@@ -84,7 +84,7 @@ public class EstimatorController : Controller
         if (settings is null || settings.BasePricePerCourtOutdoor <= 0)
         {
             form.ErrorMessage = "برآوردگر هنوز تنظیم نشده است. لطفاً بعداً مراجعه کنید.";
-            return View(form);
+            return FormResponse(form);
         }
 
         var result = CostEstimator.Calculate(
@@ -99,7 +99,7 @@ public class EstimatorController : Controller
         if (result is null)
         {
             form.ErrorMessage = "برای این ترکیب، برآورد امکان‌پذیر نیست. لطفاً با ما تماس بگیرید.";
-            return View(form);
+            return FormResponse(form);
         }
 
         _context.InquiryLeads.Add(new InquiryLead
@@ -119,7 +119,24 @@ public class EstimatorController : Controller
         _logger.LogInformation("Estimator lead saved. City={City} Courts={Courts}", model.City, model.CourtCount);
 
         form.Result = result;
-        return View(form);
+        return FormResponse(form);
+    }
+
+    private IActionResult FormResponse(EstimatorFormViewModel form)
+    {
+        if (!Request.GetTypedHeaders().Accept?.Any(h => h.MediaType.Value == "application/json") ?? true)
+            return View("Index", form);
+
+        if (!ModelState.IsValid || form.ErrorMessage is not null)
+            return new JsonResult(new
+            {
+                success = false,
+                message = form.ErrorMessage ?? "لطفاً اطلاعات مشخص‌شده را اصلاح کنید.",
+                errors = ModelState.Where(p => p.Value?.Errors.Count > 0)
+                    .ToDictionary(p => p.Key, p => p.Value!.Errors.Select(e => e.ErrorMessage).ToArray())
+            }) { StatusCode = StatusCodes.Status422UnprocessableEntity };
+
+        return Json(new { success = true, result = form.Result });
     }
 
     private async Task<EstimatorFormViewModel> BuildFormAsync(EstimatorFormViewModel model)

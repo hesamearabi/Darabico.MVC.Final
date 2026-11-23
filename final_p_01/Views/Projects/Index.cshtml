@@ -2,20 +2,19 @@
 @model Darabico.Web.ViewModels.Public.ProjectIndexViewModel
 @{
     ViewData["Title"] = "پروژه‌های اجرا شده زمین پدل | دارابیکو";
-    ViewData["MetaDescription"] = "نمونه پروژه‌های طراحی، ساخت و اجرای زمین پدل استاندارد روباز و سرپوشیده در سراسر ایران توسط گروه مهندسی دارابیکو.";
+    ViewData["MetaDescription"] = "نمونه پروژه‌های اجرا شده زمین پدل دارابیکو در شهرهای مختلف ایران؛ مشخصات، تصاویر و جزئیات هر پروژه را ببینید.";
 }
-
-<section class="projects-section" dir="rtl">
-    <div class="container">
-        <header class="projects-header">
-            <h1 class="projects-header__title">پروژه‌های اجرا شده دارابیکو</h1>
-            <p class="projects-header__subtitle">مجموعه‌ای از زمین‌های پدل استاندارد طراحی و اجرا شده در شهرهای مختلف کشور</p>
-        </header>
-
-        <form method="get" asp-action="Index" class="projects-filter" id="filterForm">
-            <div class="filter-group">
-                <label for="cityFilter" class="filter-label">شهر:</label>
-                <select id="cityFilter" name="city" class="filter-select" onchange="this.form.submit()">
+<main class="dc-projects-page" dir="rtl">
+    <header class="dc-projects-header">
+        <p class="dc-projects-eyebrow">از طراحی تا اولین بازی</p>
+        <h1>پروژه‌های اجرا شده دارابیکو</h1>
+        <p>مجموعه‌ای از زمین‌های پدل استاندارد طراحی و اجرا شده در شهرهای مختلف کشور</p>
+    </header>
+    <section class="dc-projects-content" aria-label="پروژه‌ها و فیلترها">
+        <form method="get" asp-controller="Projects" asp-action="Index" class="dc-projects-filters">
+            <div class="dc-projects-field">
+                <label for="project-city">شهر</label>
+                <select name="city" id="project-city">
                     <option value="">همه شهرها</option>
                     @foreach (var city in Model.AvailableCities)
                     {
@@ -23,316 +22,47 @@
                     }
                 </select>
             </div>
-
-            <div class="filter-group">
-                <span class="filter-label">نوع زمین:</span>
-                <div class="filter-pills" role="group" aria-label="فیلتر نوع زمین">
-                    <button type="submit" name="courtType" value="" class="pill-btn @(Model.SelectedCourtType is null ? "is-active" : "")">همه</button>
-                    <button type="submit" name="courtType" value="@CourtType.Outdoor" class="pill-btn @(Model.SelectedCourtType == CourtType.Outdoor ? "is-active" : "")">روباز</button>
-                    <button type="submit" name="courtType" value="@CourtType.Indoor" class="pill-btn @(Model.SelectedCourtType == CourtType.Indoor ? "is-active" : "")">سرپوشیده</button>
+            <fieldset class="dc-projects-types">
+                <legend>نوع زمین</legend>
+                <div class="dc-projects-options">
+                    <label><input type="radio" name="courtType" value="" checked="@(!Model.SelectedCourtType.HasValue)" /><span>همه</span></label>
+                    <label><input type="radio" name="courtType" value="Outdoor" checked="@(Model.SelectedCourtType == CourtType.Outdoor)" /><span>روباز</span></label>
+                    <label><input type="radio" name="courtType" value="Indoor" checked="@(Model.SelectedCourtType == CourtType.Indoor)" /><span>سرپوشیده</span></label>
                 </div>
-            </div>
+            </fieldset>
+            <button type="submit" class="dc-projects-button">اعمال فیلترها</button>
         </form>
-
         @if (!Model.Projects.Any())
         {
-            <div class="empty-state">
+            <div class="dc-projects-empty">
+                <svg width="80" height="64" viewBox="0 0 80 64" fill="none" stroke="currentColor" aria-hidden="true"><rect x="8" y="8" width="64" height="48" rx="2"/><path d="M40 8v48M8 32h64M24 8v24m32-24v24M24 32v24m32-24v24"/></svg>
+                <h2>پروژه‌ای با این مشخصات پیدا نشد</h2>
                 <p>در حال حاضر پروژه‌ای با فیلترهای انتخاب‌شده یافت نشد.</p>
-                @if (!string.IsNullOrEmpty(Model.SelectedCity) || Model.SelectedCourtType.HasValue)
-                {
-                    <a asp-action="Index" class="btn-outline">مشاهده همه پروژه‌ها</a>
-                }
+                <a asp-controller="Projects" asp-action="Index" class="dc-projects-button">نمایش همه پروژه‌ها</a>
             </div>
         }
         else
         {
-            <div class="projects-grid" id="projectsGrid">
+            <div class="dc-projects-grid" id="projectsGrid">
                 <partial name="_ProjectCardsPartial" model="Model.Projects" />
             </div>
-
             @if (Model.HasMore)
             {
-                <div class="load-more-wrap" id="loadMoreWrap">
-                    <button type="button"
-                            id="btnLoadMore"
-                            class="btn-primary"
-                            data-next-page="@(Model.CurrentPage + 1)"
-                            data-city="@Model.SelectedCity"
-                            data-court-type="@Model.SelectedCourtType">
-                        نمایش بیشتر
-                    </button>
+                <div class="dc-projects-pagination">
+                    <button type="button" class="dc-projects-button" id="loadMoreBtn" data-page="1" data-city="@Model.SelectedCity" data-court-type="@Model.SelectedCourtType">نمایش پروژه‌های بیشتر</button>
+                    <p id="projectsStatus" role="status" aria-live="polite"></p>
                 </div>
             }
         }
-    </div>
-</section>
-<section class="form-page" aria-label="درخواست مشاوره پروژه پدل">
-    <h2 class="form-page__title">پروژه بعدی، زمین پدل شما</h2>
-    @await Component.InvokeAsync("InquiryForm", new { source = "projects" })
-</section>
-
-<style>
-    .projects-section {
-        padding: 2.5rem 0 4rem;
-        background: #f8fafc;
-        color: #0f172a;
-    }
-
-    .container {
-        width: 100%;
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 1rem;
-        box-sizing: border-box;
-    }
-
-    .projects-header {
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-
-    .projects-header__title {
-        font-size: clamp(1.5rem, 3vw, 2.25rem);
-        font-weight: 800;
-        margin: 0 0 .5rem;
-    }
-
-    .projects-header__subtitle {
-        color: #475569;
-        font-size: .95rem;
-        margin: 0;
-    }
-
-    .projects-filter {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        align-items: center;
-        justify-content: space-between;
-        background: #fff;
-        padding: 1rem;
-        border-radius: 14px;
-        border: 1px solid #e2e8f0;
-        margin-bottom: 2rem;
-    }
-
-    .filter-group {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: .6rem;
-    }
-
-    .filter-label {
-        font-size: .9rem;
-        font-weight: 600;
-        color: #334155;
-    }
-
-    .filter-select {
-        padding: .55rem .9rem;
-        border-radius: 10px;
-        border: 1px solid #cbd5e1;
-        background: #fff;
-        font-family: inherit;
-        font-size: .9rem;
-        min-width: 160px;
-    }
-
-    .filter-pills {
-        display: flex;
-        flex-wrap: wrap;
-        gap: .4rem;
-    }
-
-    .pill-btn {
-        padding: .5rem .95rem;
-        border-radius: 999px;
-        border: 1px solid #cbd5e1;
-        background: #fff;
-        color: #334155;
-        font-family: inherit;
-        font-size: .85rem;
-        cursor: pointer;
-        transition: all .2s;
-    }
-
-        .pill-btn.is-active {
-            background: #0f766e;
-            border-color: #0f766e;
-            color: #fff;
-            font-weight: 600;
-        }
-
-    /* گرید ریسپانسیو بدون اسکرول افقی حتی در 360px */
-    .projects-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 1fr));
-        gap: 1.5rem;
-    }
-
-    .project-card {
-        background: #fff;
-        border-radius: 16px;
-        overflow: hidden;
-        border: 1px solid #e2e8f0;
-        transition: transform .2s, box-shadow .2s;
-    }
-
-        .project-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px -8px rgba(15, 23, 42, .12);
-        }
-
-    .project-card__link {
-        text-decoration: none;
-        color: inherit;
-        display: block;
-    }
-
-    .project-card__media {
-        position: relative;
-        aspect-ratio: 3 / 2;
-        background: #e2e8f0;
-        overflow: hidden;
-    }
-
-    .project-card__img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-    }
-
-    .project-card__badge {
-        position: absolute;
-        top: .75rem;
-        right: .75rem;
-        padding: .3rem .75rem;
-        border-radius: 999px;
-        font-size: .78rem;
-        font-weight: 700;
-        color: #fff;
-    }
-
-    .badge-outdoor {
-        background: #0284c7;
-    }
-
-    .badge-indoor {
-        background: #0f766e;
-    }
-
-    .project-card__body {
-        padding: 1.15rem;
-    }
-
-    .project-card__title {
-        font-size: 1.08rem;
-        font-weight: 700;
-        margin: 0 0 .85rem;
-        line-height: 1.5;
-    }
-
-    .project-card__meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        font-size: .88rem;
-        color: #475569;
-    }
-
-    .meta-item {
-        display: inline-flex;
-        align-items: center;
-        gap: .35rem;
-    }
-
-    .load-more-wrap {
-        text-align: center;
-        margin-top: 2.5rem;
-    }
-
-    .btn-primary {
-        padding: .8rem 2rem;
-        border-radius: 12px;
-        border: none;
-        background: #0f766e;
-        color: #fff;
-        font-family: inherit;
-        font-size: .95rem;
-        font-weight: 700;
-        cursor: pointer;
-    }
-
-        .btn-primary:disabled {
-            opacity: .6;
-            cursor: wait;
-        }
-
-    .empty-state {
-        text-align: center;
-        padding: 3rem 1rem;
-        background: #fff;
-        border-radius: 16px;
-        border: 1px solid #e2e8f0;
-    }
-
-    .btn-outline {
-        display: inline-block;
-        margin-top: 1rem;
-        padding: .65rem 1.4rem;
-        border-radius: 10px;
-        border: 1px solid #0f766e;
-        color: #0f766e;
-        text-decoration: none;
-        font-weight: 600;
-    }
-</style>
-
+    </section>
+    <section class="dc-projects-consultation" aria-labelledby="projects-consultation-title">
+        <header class="dc-section-heading">
+            <h2 id="projects-consultation-title">پروژه بعدی، زمین پدل شما</h2>
+            <p>اطلاعات پروژه‌تان را ثبت کنید تا درباره طراحی، اجرا و برآورد هزینه با شما تماس بگیریم.</p>
+        </header>
+        @await Component.InvokeAsync("InquiryForm", new { source = "projects" })
+    </section>
+</main>
 @section Scripts {
-    <script>
-        (function () {
-            const btn = document.getElementById('btnLoadMore');
-            const grid = document.getElementById('projectsGrid');
-            if (!btn || !grid) return;
-
-            btn.addEventListener('click', async function () {
-                const nextPage = btn.getAttribute('data-next-page');
-                const city = btn.getAttribute('data-city') || '';
-                const courtType = btn.getAttribute('data-court-type') || '';
-
-                btn.disabled = true;
-                const originalText = btn.textContent;
-                btn.textContent = 'در حال بارگذاری...';
-
-                try {
-                    const params = new URLSearchParams({ page: nextPage });
-                    if (city) params.append('city', city);
-                    if (courtType) params.append('courtType', courtType);
-
-                    const response = await fetch(`/projects/load-more?${params.toString()}`, {
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                    });
-
-                    if (!response.ok) throw new Error('Network error');
-
-                    const html = await response.text();
-                    grid.insertAdjacentHTML('beforeend', html);
-
-                    const hasMore = response.headers.get('X-Has-More') === 'true';
-                    if (hasMore) {
-                        btn.setAttribute('data-next-page', String(Number(nextPage) + 1));
-                        btn.disabled = false;
-                        btn.textContent = originalText;
-                    } else {
-                        document.getElementById('loadMoreWrap')?.remove();
-                    }
-                } catch {
-                    btn.disabled = false;
-                    btn.textContent = 'تلاش مجدد';
-                }
-            });
-        })();
-    </script>
+    <script src="~/JS-SOURCE/projects.js" asp-append-version="true" defer></script>
 }
