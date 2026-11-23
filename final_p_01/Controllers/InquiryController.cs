@@ -42,7 +42,7 @@ public class InquiryController(ApplicationDbContext db, IInquiryAttachmentStorag
         if (model.Source is not ("inquiry" or "home" or "projects")) ModelState.AddModelError(nameof(model.Source), "منبع درخواست معتبر نیست.");
         if (model.ProjectRef.HasValue && !await db.Projects.AnyAsync(p => p.Id == model.ProjectRef && p.IsPublished, cancellationToken)) ModelState.AddModelError(nameof(model.ProjectRef), "پروژه معتبر نیست.");
         if (model.Files.Count > 5) ModelState.AddModelError(nameof(model.Files), "حداکثر ۵ فایل مجاز است.");
-        if (!ModelState.IsValid) return View(model);
+        if (!ModelState.IsValid) return InvalidSubmission(model);
         var saved = new List<InquiryLeadAttachment>();
         try
         {
@@ -52,7 +52,7 @@ public class InquiryController(ApplicationDbContext db, IInquiryAttachmentStorag
         {
             foreach (var file in saved) storage.Delete(file.StorageKey);
             ModelState.AddModelError(nameof(model.Files), ex.Message);
-            return View(model);
+            return InvalidSubmission(model);
         }
         catch
         {
@@ -69,8 +69,17 @@ public class InquiryController(ApplicationDbContext db, IInquiryAttachmentStorag
         db.InquiryLeads.Add(lead);
         try { await db.SaveChangesAsync(cancellationToken); }
         catch { foreach (var file in saved) storage.Delete(file.StorageKey); throw; }
-        return RedirectToAction(nameof(Thanks));
+        if (WantsJson) return Json(new { success = true });
+        TempData["InquirySubmitted"] = true;
+        return RedirectToAction("Index", model.Source == "home" ? "Home" : "Inquiry", new { projectRef = model.ProjectRef });
     }
+
+    private bool WantsJson => Request.GetTypedHeaders().Accept?.Any(value => value.MediaType.Value == "application/json") == true;
+
+    private IActionResult InvalidSubmission(InquiryFormViewModel model) => WantsJson
+        ? new JsonResult(new { success = false, errors = ModelState.Where(entry => entry.Value!.Errors.Count > 0)
+            .ToDictionary(entry => entry.Key, entry => entry.Value!.Errors.Select(error => error.ErrorMessage).ToArray()) }) { StatusCode = StatusCodes.Status422UnprocessableEntity }
+        : View("Index", model);
 
     [HttpGet("thanks")]
     public async Task<IActionResult> Thanks(CancellationToken cancellationToken) => View(await Settings(cancellationToken));

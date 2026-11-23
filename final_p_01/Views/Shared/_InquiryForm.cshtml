@@ -1,39 +1,52 @@
 @model final_p_01.Models.InquiryFormViewModel
 @using final_p_01.Models
-@{ var cities = InquiryFormViewModel.Options(Model.Settings.InquiryCities); var budgets = InquiryFormViewModel.Options(Model.Settings.InquiryBudgetRanges); }
-<form action="/inquiry" method="post" enctype="multipart/form-data" class="public-form inquiry-form" data-inquiry-form novalidate>
+@{
+    var cities = InquiryFormViewModel.Options(Model.Settings.InquiryCities);
+    var budgets = InquiryFormViewModel.Options(Model.Settings.InquiryBudgetRanges);
+    var submitted = TempData["InquirySubmitted"] is true;
+}
+<div class="dc-consultation">
+<form action="/inquiry" method="post" enctype="multipart/form-data" class="dc-form" data-inquiry-form novalidate>
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="Source" />
     <input type="hidden" asp-for="ProjectRef" />
     <div class="form-honeypot" aria-hidden="true"><label asp-for="Website">نشانی وب‌سایت</label><input asp-for="Website" tabindex="-1" autocomplete="off" /></div>
-    <div asp-validation-summary="All" class="form-alert form-alert--warning"></div>
-    <div class="inquiry-progress" data-progress hidden><span data-step-label aria-live="polite">مرحله ۱ از ۲</span><progress max="2" value="1" aria-label="پیشرفت فرم"></progress></div>
-    <p class="field-hint">فیلدهای بدون برچسب «اختیاری» ضروری هستند.</p>
-    <fieldset data-step="1" class="inquiry-step">
-        <legend class="form-section-title">۱. مشخصات پروژه</legend>
-        <div class="form-grid">
-            <div class="form-field"><label asp-for="City" class="form-label"></label>
-            @if (cities.Length > 0) { <select asp-for="City" class="form-select" required><option value="">انتخاب شهر</option>@foreach(var city in cities){<option value="@city">@city</option>}</select> }
-            else { <input asp-for="City" class="form-input" required maxlength="100" autocomplete="address-level2" placeholder="مثلاً تهران" /> }
-            <span asp-validation-for="City" class="field-validation-error"></span></div>
-            <div class="form-field"><label asp-for="SiteType" class="form-label"></label><select asp-for="SiteType" class="form-select" required><option value="">انتخاب نوع محل</option>@foreach(var item in InquiryFormViewModel.SiteTypes){<option value="@item">@item</option>}</select><span asp-validation-for="SiteType" class="field-validation-error"></span></div>
-            <div class="form-field"><label asp-for="CourtCount" class="form-label"></label><input asp-for="CourtCount" class="form-input" inputmode="numeric" required pattern="(?:[1-9]|1[0-9]|20)" maxlength="2" data-digits placeholder="۱ تا ۲۰" /><span asp-validation-for="CourtCount" class="field-validation-error"></span></div>
-            <div class="form-field"><label asp-for="CourtType" class="form-label"></label><select asp-for="CourtType" class="form-select" required><option value="">انتخاب نوع زمین</option>@foreach(var item in InquiryFormViewModel.CourtTypes){<option value="@item">@item</option>}</select><span asp-validation-for="CourtType" class="field-validation-error"></span></div>
+    <div asp-validation-summary="All" class="dc-errors" data-summary role="alert" tabindex="-1"></div>
+    <div class="dc-progress" data-progress hidden><span data-step-label aria-live="polite">مرحله ۱ از ۲</span><progress max="2" value="1" aria-label="پیشرفت فرم"></progress></div>
+    <p class="dc-hint">فیلدهای بدون برچسب «اختیاری» ضروری هستند.</p>
+    <fieldset data-step="1" class="dc-step">
+        <legend>مشخصات پروژه</legend>
+        <div class="dc-grid">
+            <div class="dc-field"><label asp-for="City"></label>
+            @if (cities.Length > 0) { <select asp-for="City" required><option value="">انتخاب شهر</option>@foreach(var city in cities){<option value="@city">@city</option>}</select> }
+            else { <input asp-for="City" required maxlength="100" autocomplete="address-level2" placeholder="مثلاً تهران" /> }
+            <span asp-validation-for="City"></span></div>
+            <div class="dc-field"><label asp-for="SiteType"></label><select asp-for="SiteType" required><option value="">انتخاب نوع محل</option>@foreach(var item in InquiryFormViewModel.SiteTypes){<option value="@item">@item</option>}</select><span asp-validation-for="SiteType"></span></div>
+            <div class="dc-field"><label asp-for="CourtCount"></label><input asp-for="CourtCount" inputmode="numeric" required pattern="(?:[1-9]|1[0-9]|20)" maxlength="2" data-digits placeholder="۱ تا ۲۰" /><span asp-validation-for="CourtCount"></span></div>
+            <div class="dc-field"><label asp-for="CourtType"></label><select asp-for="CourtType" required><option value="">انتخاب نوع زمین</option>@foreach(var item in InquiryFormViewModel.CourtTypes){<option value="@item">@item</option>}</select><span asp-validation-for="CourtType"></span></div>
         </div>
-        <button type="button" class="btn-submit" data-next hidden>ادامه: اطلاعات تماس</button>
+        <button type="button" class="dc-button" data-next hidden>ادامه: اطلاعات تماس</button>
     </fieldset>
-    <fieldset data-step="2" class="inquiry-step">
-        <legend class="form-section-title" tabindex="-1">۲. اطلاعات تماس</legend>
-        <div class="form-grid">
-            <div class="form-field"><label asp-for="FullName" class="form-label"></label><input asp-for="FullName" class="form-input" required maxlength="150" autocomplete="name" /><span asp-validation-for="FullName" class="field-validation-error"></span></div>
-            <div class="form-field"><label asp-for="Mobile" class="form-label"></label><input asp-for="Mobile" type="tel" dir="ltr" class="form-input" required pattern="09[0-9]{9}" maxlength="11" data-digits autocomplete="tel-national" placeholder="09123456789" /><span asp-validation-for="Mobile" class="field-validation-error"></span></div>
-            <div class="form-field"><label asp-for="EstimatedStartTime" class="form-label"></label><select asp-for="EstimatedStartTime" class="form-select" required><option value="">انتخاب زمان شروع</option>@foreach(var item in InquiryFormViewModel.StartTimes){<option value="@item">@item</option>}</select><span asp-validation-for="EstimatedStartTime" class="field-validation-error"></span></div>
-            <div class="form-field"><label asp-for="ApproximateBudget" class="form-label"></label><select asp-for="ApproximateBudget" class="form-select"><option value="">ترجیح می‌دهم اعلام نکنم</option>@foreach(var item in budgets){<option value="@item">@item</option>}</select><span asp-validation-for="ApproximateBudget" class="field-validation-error"></span></div>
-            <div class="form-field form-field--full"><label asp-for="Files" class="form-label"></label><input asp-for="Files" type="file" class="form-input" multiple accept=".jpg,.jpeg,.png,.pdf" aria-describedby="inquiry-file-hint" /><p id="inquiry-file-hint" class="field-hint">حداکثر ۵ فایل JPG، PNG یا PDF؛ هر فایل حداکثر ۵ مگابایت.</p><span asp-validation-for="Files" class="field-validation-error"></span><p data-file-feedback class="field-hint" aria-live="polite"></p></div>
-            <div class="form-field form-field--full"><label asp-for="Description" class="form-label"></label><textarea asp-for="Description" class="form-textarea" maxlength="500" rows="4" placeholder="ابعاد محل، محدودیت‌ها یا پرسش خود را بنویسید."></textarea><span asp-validation-for="Description" class="field-validation-error"></span></div>
+    <fieldset data-step="2" class="dc-step">
+        <legend tabindex="-1">اطلاعات تماس</legend>
+        <div class="dc-grid">
+            <div class="dc-field"><label asp-for="FullName"></label><input asp-for="FullName" required maxlength="150" autocomplete="name" /><span asp-validation-for="FullName"></span></div>
+            <div class="dc-field"><label asp-for="Mobile"></label><input asp-for="Mobile" type="tel" dir="ltr" required pattern="09[0-9]{9}" maxlength="11" data-digits autocomplete="tel-national" placeholder="09123456789" /><span asp-validation-for="Mobile"></span></div>
+            <div class="dc-field"><label asp-for="EstimatedStartTime"></label><select asp-for="EstimatedStartTime" required><option value="">انتخاب زمان شروع</option>@foreach(var item in InquiryFormViewModel.StartTimes){<option value="@item">@item</option>}</select><span asp-validation-for="EstimatedStartTime"></span></div>
+            <div class="dc-field"><label asp-for="ApproximateBudget"></label><select asp-for="ApproximateBudget"><option value="">ترجیح می‌دهم اعلام نکنم</option>@foreach(var item in budgets){<option value="@item">@item</option>}</select><span asp-validation-for="ApproximateBudget"></span></div>
+            <div class="dc-field dc-field--full"><label asp-for="Files"></label><input asp-for="Files" type="file" multiple accept=".jpg,.jpeg,.png,.pdf" aria-describedby="inquiry-file-hint" /><p id="inquiry-file-hint" class="dc-hint">حداکثر ۵ فایل JPG، PNG یا PDF؛ هر فایل حداکثر ۵ مگابایت.</p><span asp-validation-for="Files"></span><p data-file-feedback class="dc-hint" aria-live="polite"></p></div>
+            <div class="dc-field dc-field--full"><label asp-for="Description"></label><textarea asp-for="Description" maxlength="500" rows="4" placeholder="ابعاد محل، محدودیت‌ها یا پرسش خود را بنویسید."></textarea><span asp-validation-for="Description"></span></div>
         </div>
-        <div class="inquiry-actions"><button type="button" class="inquiry-back" data-back hidden>بازگشت به مشخصات پروژه</button><button type="submit" class="btn-submit" data-submit><span>ثبت درخواست مشاوره</span></button></div>
-        <p class="field-hint">با ثبت درخواست، اجازه تماس درباره این پروژه را به دارابیکو می‌دهید.</p>
+        <div class="dc-actions"><button type="button" class="dc-button dc-button--secondary" data-back hidden>بازگشت به مشخصات پروژه</button><button type="submit" class="dc-button" data-submit><span>ثبت درخواست مشاوره</span></button></div>
+        <p class="dc-hint">با ثبت درخواست، اجازه تماس درباره این پروژه را به دارابیکو می‌دهید.</p>
     </fieldset>
 </form>
+<dialog class="dc-dialog" data-success-dialog data-submitted="@submitted.ToString().ToLowerInvariant()" aria-labelledby="inquiry-success-title" aria-describedby="inquiry-success-message" dir="rtl">
+    <span class="dc-confirmation-mark" aria-hidden="true">✓</span>
+    <h2 id="inquiry-success-title">درخواست شما با موفقیت ثبت شد</h2>
+    <p id="inquiry-success-message">کارشناسان دارابیکو در کوتاه‌ترین زمان برای بررسی پروژه با شما تماس می‌گیرند</p>
+    <div class="dc-actions"><button type="button" class="dc-button" data-close-dialog autofocus>بستن</button><a class="dc-button dc-button--secondary" href="/projects">مشاهده پروژه‌های دارابیکو</a></div>
+</dialog>
+@if (submitted) { <noscript><div class="dc-notice" role="status">درخواست شما با موفقیت ثبت شد. کارشناسان دارابیکو در کوتاه‌ترین زمان برای بررسی پروژه با شما تماس می‌گیرند. <a href="/projects">مشاهده پروژه‌های دارابیکو</a></div></noscript> }
+</div>
 <script src="~/JS-SOURCE/inquiry.js" asp-append-version="true" defer></script>

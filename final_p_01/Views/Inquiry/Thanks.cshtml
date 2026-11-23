@@ -1,7 +1,8 @@
 @model final_p_01.Domain.Entities.SiteSettings
 @{ ViewData["Title"] = Model.InquiryThanksTitle; }
-<main class="form-page"><section class="result-card" role="status">
-    <h1 class="form-page__title">@Model.InquiryThanksTitle</h1>
-    <p class="inquiry-thanks">@Model.InquiryThanksBody</p>
-    <a class="btn-submit" href="/projects">مشاهده پروژه‌های دارابیکو</a>
-</section></main>
+<main class="dc-thanks">
+    <span class="dc-confirmation-mark" aria-hidden="true">✓</span>
+    <h1>@Model.InquiryThanksTitle</h1>
+    <p>@Model.InquiryThanksBody</p>
+    <a class="dc-button" href="/projects">مشاهده پروژه‌های دارابیکو</a>
+</main>

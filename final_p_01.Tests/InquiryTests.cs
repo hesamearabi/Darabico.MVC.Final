@@ -152,6 +152,61 @@ public class InquiryTests
         Assert.False(Directory.Exists(parent));
     }
 
+    [Fact]
+    public async Task JsonSubmissionPersistsWithoutRedirect()
+    {
+        using var connection = new SqliteConnection("DataSource=:memory:"); connection.Open();
+        using var db = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>().UseSqlite(connection).Options);
+        db.Database.EnsureCreated();
+        var controller = CreateController(db);
+        controller.Request.Headers.Accept = "application/json";
+        var result = Assert.IsType<JsonResult>(await controller.Index(Valid(), CancellationToken.None));
+        Assert.True(System.Text.Json.JsonSerializer.SerializeToElement(result.Value).GetProperty("success").GetBoolean());
+        db.ChangeTracker.Clear();
+        Assert.Equal("09123456789", Assert.Single(await db.InquiryLeads.ToListAsync()).Mobile);
+    }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("21")]
+    public async Task JsonValidationReturnsFieldErrorsWithoutPersisting(string count)
+    {
+        using var connection = new SqliteConnection("DataSource=:memory:"); connection.Open();
+        using var db = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>().UseSqlite(connection).Options);
+        db.Database.EnsureCreated();
+        var controller = CreateController(db);
+        controller.Request.Headers.Accept = "application/json";
+        var model = Valid(); model.CourtCount = count;
+        var result = Assert.IsType<JsonResult>(await controller.Index(model, CancellationToken.None));
+        Assert.Equal(422, result.StatusCode);
+        Assert.True(System.Text.Json.JsonSerializer.SerializeToElement(result.Value).GetProperty("errors").TryGetProperty("CourtCount", out _));
+        Assert.Empty(db.InquiryLeads);
+    }
+
+    [Theory]
+    [InlineData("home", "Home")]
+    [InlineData("inquiry", "Inquiry")]
+    public async Task NativeSubmissionReturnsToSourceInsteadOfThanks(string source, string expectedController)
+    {
+        using var connection = new SqliteConnection("DataSource=:memory:"); connection.Open();
+        using var db = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>().UseSqlite(connection).Options);
+        db.Database.EnsureCreated();
+        var controller = CreateController(db);
+        controller.TempData = new Microsoft.AspNetCore.Mvc.ViewFeatures.TempDataDictionary(controller.HttpContext, new MemoryTempDataProvider());
+        var model = Valid(); model.Source = source;
+        var result = Assert.IsType<RedirectToActionResult>(await controller.Index(model, CancellationToken.None));
+        Assert.Equal("Index", result.ActionName);
+        Assert.Equal(expectedController, result.ControllerName);
+        Assert.Equal(true, controller.TempData["InquirySubmitted"]);
+        Assert.Single(db.InquiryLeads);
+    }
+
+    private class MemoryTempDataProvider : Microsoft.AspNetCore.Mvc.ViewFeatures.ITempDataProvider
+    {
+        public IDictionary<string, object> LoadTempData(HttpContext context) => new Dictionary<string, object>();
+        public void SaveTempData(HttpContext context, IDictionary<string, object> values) { }
+    }
+
     private class TestEnvironment : IWebHostEnvironment
     {
         public string ApplicationName { get; set; } = "test";

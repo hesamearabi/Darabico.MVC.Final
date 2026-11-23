@@ -3,32 +3,34 @@
 @using final_p_01.Domain.Enums
 @{ ViewData["Title"] = "مدیریت لیدها"; var f = Model.Filter;
     string Link(int? page = null, bool export = false) => "/admin/leads" + (export ? "/export" : "") + Microsoft.AspNetCore.Http.QueryString.Create(new Dictionary<string,string?> { ["status"] = f.Status?.ToString(), ["from"] = f.From, ["to"] = f.To, ["city"] = f.City, ["source"] = f.Source, ["leadType"] = f.LeadType, ["search"] = f.Search, ["page"] = page?.ToString() });
+    string TypeLabel(string? type) => type switch { "inquiry" => "مشاوره پروژه", "booking" => "رزرو", "aftersales" => "خدمات پس از فروش", "estimator" => "برآورد هزینه", "feasibility_pdf" => "امکان‌سنجی", _ => type ?? "نامشخص" };
+    string SourceLabel(string? source) => source switch { "home" => "صفحه اصلی", "projects" => "پروژه‌ها", "inquiry" => "فرم مشاوره", _ => source ?? "نامشخص" };
 }
 <section class="lead-panel">
-<header class="lead-heading"><div><p class="workspace-eyebrow">پنل مدیریت دارابیکو</p><h1>همه درخواست‌ها، در یک نگاه</h1><p>استعلام‌ها، وضعیت پیگیری و فایل‌های پیوست؛ منظم و در دسترس.</p><p>@Model.Total درخواست · تاریخ‌ها به وقت تهران و شمسی</p></div><div class="inquiry-actions"><a class="btn btn-primary" href="/inquiry">ثبت درخواست جدید</a><a class="btn btn-outline-secondary" href="@Link(export: true)">خروجی CSV</a></div></header>
-<form method="get" action="/admin/leads" class="lead-filters">
-    <div class="form-field"><label for="status">وضعیت</label><select id="status" name="status" class="form-select"><option value="">همه وضعیت‌ها</option>@foreach(var status in Enum.GetValues<LeadStatus>()){<option value="@status" selected="@(f.Status == status)">@LeadPresentation.Status(status)</option>}</select></div>
-    <div class="form-field"><label for="search">نام یا موبایل</label><input id="search" name="search" value="@f.Search" maxlength="150" class="form-input" /></div>
-    <div class="form-field"><label for="from">از تاریخ شمسی</label><input id="from" name="from" value="@f.From" placeholder="۱۴۰۵/۰۱/۰۱" class="form-input" /></div>
-    <div class="form-field"><label for="to">تا تاریخ شمسی</label><input id="to" name="to" value="@f.To" placeholder="۱۴۰۵/۱۲/۲۹" class="form-input" /></div>
-    <div class="form-field"><label for="city">شهر</label><input id="city" name="city" value="@f.City" maxlength="100" class="form-input" /></div>
-    <div class="form-field"><label for="source">منبع</label><input id="source" name="source" value="@f.Source" maxlength="50" placeholder="home / projects / inquiry" class="form-input" /></div>
-    <div class="form-field"><label for="leadType">نوع لید</label><select id="leadType" name="leadType" class="form-select"><option value="">همه نوع‌ها</option>@foreach(var type in new[]{"inquiry", "booking", "aftersales", "estimator", "feasibility_pdf"}){<option value="@type" selected="@(f.LeadType == type)">@type</option>}</select></div>
-    <div class="inquiry-actions"><button class="btn-submit" type="submit">اعمال فیلتر</button><a class="inquiry-back" href="/admin/leads">پاک کردن</a></div>
+<header class="lead-heading"><div><p class="workspace-eyebrow">پنل مدیریت دارابیکو</p><h1>همه درخواست‌ها، در یک نگاه</h1><p>استعلام‌ها، وضعیت پیگیری و فایل‌های پیوست؛ منظم و در دسترس.</p><p>@Model.Total درخواست · تاریخ‌ها به وقت تهران و شمسی</p></div><div class="inquiry-actions"><a class="pw-btn pw-btn--primary" href="/inquiry">ثبت درخواست جدید</a><a class="pw-btn pw-btn--secondary" href="@Link(export: true)">خروجی CSV</a></div></header>
+<form method="get" action="/admin/leads" class="lead-filters" aria-label="فیلتر درخواست‌ها">
+    <div class="form-field"><label for="status">وضعیت</label><select id="status" name="status"><option value="">همه وضعیت‌ها</option>@foreach(var status in Enum.GetValues<LeadStatus>()){<option value="@status" selected="@(f.Status == status)">@LeadPresentation.Status(status)</option>}</select></div>
+    <div class="form-field"><label for="search">نام یا موبایل</label><input id="search" name="search" value="@f.Search" maxlength="150" placeholder="جست‌وجوی نام یا شماره" /></div>
+    <div class="form-field"><label for="from">از تاریخ شمسی</label><input id="from" name="from" value="@f.From" placeholder="۱۴۰۵/۰۱/۰۱" dir="ltr" /></div>
+    <div class="form-field"><label for="to">تا تاریخ شمسی</label><input id="to" name="to" value="@f.To" placeholder="۱۴۰۵/۱۲/۲۹" dir="ltr" /></div>
+    <div class="form-field"><label for="city">شهر</label><input id="city" name="city" value="@f.City" maxlength="100" /></div>
+    <div class="form-field"><label for="source">منبع</label><input id="source" name="source" value="@f.Source" maxlength="50" placeholder="home / projects / inquiry" dir="ltr" /></div>
+    <div class="form-field"><label for="leadType">نوع لید</label><select id="leadType" name="leadType"><option value="">همه نوع‌ها</option>@foreach(var type in new[]{"inquiry", "booking", "aftersales", "estimator", "feasibility_pdf"}){<option value="@type" selected="@(f.LeadType == type)">@TypeLabel(type)</option>}</select></div>
+    <div class="inquiry-actions lead-filter-actions"><button class="pw-btn pw-btn--primary" type="submit">اعمال فیلتر</button><a class="pw-btn pw-btn--secondary" href="/admin/leads">پاک کردن</a></div>
 </form>
 <div asp-validation-summary="All" class="form-alert form-alert--warning"></div>
-@if(Model.Leads.Count == 0){<div class="result-card"><h2>درخواستی پیدا نشد</h2><p>فیلترها را تغییر دهید یا پس از ثبت درخواست جدید دوباره بررسی کنید.</p><a href="/admin/leads">نمایش همه لیدها</a></div>}
+@if(Model.Leads.Count == 0){<div class="result-card"><h2>درخواستی پیدا نشد</h2><p>فیلترها را تغییر دهید یا پس از ثبت درخواست جدید دوباره بررسی کنید.</p><a class="pw-btn pw-btn--secondary" href="/admin/leads">نمایش همه لیدها</a></div>}
 <div class="lead-list">
 @foreach(var lead in Model.Leads){
-<article class="lead-row">
-    <div><a href="/admin/leads/@lead.Id" class="lead-name">@(lead.FullName ?? "بدون نام")</a><p><bdi>@lead.Mobile</bdi> · @lead.City</p><p class="field-hint">@LeadPresentation.Date(lead.CreatedAtUtc) · @(lead.Source ?? lead.LeadType) · @lead.LeadType</p></div>
-    <form action="/admin/leads/@lead.Id/update" method="post" class="lead-inline">
+<article class="lead-row" aria-labelledby="lead-name-@lead.Id">
+    <div class="lead-identity"><div class="lead-identity-heading"><a id="lead-name-@lead.Id" href="/admin/leads/@lead.Id" class="lead-name">@(lead.FullName ?? "بدون نام")</a><span class="lead-status" data-status="@lead.Status">@LeadPresentation.Status(lead.Status)</span></div><p><bdi>@lead.Mobile</bdi> · @lead.City</p><p class="field-hint">@LeadPresentation.Date(lead.CreatedAtUtc)</p><p class="field-hint">@SourceLabel(lead.Source) · @TypeLabel(lead.LeadType)</p></div>
+    <form action="/admin/leads/@lead.Id/update" method="post" class="lead-inline" aria-label="پیگیری @(lead.FullName ?? "بدون نام")">
         @Html.AntiForgeryToken()<input type="hidden" name="returnUrl" value="@Link(f.Page)" />
-        <div><label for="status-@lead.Id">وضعیت</label><select id="status-@lead.Id" name="Status" class="form-select">@foreach(var status in Enum.GetValues<LeadStatus>()){<option value="@status" selected="@(lead.Status == status)">@LeadPresentation.Status(status)</option>}</select></div>
-        <div><label for="assigned-@lead.Id">مسئول پیگیری</label><input id="assigned-@lead.Id" name="AssignedTo" value="@lead.AssignedTo" maxlength="150" class="form-input" /></div>
-        <button class="inquiry-back" type="submit">ذخیره</button>
+        <div><label for="status-@lead.Id">وضعیت</label><select id="status-@lead.Id" name="Status">@foreach(var status in Enum.GetValues<LeadStatus>()){<option value="@status" selected="@(lead.Status == status)">@LeadPresentation.Status(status)</option>}</select></div>
+        <div><label for="assigned-@lead.Id">مسئول پیگیری</label><input id="assigned-@lead.Id" name="AssignedTo" value="@lead.AssignedTo" maxlength="150" /></div>
+        <button class="pw-btn pw-btn--primary" type="submit">ذخیره</button>
     </form>
 </article>}
 </div>
-<nav aria-label="صفحه‌بندی لیدها" class="inquiry-actions">@if(f.Page > 1){<a class="inquiry-back" href="@Link(f.Page-1)">صفحه قبل</a>}<span>صفحه @f.Page از @Math.Max(1, Model.Pages)</span>@if(f.Page < Model.Pages){<a class="inquiry-back" href="@Link(f.Page+1)">صفحه بعد</a>}</nav>
+<nav aria-label="صفحه‌بندی لیدها" class="inquiry-actions">@if(f.Page > 1){<a class="pw-btn pw-btn--secondary" href="@Link(f.Page-1)">صفحه قبل</a>}<span>صفحه @f.Page از @Math.Max(1, Model.Pages)</span>@if(f.Page < Model.Pages){<a class="pw-btn pw-btn--secondary" href="@Link(f.Page+1)">صفحه بعد</a>}</nav>
 </section>
