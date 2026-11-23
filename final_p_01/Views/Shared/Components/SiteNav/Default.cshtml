@@ -1,0 +1,32 @@
+@model final_p_01.ViewComponents.SiteNavViewModel
+@{
+    string currentPath = Context.Request.Path.Value?.ToLowerInvariant().TrimEnd('/') ?? "";
+    string guidePath = "/padel-court-construction-guide";
+    bool guideActive = currentPath == guidePath || (currentPath.Length > guidePath.Length && currentPath.StartsWith(guidePath));
+}
+<ul class="workspace-nav-subtree">
+    <li>
+        <a href="@guidePath" class="nav-link @(guideActive ? "is-active" : "")">راهنمای جامع 0 تا 100 ساخت زمین پدل</a>
+        @if (Model.GuideChildren.Count > 0)
+        {
+            <ul class="workspace-nav-cluster" aria-label="فصل‌های راهنمای جامع">
+                @foreach (var child in Model.GuideChildren)
+                {
+                    <li><a href="/blog/@child.Slug" class="nav-link">دیواره‌ها و ابعاد: @child.Title</a></li>
+                }
+            </ul>
+        }
+    </li>
+</ul>
+@if (Model.LatestPosts.Count > 0)
+{
+    <div class="workspace-nav-latest">
+        <span class="workspace-nav-latest-title">آخرین مقالات مجله</span>
+        <ul>
+            @foreach (var post in Model.LatestPosts)
+            {
+                <li><a href="/blog/@post.Slug" class="nav-link">@post.Title</a></li>
+            }
+        </ul>
+    </div>
+}

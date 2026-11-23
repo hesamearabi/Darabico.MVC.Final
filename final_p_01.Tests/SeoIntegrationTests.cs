@@ -18,6 +18,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
+using final_p_01.Domain.Entities;
+using final_p_01.Infrastructure.Data;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace final_p_01.Tests;
 
@@ -25,6 +28,7 @@ public sealed class SeoApplication : IAsyncLifetime
 {
     public const string Origin = "https://seo-staging.example";
     public WebApplication App { get; private set; } = null!;
+    public IServiceProvider Services => App.Services;
     public HttpClient Client { get; private set; } = null!;
     private readonly string directory = Path.Combine(Path.GetTempPath(), $"darabico-seo-{Guid.NewGuid():N}");
 
@@ -49,6 +53,8 @@ public sealed class SeoApplication : IAsyncLifetime
         builder.Logging.ClearProviders();
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         builder.Services.AddControllersWithViews().AddApplicationPart(typeof(HomeController).Assembly);
+        builder.Services.AddMemoryCache();
+        builder.Services.AddSingleton<final_p_01.Services.ISiteSettingsProvider, final_p_01.Services.SiteSettingsProvider>();
         builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite($"Data Source={Path.Combine(directory, "seo.db")}"));
         builder.Services.AddScoped<final_p_01.Application.Common.Interfaces.IAppDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
         builder.Services.AddScoped<final_p_01.Application.Projects.Queries.ListProjectsHandler>();
@@ -62,6 +68,7 @@ public sealed class SeoApplication : IAsyncLifetime
         App.UseDeveloperExceptionPage();
         final_p_01.Extensions.StaticAssetExtensions.UseLegacyImagePaths(App, App.Environment);
         App.UseStaticFiles();
+        App.UseMiddleware<final_p_01.Middleware.LanguageMiddleware>();
         App.UseRouting();
         App.UseAuthentication();
         App.UseAuthorization();
@@ -71,6 +78,19 @@ public sealed class SeoApplication : IAsyncLifetime
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             await db.Database.EnsureCreatedAsync();
+            var settings = await db.SiteSettings.SingleAsync();
+            settings.EnableMultiLanguage = true;
+            var category = db.Categories.Add(new Category { Name = "راهنما", Slug = "guide" }).Entity;
+            await db.SaveChangesAsync();
+            db.Posts.Add(new Post
+            {
+                Title = "راهنمای جامع 0 تا 100 ساخت زمین پدل",
+                Slug = "padel-court-construction-guide",
+                Content = "<p>راهنمای کامل ساخت زمین پدل</p>",
+                MetaDescription = "راهنمای جامع ساخت زمین پدل",
+                IsPublished = true,
+                CategoryId = category.Id
+            });
             for (var number = 1; number <= 14; number++)
             {
                 db.Projects.Add(new Project
@@ -109,6 +129,12 @@ public sealed class SeoIntegrationTests(SeoApplication app) : IClassFixture<SeoA
         var body = await response.Content.ReadAsStringAsync();
         Assert.True(response.StatusCode == HttpStatusCode.OK, $"{path}: {response.StatusCode}\n{body}");
         return body;
+    }
+
+    private async Task<(HttpStatusCode Status, string Body)> GetWithStatus(string path)
+    {
+        using var response = await app.Client.GetAsync(path);
+        return (response.StatusCode, await response.Content.ReadAsStringAsync());
     }
 
     private static string[] Tags(string html, string pattern) => Regex.Matches(html, pattern, RegexOptions.IgnoreCase).Select(m => m.Value).ToArray();
@@ -337,5 +363,50 @@ public sealed class SeoIntegrationTests(SeoApplication app) : IClassFixture<SeoA
         Assert.Contains($"Sitemap: {SeoApplication.Origin}/sitemap.xml", robots);
         Assert.Contains("Disallow: /admin/", robots);
         Assert.DoesNotContain("/inquiry", robots);
+    }
+
+    [Fact]
+    public async Task GuidePageReturns200WithBreadcrumbsAndSitemapEntry()
+    {
+        var (status, html) = await GetWithStatus("/padel-court-construction-guide");
+        Assert.Equal(HttpStatusCode.OK, status);
+        Assert.Contains("راهنمای جامع 0 تا 100 ساخت زمین پدل", WebUtility.HtmlDecode(html));
+        Assert.Contains("BreadcrumbList", html);
+    }
+
+    [Fact]
+    public async Task GuideChildrenAppearInNavAndSitemap()
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var guide = db.Posts.Single(p => p.Slug == "padel-court-construction-guide");
+        db.Posts.Add(new Post
+        {
+            Title = "دیواره‌های زمین پدل",
+            Slug = "padel-court-walls-test",
+            Content = "<p>دیواره‌های شیشه‌ای زمین پدل</p>",
+            ParentPostId = guide.Id,
+            CategoryId = guide.CategoryId,
+            IsPublished = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        });
+        db.SaveChanges();
+
+        var navHtml = await Get("/");
+        Assert.Contains("/blog/padel-court-walls-test", navHtml);
+
+        var sitemap = await Get("/sitemap.xml");
+        Assert.Contains("/blog/padel-court-walls-test", sitemap);
+        Assert.Contains("/padel-court-construction-guide", sitemap);
+    }
+
+    [Fact]
+    public async Task ArabicRouteServesHtmlLangAr()
+    {
+        var (status, html) = await GetWithStatus("/ar");
+        Assert.Equal(HttpStatusCode.OK, status);
+        Assert.Contains("<html lang=\"ar\"", html);
+        Assert.Contains("hreflang=\"ar\"", html);
     }
 }

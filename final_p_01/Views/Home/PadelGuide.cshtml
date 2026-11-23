@@ -5,4 +5,33 @@
     ViewData["ArticleCanonicalUrl"] = UrlBuilder.Absolute("padel-court-construction-guide");
     ViewData["ArticleDefaultTitle"] = "راهنمای جامع 0 تا 100 ساخت زمین پدل";
     ViewData["ArticleDefaultImgAlt"] = "تصویر راهنمای ساخت زمین پدل";
+    ViewData["SeoPageKey"] = "guide";
 }
+@if (Model.ChildPosts.Count > 0)
+{
+    <section class="guide-chapters" aria-label="فصل‌های راهنمای جامع">
+        <h2>فصل‌های راهنمای جامع 0 تا 100</h2>
+        <div class="guide-chapters-grid">
+            @foreach (var child in Model.ChildPosts)
+            {
+                <a class="guide-chapter-card" href="/blog/@child.Slug">
+                    <span class="guide-chapter-title">@child.Title</span>
+                    @if (!string.IsNullOrWhiteSpace(child.MetaDescription))
+                    {
+                        <span class="guide-chapter-desc">@child.MetaDescription</span>
+                    }
+                </a>
+            }
+        </div>
+    </section>
+}
+<script type="application/ld+json">
+{
+  "@@context": "https://schema.org",
+  "@@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@@type": "ListItem", "position": 1, "name": "خانه", "item": "@UrlBuilder.Absolute("")" },
+    { "@@type": "ListItem", "position": 2, "name": "راهنمای جامع 0 تا 100 ساخت زمین پدل", "item": "@UrlBuilder.Absolute("padel-court-construction-guide")" }
+  ]
+}
+</script>

@@ -62,4 +62,9 @@ public class Post
 
     public ICollection<Faq> Faqs { get; set; } = new List<Faq>();
     public ICollection<PostSlugHistory> SlugHistories { get; set; } = new List<PostSlugHistory>();
+
+    /// <summary>صفحه پیلار والد (مثلاً راهنمای جامع 0 تا 100)؛ خالی یعنی مقاله مستقل.</summary>
+    public int? ParentPostId { get; set; }
+    public Post? ParentPost { get; set; }
+    public ICollection<Post> Children { get; set; } = new List<Post>();
 }

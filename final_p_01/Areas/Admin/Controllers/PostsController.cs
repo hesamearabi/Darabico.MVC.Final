@@ -220,10 +220,27 @@ public class PostsController : Controller
         return View(posts);
     }
 
+    private async Task<List<SelectListItem>> GetParentGuideOptionsAsync(int? excludePostId = null)
+    {
+        var guideId = await _context.Posts.AsNoTracking()
+            .Where(p => p.Slug == GuideSlug)
+            .Select(p => (int?)p.Id)
+            .FirstOrDefaultAsync();
+
+        var options = new List<SelectListItem> { new("مقاله مستقل (بدون والد)", "") };
+        if (guideId != null && guideId != excludePostId)
+        {
+            var guide = await _context.Posts.AsNoTracking().FirstAsync(p => p.Id == guideId);
+            options.Add(new(guide.Title, guideId.ToString()));
+        }
+        return options;
+    }
+
     [HttpGet]
     public IActionResult Create()
     {
         ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name");
+        ViewBag.ParentPostId = GetParentGuideOptionsAsync().GetAwaiter().GetResult();
         return View();
     }
 
@@ -238,6 +255,8 @@ public class PostsController : Controller
         ModelState.Remove("Faqs");
         ModelState.Remove("SlugHistories");
         ModelState.Remove("Slug");
+        ModelState.Remove("ParentPost");
+        ModelState.Remove("Children");
 
         post.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(post.Slug) ? post.Title : post.Slug);
 
@@ -288,6 +307,13 @@ public class PostsController : Controller
                 post.AverageRating = 0.0;
                 post.TotalVotes = 0;
 
+                if (post.ParentPostId == 0) post.ParentPostId = null;
+                if (post.ParentPostId != null)
+                {
+                    var parent = await _context.Posts.AsNoTracking().FirstOrDefaultAsync(p => p.Id == post.ParentPostId);
+                    if (parent == null || parent.Slug != GuideSlug) post.ParentPostId = null;
+                }
+
                 post.CreatedAt = DateTime.UtcNow;
                 _context.Posts.Add(post);
                 await _context.SaveChangesAsync();
@@ -309,6 +335,7 @@ public class PostsController : Controller
                 ModelState.AddModelError("", ex.Message);
                 ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
                 ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
+                ViewBag.ParentPostId = GetParentGuideOptionsAsync().GetAwaiter().GetResult();
                 return View(post);
             }
             catch (Exception ex)
@@ -338,6 +365,7 @@ public class PostsController : Controller
 
         ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
         ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
+        ViewBag.ParentPostId = await GetParentGuideOptionsAsync(post.Id);
         return View(post);
     }
 
@@ -461,6 +489,14 @@ public class PostsController : Controller
 
             existingPost.AttachmentTitle = post.AttachmentTitle;
             existingPost.AttachmentDescription = post.AttachmentDescription;
+
+            existingPost.ParentPostId = post.ParentPostId == 0 ? null : post.ParentPostId;
+            if (existingPost.ParentPostId != null)
+            {
+                var parent = await _context.Posts.AsNoTracking().FirstOrDefaultAsync(p => p.Id == existingPost.ParentPostId);
+                if (parent == null || parent.Slug != GuideSlug) existingPost.ParentPostId = null;
+            }
+            if (existingPost.Id.ToString() == existingPost.ParentPostId?.ToString()) existingPost.ParentPostId = null;
 
             string? oldImagePathToDelete = null;
             string? newlyUploadedImagePath = null;

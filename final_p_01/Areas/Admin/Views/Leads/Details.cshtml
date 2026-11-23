@@ -30,4 +30,11 @@
     @if(Model.Notes.Count == 0){<p class="text-muted">هنوز یادداشتی ثبت نشده است. نتیجه تماس را در فرم زیر بنویسید.</p>}
     @foreach(var note in Model.Notes.OrderByDescending(n => n.CreatedAtUtc)){<article class="result-card"><p class="inquiry-thanks">@note.Text</p><p class="text-muted">@note.Author · @LeadPresentation.Date(note.CreatedAtUtc)</p></article>}
     <form action="/admin/leads/@Model.Id/notes" method="post" class="result-card">@Html.AntiForgeryToken()<label for="note">یادداشت جدید (فقط برای مدیریت)</label><textarea id="note" name="text" class="form-control" required maxlength="2000" rows="4" aria-describedby="note-error">@ViewData["NoteText"]</textarea><span id="note-error" class="field-validation-error">@Html.ValidationMessage("text")</span><button class="btn btn-primary mt-3">ثبت یادداشت</button></form>
+
+    <form action="/admin/leads/delete/@Model.Id" method="post" class="result-card lead-delete-form" onsubmit="return confirm('این درخواست و همه یادداشت‌ها و پیوست‌های آن برای همیشه حذف می‌شود. مطمئن هستید؟');">
+        @Html.AntiForgeryToken()
+        <h2>حذف درخواست</h2>
+        <p class="field-hint">حذف دائمی است و قابل بازگشت نیست؛ فایل‌های پیوست نیز پاک می‌شوند.</p>
+        <button type="submit" class="btn btn-danger">حذف دائمی درخواست</button>
+    </form>
 </section>

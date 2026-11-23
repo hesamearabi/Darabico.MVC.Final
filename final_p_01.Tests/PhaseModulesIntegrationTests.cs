@@ -1,5 +1,6 @@
 using final_p_01.Controllers;
 using final_p_01.Domain.Entities;
+using final_p_01.Application.Common.Interfaces;
 using final_p_01.Infrastructure.Data;
 using Darabico.Domain.Entities;
 using Microsoft.Data.Sqlite;
@@ -252,5 +253,94 @@ public class PhaseModulesIntegrationTests : IDisposable
         var controller = new CityPagesController(_context);
 
         Assert.IsType<NotFoundResult>(await controller.Details("tabriz"));
+    }
+
+    [Fact]
+    public async Task DeleteLead_RemovesLeadNotesAttachmentsAndFiles()
+    {
+        var lead = new InquiryLead { FullName = "آزمون حذف", Mobile = "09123456789" };
+        lead.Attachments.Add(new InquiryLeadAttachment { StorageKey = "leads/test.txt", OriginalFileName = "test.txt", ContentType = "text/plain" });
+        lead.Notes.Add(new InquiryLeadNote { Text = "یادداشت", Author = "مدیر", CreatedAtUtc = DateTime.UtcNow });
+        _context.InquiryLeads.Add(lead);
+        await _context.SaveChangesAsync();
+
+        var deletedKeys = new List<string>();
+        var storage = new DeletionTrackingStorage(keys => deletedKeys.AddRange(keys));
+        var controller = WithTempData(new final_p_01.Areas.Admin.Controllers.LeadsController(_context, storage));
+
+        var result = await controller.Delete(lead.Id, default);
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Index", redirect.ActionName);
+
+        Assert.False(await _context.InquiryLeads.AsNoTracking().AnyAsync(l => l.Id == lead.Id));
+        Assert.False(await _context.InquiryLeadAttachments.AsNoTracking().AnyAsync(a => a.InquiryLeadId == lead.Id));
+        Assert.False(await _context.InquiryLeadNotes.AsNoTracking().AnyAsync(n => n.InquiryLeadId == lead.Id));
+        Assert.Equal(new[] { "leads/test.txt" }, deletedKeys);
+    }
+
+    [Fact]
+    public async Task DeleteLead_MissingLead_RedirectsWithoutThrowing()
+    {
+        var controller = WithTempData(new final_p_01.Areas.Admin.Controllers.LeadsController(_context, new DeletionTrackingStorage(_ => { })));
+        var result = await controller.Delete(999, default);
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Index", redirect.ActionName);
+    }
+
+    [Fact]
+    public async Task SaveSeo_PersistsTitlesAndUploadedFavicon()
+    {
+        var controller = WithTempData(new final_p_01.Areas.Admin.Controllers.SettingsController(_context));
+        var model = new final_p_01.Areas.Admin.Models.SiteSeoViewModel
+        {
+            SeoHomeTitle = "ساخت زمین پدل | دارابیکو",
+            SeoGuideDescription = "راهنمای جامع ساخت زمین پدل"
+        };
+        var faviconBytes = new byte[] { 0, 0, 1, 0, 1, 0, 16, 16, 32, 0, 1, 0, 32, 0, 168, 0, 0, 0, 0, 0 };
+        var favicon = new Microsoft.AspNetCore.Http.FormFile(new MemoryStream(faviconBytes), 0, faviconBytes.Length, "favicon", "favicon.ico");
+
+        var result = await controller.SaveSeo(model, favicon);
+
+        Assert.IsType<RedirectToActionResult>(result);
+        var settings = await _context.SiteSettings.AsNoTracking().SingleAsync();
+        Assert.Equal("ساخت زمین پدل | دارابیکو", settings.SeoHomeTitle);
+        Assert.Equal("راهنمای جامع ساخت زمین پدل", settings.SeoGuideDescription);
+        Assert.Equal("/uploads/branding/favicon.ico", settings.FaviconPath);
+    }
+
+    [Fact]
+    public async Task SaveSeo_RejectsDisallowedFaviconExtension()
+    {
+        var controller = WithTempData(new final_p_01.Areas.Admin.Controllers.SettingsController(_context));
+        var bytes = new byte[] { 1, 2, 3 };
+        var exe = new Microsoft.AspNetCore.Http.FormFile(new MemoryStream(bytes), 0, bytes.Length, "favicon", "favicon.exe");
+
+        var result = await controller.SaveSeo(new final_p_01.Areas.Admin.Models.SiteSeoViewModel(), exe);
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.True(controller.TempData.ContainsKey("SeoError"));
+        Assert.Null(await _context.SiteSettings.AsNoTracking().Select(s => s.FaviconPath).SingleAsync());
+    }
+
+    private static T WithTempData<T>(T controller) where T : Microsoft.AspNetCore.Mvc.Controller
+    {
+        controller.TempData = new Microsoft.AspNetCore.Mvc.ViewFeatures.TempDataDictionary(
+            new Microsoft.AspNetCore.Http.DefaultHttpContext(), new MemoryTempDataProvider());
+        return controller;
+    }
+
+    private sealed class MemoryTempDataProvider : Microsoft.AspNetCore.Mvc.ViewFeatures.ITempDataProvider
+    {
+        public IDictionary<string, object> LoadTempData(Microsoft.AspNetCore.Http.HttpContext context) => new Dictionary<string, object>();
+        public void SaveTempData(Microsoft.AspNetCore.Http.HttpContext context, IDictionary<string, object> values) { }
+    }
+
+    private sealed class DeletionTrackingStorage : IInquiryAttachmentStorage
+    {
+        private readonly Action<string[]> _onDelete;
+        public DeletionTrackingStorage(Action<string[]> onDelete) => _onDelete = onDelete;
+        public void Delete(string storageKey) => _onDelete(new[] { storageKey });
+        public Task<InquiryLeadAttachment> SaveAsync(UploadFile file, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Stream Open(string storageKey) => throw new NotSupportedException();
     }
 }

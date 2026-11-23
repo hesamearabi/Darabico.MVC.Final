@@ -62,5 +62,22 @@ public class SiteSettings
     /// <summary>کلید فعال‌سازی زیرساخت چندزبانه (EN/AR)؛ پیش‌فرض خاموش</summary>
     public bool EnableMultiLanguage { get; set; }
 
+    /// <summary>عنوان سئوی اختصاصی صفحه اصلی؛ خالی = مقدار پیش‌فرض</summary>
+    [MaxLength(200)] public string? SeoHomeTitle { get; set; }
+    [MaxLength(320)] public string? SeoHomeDescription { get; set; }
+    [MaxLength(200)] public string? SeoProjectsTitle { get; set; }
+    [MaxLength(320)] public string? SeoProjectsDescription { get; set; }
+    [MaxLength(200)] public string? SeoBlogTitle { get; set; }
+    [MaxLength(320)] public string? SeoBlogDescription { get; set; }
+    [MaxLength(200)] public string? SeoEstimatorTitle { get; set; }
+    [MaxLength(320)] public string? SeoEstimatorDescription { get; set; }
+    [MaxLength(200)] public string? SeoInquiryTitle { get; set; }
+    [MaxLength(320)] public string? SeoInquiryDescription { get; set; }
+    [MaxLength(200)] public string? SeoGuideTitle { get; set; }
+    [MaxLength(320)] public string? SeoGuideDescription { get; set; }
+
+    /// <summary>مسیر فاوآیکون آپلودشده در wwwroot؛ خالی = favicon پیش‌فرض</summary>
+    [MaxLength(500)] public string? FaviconPath { get; set; }
+
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }

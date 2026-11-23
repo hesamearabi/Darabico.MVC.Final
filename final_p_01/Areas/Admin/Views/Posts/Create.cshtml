@@ -212,6 +212,14 @@
                 </div>
 
                 <div class="mb-4">
+                    <label asp-for="ParentPostId" class="form-label">مقاله والد (راهنمای جامع 0 تا 100)</label>
+                    <select asp-for="ParentPostId" class="form-select" asp-items="ViewBag.ParentPostId">
+                        <option value="">مقاله مستقل (بدون والد)</option>
+                    </select>
+                    <small class="form-text text-muted">با انتخاب راهنمای جامع، این مقاله به‌عنوان فصل کلارستر در منوی اصلی و صفحه راهنما نمایش داده می‌شود.</small>
+                </div>
+
+                <div class="mb-4">
                     <label class="form-label">عکس کاور مقاله</label>
                     <div class="image-upload-box" onclick="document.getElementById('coverImage').click()">
                         <img id="previewImg" alt="پیش‌نمایش کاور" />

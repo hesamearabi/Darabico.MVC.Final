@@ -1,12 +1,33 @@
 ﻿@inject final_p_01.Services.ISiteUrlBuilder UrlBuilder
+@using final_p_01.ViewModels
+@using final_p_01.ViewComponents
+@using final_p_01.Application.Services
+@inject final_p_01.Services.ISiteSettingsProvider SiteSettings
+@{
+    var siteSettings = SiteSettings.Get();
+    string? pageSeoKey = ViewData["SeoPageKey"] as string;
+    var (pageSeoTitle, pageSeoDescription) = pageSeoKey != null ? siteSettings.ForPage(pageSeoKey) : (null, null);
+    string currentCulture = Context.Items[LanguageRouteHelper.CultureKey] as string ?? LanguageRouteHelper.Persian;
+    bool isArabic = currentCulture == LanguageRouteHelper.Arabic;
+    string htmlLang = isArabic ? "ar" : "fa-IR";
+    string langSwitchUrl = siteSettings.EnableMultiLanguage
+        ? isArabic ? "/" + (Context.Request.Path.Value ?? "").Split('/')[^1] : "/ar" + Context.Request.Path.Value
+        : "";
+    string strippedPath = Context.Request.Path.Value?.TrimStart('/') ?? "";
+    if (strippedPath.StartsWith("ar/", StringComparison.OrdinalIgnoreCase) || strippedPath.StartsWith("en/", StringComparison.OrdinalIgnoreCase))
+    {
+        strippedPath = strippedPath[3..];
+    }
+}
 <!DOCTYPE html>
-<html lang="fa-IR" dir="rtl">
+<html lang="@htmlLang" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     @{
         string? customMetaDescription = ViewData["MetaDescription"] as string;
+        customMetaDescription = !string.IsNullOrWhiteSpace(customMetaDescription) ? customMetaDescription : pageSeoDescription;
         string metaDescription = !string.IsNullOrWhiteSpace(customMetaDescription)
         ? customMetaDescription
         : "دارابی‌کو، برند تخصصی هلدینگ دارابی و پیمانکار مستقیم طراحی، زیرسازی و ساخت زمین پدل در ایران. تولید شیشه، چمن مصنوعی و تجهیزات با استانداردهای جهانی FIP.";
@@ -16,6 +37,7 @@
         bool isNoIndex = robots.Contains("noindex", StringComparison.OrdinalIgnoreCase);
 
         string rawTitle = ViewData["Title"] as string ?? "ساخت زمین پدل و تجهیزات استاندارد FIP";
+        if (!string.IsNullOrWhiteSpace(pageSeoTitle)) rawTitle = pageSeoTitle;
         bool hasBrandInTitle = rawTitle.Contains("دارابی کو") || rawTitle.Contains("دارابی‌کو") || rawTitle.Contains("دارابیکو");
         string pageTitle = (hasBrandInTitle || rawTitle.Length > 55)
         ? rawTitle
@@ -60,7 +82,9 @@
     <meta name="robots" content="@robots">
     @if (!isNoIndex)
     {
-        <link rel="canonical" href="@canonicalUrl" />
+        <link rel="alternate" hreflang="fa" href="@UrlBuilder.Absolute(strippedPath)" />
+    <link rel="alternate" hreflang="ar" href="@UrlBuilder.Absolute("ar/" + strippedPath)" />
+    <link rel="canonical" href="@canonicalUrl" />
     }
 
     <meta property="og:locale" content="fa_IR">
@@ -97,7 +121,7 @@
 
     <title>@pageTitle</title>
 
-    <link rel="icon" type="image/x-icon" href="@UrlBuilder.Absolute("favicon.ico")" sizes="48x48">
+    <link rel="icon" type="image/x-icon" href="@(string.IsNullOrWhiteSpace(siteSettings.FaviconPath) ? UrlBuilder.Absolute("favicon.ico") : UrlBuilder.Absolute(siteSettings.FaviconPath.TrimStart('/') + (siteSettings.CacheBust != null ? "?v=" + siteSettings.CacheBust : "")))" sizes="48x48">
     <link rel="icon" type="image/png" sizes="192x192" href="@UrlBuilder.Absolute("android-chrome-192x192.png")">
     <link rel="icon" type="image/png" sizes="192x192" href="@UrlBuilder.Absolute("images/siteLOGO/favicon.png")">
     <link rel="apple-touch-icon" sizes="180x180" href="@UrlBuilder.Absolute("apple-touch-icon.png")">
@@ -413,11 +437,23 @@
                     <li><a href="/#services-section" class="nav-link">خدمات</a></li>
                     <li><a asp-controller="Projects" asp-action="Index" class="nav-link">پروژه‌ها</a></li>
                     <li><a asp-controller="Home" asp-action="Blog" class="nav-link">مقالات</a></li>
-                    <li><a asp-controller="Home" asp-action="PadelGuide" class="nav-link">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
+                    <li class="nav-has-mega" aria-haspopup="true">
+                        <a asp-controller="Home" asp-action="PadelGuide" class="nav-link">راهنمای جامع 0 تا 100 ساخت زمین پدل</a>
+                        <div class="nav-mega" role="menu">
+                            <vc:site-nav />
+                        </div>
+                    </li>
                 </ul>
             </nav>
 
             <div class="header-actions">
+                @if (siteSettings.EnableMultiLanguage)
+                {
+                    <a href="@langSwitchUrl" class="lang-switcher" lang="ar" hreflang="ar" title="العربية" aria-label="Switch to Arabic">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                        <span>AR</span>
+                    </a>
+                }
                 <a asp-controller="Home" asp-action="Contact" class="header-cta-btn">مشاوره رایگان</a>
                 <button class="hamburger" id="hamburger-btn" aria-label="منو">
                     <span></span><span></span><span></span>
@@ -437,9 +473,14 @@
                     <li><a asp-controller="Projects" asp-action="Index" class="mobile-link">پروژه‌ها</a></li>
                     <li><a asp-controller="Home" asp-action="Blog" class="mobile-link">وبلاگ آموزشی</a></li>
                     <li><a asp-controller="Home" asp-action="PadelGuide" class="mobile-link">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
+                    <vc:site-nav />
                 </ul>
             </nav>
             <div class="mobile-menu-footer">
+                @if (siteSettings.EnableMultiLanguage)
+                {
+                    <a href="@langSwitchUrl" class="mobile-link lang-switcher" lang="ar" hreflang="ar">العربية (AR)</a>
+                }
                 <a asp-controller="Home" asp-action="Contact" class="mobile-cta">درخواست بازدید پروژه</a>
             </div>
         </div>
@@ -510,6 +551,10 @@
                         <li><a asp-controller="Home" asp-action="About">درباره ما</a></li>
                         <li><a asp-controller="Home" asp-action="Contact">ارتباط با ما</a></li>
                         <li><a asp-controller="Home" asp-action="PadelGuide">راهنمای جامع 0 تا 100 ساخت زمین پدل</a></li>
+                        @foreach (var child in (await Component.InvokeAsync<SiteNavViewComponent>() as SiteNavViewModel)?.GuideChildren ?? new List<PostCardViewModel>())
+                        {
+                            <li><a href="/blog/@child.Slug">@child.Title</a></li>
+                        }
                     </ul>
                 </div>
 

@@ -1957,4 +1957,85 @@ body:has(.lead-panel) .admin-main .d-flex { flex-wrap: wrap; }
 .field-hint { color: var(--color-muted); font-size: var(--form-type-small); line-height: 1.6; }
 .form-section-title { font-size: var(--form-type-body); font-weight: var(--fw-bold); }
 .lead-panel .form-grid { margin-block-end: var(--form-space-3); }
+
+/* =========================================
+   Dynamic mega-menu (guide cluster) & lang switcher
+   ========================================= */
+.nav-has-mega { position: relative; }
+
+.nav-mega {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    min-width: 340px;
+    background: var(--brand-navy);
+    border: 1px solid rgba(197, 166, 107, 0.25);
+    border-radius: 12px;
+    padding: 18px 20px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition: opacity 0.24s ease, transform 0.24s ease, visibility 0.24s;
+    z-index: 1000;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.nav-has-mega:hover .nav-mega,
+.nav-has-mega:focus-within .nav-mega { opacity: 1; visibility: visible; transform: translateY(4px); }
+
+.workspace-nav-subtree, .workspace-nav-cluster, .workspace-nav-latest ul { list-style: none; margin: 0; padding: 0; }
+
+.workspace-nav-cluster { margin-top: 8px; padding-inline-start: 12px; border-inline-start: 2px solid rgba(197, 166, 107, 0.3); }
+
+.workspace-nav-latest { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.12); }
+
+.workspace-nav-latest-title { display: block; font-size: 12px; font-weight: 800; color: var(--brand-gold); margin-bottom: 8px; }
+
+.nav-mega a { display: block; padding: 6px 0; color: rgba(255, 255, 255, 0.85); text-decoration: none; font-size: 14px; transition: color 0.2s ease; }
+.nav-mega a:hover, .nav-mega a.is-active { color: var(--brand-gold); }
+
+.lang-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 50px;
+    min-height: 44px;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+.lang-switcher:hover, .lang-switcher:focus-visible { color: var(--brand-gold); border-color: var(--brand-gold); }
+.mobile-menu-footer .lang-switcher { color: var(--brand-navy); border-color: rgba(0, 0, 0, 0.2); }
+
+/* =========================================
+   Homepage gallery footer CTA
+   ========================================= */
+.gallery-header { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.gallery-subtitle { color: rgba(255, 255, 255, 0.7); font-size: 15px; margin: 0 0 8px; }
+.gallery-footer { display: flex; justify-content: center; margin-top: 36px; }
+
+/* =========================================
+   Guide chapters (pillar cluster cards)
+   ========================================= */
+.guide-chapters { margin: 48px 0; }
+.guide-chapters-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.guide-chapter-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px;
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, rgba(0, 0, 0, 0.1));
+    border-radius: 12px;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.guide-chapter-card:hover, .guide-chapter-card:focus-visible { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08); }
+.guide-chapter-title { font-weight: 800; color: var(--text, #1a1a2e); }
+.guide-chapter-desc { font-size: 14px; line-height: 1.7; color: var(--muted, #555); }
+@media (prefers-reduced-motion: reduce) { .nav-mega, .guide-chapter-card, .lang-switcher { transition: none; } }
 .inquiry-form .form-input, .inquiry-form .form-select, .inquiry-form .form-textarea, .lead-panel .form-input, .lead-panel .form-select { font-variant-numeric: tabular-nums; }

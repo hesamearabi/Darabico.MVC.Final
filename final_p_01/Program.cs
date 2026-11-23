@@ -29,6 +29,8 @@ builder.Services.Configure<FormOptions>(options =>
 });
 
 builder.Services.AddSingleton<ISiteUrlBuilder, SiteUrlBuilder>();
+builder.Services.AddSingleton<ISiteSettingsProvider, SiteSettingsProvider>();
+builder.Services.AddSingleton<ISiteSettingsProvider, SiteSettingsProvider>();
 builder.Services.AddFileStorage();
 
 builder.Services.AddWebEncoders(options =>
@@ -242,6 +244,22 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<ApplicationDbContext>();
         context.Database.Migrate();
 
+        if (!context.Posts.Any(p => p.Slug == "padel-court-construction-guide"))
+        {
+            context.Posts.Add(new Post
+            {
+                Title = "راهنمای جامع 0 تا 100 ساخت زمین پدل",
+                Slug = "padel-court-construction-guide",
+                Content = "<p>راهنمای گام‌به‌گام طراحی و اجرای زمین پدل: از انتخاب زمین و پی تا دیواره‌های شیشه‌ای، نورپردازی و تحویل نهایی. فصل‌های تخصصی این راهنما در همین صفحه در دسترس شماست.</p>",
+                MetaTitle = "راهنمای جامع 0 تا 100 ساخت زمین پدل | دارابیکو",
+                MetaDescription = "همه مراحل ساخت زمین پدل از صفر تا صد: انتخاب زمین، پی و آسفالت، دیواره‌ها، ابعاد استاندارد و تجهیزات FIP.",
+                IsPublished = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            });
+            context.SaveChanges();
+        }
+
         if (!context.AdminUsers.Any())
         {
             var configuration = services.GetRequiredService<IConfiguration>();
@@ -448,9 +466,9 @@ app.UseStaticFiles(new StaticFileOptions
     }
 });
 
-app.UseRouting();
-
 app.UseMiddleware<final_p_01.Middleware.LanguageMiddleware>();
+
+app.UseRouting();
 
 app.UseRateLimiter();
 

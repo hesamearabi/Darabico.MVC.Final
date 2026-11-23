@@ -306,5 +306,12 @@ public class PostConfiguration : IEntityTypeConfiguration<Post>
         builder.Property(p => p.AuthorName).HasMaxLength(150);
 
         builder.HasIndex(p => p.Slug).IsUnique();
+
+        builder.HasOne(p => p.ParentPost)
+               .WithMany(p => p.Children)
+               .HasForeignKey(p => p.ParentPostId)
+               .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(p => p.ParentPostId);
     }
 }

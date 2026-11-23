@@ -20,6 +20,7 @@ namespace final_p_01.ViewModels
     {
         public Post Post { get; set; } = default!;
         public List<PostCardViewModel> RelatedPosts { get; set; } = new List<PostCardViewModel>();
+        public List<PostCardViewModel> ChildPosts { get; set; } = new List<PostCardViewModel>();
     }
 
     public class BlogListViewModel

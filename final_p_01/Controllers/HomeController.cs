@@ -205,12 +205,30 @@ namespace final_p_01.Controllers
                 return base.NotFound();
             }
 
+            var childPosts = await _context.Posts
+                .AsNoTracking()
+                .Where(p => p.IsPublished && p.ParentPostId == guidePost.Id)
+                .OrderBy(p => p.CreatedAt)
+                .Select(p => new PostCardViewModel
+                {
+                    Id = p.Id,
+                    Slug = p.Slug,
+                    Title = p.Title,
+                    CoverImagePath = p.CoverImagePath,
+                    CoverImageAlt = p.CoverImageAlt,
+                    MetaDescription = p.MetaDescription,
+                    CreatedAt = p.CreatedAt,
+                    CategoryName = p.Category != null ? p.Category.Name : null
+                })
+                .ToListAsync();
+
             var relatedPosts = await GetRelatedPostsAsync(guidePost.Id, guidePost.CategoryId);
 
             var viewModel = new PostDetailsViewModel
             {
                 Post = guidePost,
-                RelatedPosts = relatedPosts
+                RelatedPosts = relatedPosts,
+                ChildPosts = childPosts
             };
 
             ViewData["Title"] = guidePost.Title;

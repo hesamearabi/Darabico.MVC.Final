@@ -50,6 +50,24 @@ public class SettingsController : AdminBaseController
             Email = admin.Email
         };
 
+        var settings = await _context.SiteSettings.FirstOrDefaultAsync(s => s.Id == 1);
+        ViewBag.SiteSeo = new SiteSeoViewModel
+        {
+            SeoHomeTitle = settings?.SeoHomeTitle,
+            SeoHomeDescription = settings?.SeoHomeDescription,
+            SeoProjectsTitle = settings?.SeoProjectsTitle,
+            SeoProjectsDescription = settings?.SeoProjectsDescription,
+            SeoBlogTitle = settings?.SeoBlogTitle,
+            SeoBlogDescription = settings?.SeoBlogDescription,
+            SeoEstimatorTitle = settings?.SeoEstimatorTitle,
+            SeoEstimatorDescription = settings?.SeoEstimatorDescription,
+            SeoInquiryTitle = settings?.SeoInquiryTitle,
+            SeoInquiryDescription = settings?.SeoInquiryDescription,
+            SeoGuideTitle = settings?.SeoGuideTitle,
+            SeoGuideDescription = settings?.SeoGuideDescription,
+            CurrentFaviconPath = settings?.FaviconPath
+        };
+
         return View(model);
     }
 
@@ -157,6 +175,58 @@ public class SettingsController : AdminBaseController
 
         ClearPasswordFields(model);
         return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(2_000_000)]
+    public async Task<IActionResult> SaveSeo(SiteSeoViewModel model, IFormFile? favicon)
+    {
+        var settings = await _context.SiteSettings.FirstOrDefaultAsync(s => s.Id == 1);
+        if (settings == null)
+        {
+            settings = new SiteSettings { Id = Domain.Entities.SiteSettings.SingletonId };
+            _context.SiteSettings.Add(settings);
+        }
+
+        settings.SeoHomeTitle = model.SeoHomeTitle?.Trim();
+        settings.SeoHomeDescription = model.SeoHomeDescription?.Trim();
+        settings.SeoProjectsTitle = model.SeoProjectsTitle?.Trim();
+        settings.SeoProjectsDescription = model.SeoProjectsDescription?.Trim();
+        settings.SeoBlogTitle = model.SeoBlogTitle?.Trim();
+        settings.SeoBlogDescription = model.SeoBlogDescription?.Trim();
+        settings.SeoEstimatorTitle = model.SeoEstimatorTitle?.Trim();
+        settings.SeoEstimatorDescription = model.SeoEstimatorDescription?.Trim();
+        settings.SeoInquiryTitle = model.SeoInquiryTitle?.Trim();
+        settings.SeoInquiryDescription = model.SeoInquiryDescription?.Trim();
+        settings.SeoGuideTitle = model.SeoGuideTitle?.Trim();
+        settings.SeoGuideDescription = model.SeoGuideDescription?.Trim();
+        settings.UpdatedAtUtc = DateTime.UtcNow;
+
+        if (favicon != null && favicon.Length > 0)
+        {
+            var permitted = new[] { ".ico", ".png", ".svg" };
+            var ext = Path.GetExtension(favicon.FileName).ToLowerInvariant();
+            if (!permitted.Contains(ext) || favicon.Length > 512_000)
+            {
+                TempData["SeoError"] = "فاوآیکون باید فایل .ico یا .png یا .svg با حداکثر حجم ۵۰۰ کیلوبایت باشد.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "branding");
+            Directory.CreateDirectory(uploadsFolder);
+            var fileName = $"favicon{ext}";
+            var filePath = Path.Combine(uploadsFolder, fileName);
+            await using (var stream = System.IO.File.Create(filePath))
+            {
+                await favicon.CopyToAsync(stream);
+            }
+            settings.FaviconPath = "/uploads/branding/favicon" + ext;
+        }
+
+        await _context.SaveChangesAsync();
+        TempData["SeoSuccess"] = "تنظیمات سئو و فاوآیکون با موفقیت ذخیره شد.";
+        return RedirectToAction(nameof(Index));
     }
 
     private void ClearPasswordFields(AdminSettingsViewModel model)

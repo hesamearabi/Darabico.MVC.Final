@@ -94,6 +94,37 @@ public class LeadsController(ApplicationDbContext db, IInquiryAttachmentStorage 
         try { return File(storage.Open(file.StorageKey), file.ContentType, file.OriginalFileName); }
         catch (FileNotFoundException) { return NotFound(); }
     }
+
+    [HttpPost("delete/{id:int}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    {
+        var lead = await db.InquiryLeads
+            .Include(l => l.Attachments)
+            .Include(l => l.Notes)
+            .FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
+
+        if (lead == null)
+        {
+            TempData["Error"] = "درخواست یافت نشد یا قبلاً حذف شده است.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        foreach (var attachment in lead.Attachments)
+        {
+            try { storage.Delete(attachment.StorageKey); }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Failed to delete attachment file {attachment.StorageKey}: {ex.Message}");
+            }
+        }
+
+        db.InquiryLeads.Remove(lead);
+        await db.SaveChangesAsync(cancellationToken);
+
+        TempData["Success"] = $"درخواست «{lead.FullName}» و پیوست‌های آن برای همیشه حذف شد.";
+        return RedirectToAction(nameof(Index));
+    }
     public static string CsvCell(string? value)
     {
         value ??= "";

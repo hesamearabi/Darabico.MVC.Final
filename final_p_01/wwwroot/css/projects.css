@@ -50,3 +50,9 @@
 
 .dc-projects-page-links { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--dc-s2); }
 .dc-projects-page-links [aria-current="page"] { outline: 2px solid var(--dc-accent); outline-offset: 3px; }
+
+@media (max-width: 480px) {
+    .dc-projects-page-links .dc-projects-button { flex: 1 1 auto; padding-inline: var(--dc-s4); }
+    .dc-projects-card-body { padding: var(--dc-s5); }
+    .dc-projects-options { flex-wrap: wrap; }
+}

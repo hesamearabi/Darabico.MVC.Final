@@ -817,6 +817,9 @@ namespace final_p_01.Infrastructure.Migrations
                         .HasMaxLength(160)
                         .HasColumnType("nvarchar(160)");
 
+                    b.Property<int?>("ParentPostId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("PublishedAtUtc")
                         .HasColumnType("datetime2");
 
@@ -839,6 +842,8 @@ namespace final_p_01.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("ParentPostId");
 
                     b.HasIndex("Slug")
                         .IsUnique();
@@ -936,6 +941,10 @@ namespace final_p_01.Infrastructure.Migrations
                     b.Property<bool>("EnableMultiLanguage")
                         .HasColumnType("bit");
 
+                    b.Property<string>("FaviconPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("FeasibilityMetaDescription")
                         .HasMaxLength(320)
                         .HasColumnType("nvarchar(320)");
@@ -986,6 +995,54 @@ namespace final_p_01.Infrastructure.Migrations
 
                     b.Property<string>("PaymentTermsHtml")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SeoBlogDescription")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("SeoBlogTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("SeoEstimatorDescription")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("SeoEstimatorTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("SeoGuideDescription")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("SeoGuideTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("SeoHomeDescription")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("SeoHomeTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("SeoInquiryDescription")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("SeoInquiryTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("SeoProjectsDescription")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("SeoProjectsTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("datetime2");
@@ -1115,7 +1172,14 @@ namespace final_p_01.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("final_p_01.Domain.Entities.Post", "ParentPost")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentPostId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Category");
+
+                    b.Navigation("ParentPost");
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.PostSlugHistory", b =>
@@ -1155,6 +1219,8 @@ namespace final_p_01.Infrastructure.Migrations
 
             modelBuilder.Entity("final_p_01.Domain.Entities.Post", b =>
                 {
+                    b.Navigation("Children");
+
                     b.Navigation("Faqs");
 
                     b.Navigation("SlugHistories");
