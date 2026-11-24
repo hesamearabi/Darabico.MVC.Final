@@ -1,13 +1,13 @@
 ﻿using System.Text.RegularExpressions;
 using final_p_01.Domain.Entities;
 using final_p_01.Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Webp;
-using Microsoft.AspNetCore.OutputCaching;
 
 namespace final_p_01.Areas.Admin.Controllers;
 
@@ -74,21 +74,31 @@ public class PostsController : Controller
         }
     }
 
+    private async Task PopulateDropdownsAsync(int? selectedCategoryId = null, int? excludePostId = null)
+    {
+        ViewBag.CategoryId = new SelectList(
+            await _context.Categories.AsNoTracking().ToListAsync(),
+            "Id",
+            "Name",
+            selectedCategoryId);
+
+        ViewBag.ParentPostId = await GetParentGuideOptionsAsync(excludePostId);
+    }
+
     private async Task<string> ProcessAndSaveImageAsync(IFormFile file, string subFolder)
     {
         if (file == null || file.Length == 0) throw new InvalidOperationException("فایلی ارسال نشده است.");
 
         int maxMb = _configuration.GetValue<int>("SiteSettings:MaxImageUploadSizeMB", 3);
-        long maxFileSize = maxMb * 1024 * 1024;
+        long maxFileSize = maxMb * 1024L * 1024L;
 
         if (file.Length > maxFileSize)
             throw new InvalidOperationException($"حجم تصویر نباید بیشتر از {maxMb} مگابایت باشد.");
 
-        if (!file.ContentType.StartsWith("image/"))
+        if (!file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("نوع محتوای فایل معتبر نیست.");
 
         string uniqueFileName = $"{Guid.NewGuid()}.webp";
-
         string uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", subFolder);
 
         if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
@@ -117,12 +127,12 @@ public class PostsController : Controller
         if (file == null || file.Length == 0) return null;
 
         int maxMb = _configuration.GetValue<int>("SiteSettings:MaxAudioUploadSizeMB", 20);
-        long maxFileSize = maxMb * 1024 * 1024;
+        long maxFileSize = maxMb * 1024L * 1024L;
 
         if (file.Length > maxFileSize)
             throw new InvalidOperationException($"حجم فایل صوتی نباید بیشتر از {maxMb} مگابایت باشد.");
 
-        if (!file.ContentType.StartsWith("audio/"))
+        if (!file.ContentType.StartsWith("audio/", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("نوع محتوای فایل معتبر نیست. لطفاً فقط فایل صوتی آپلود کنید.");
 
         string extension = Path.GetExtension(file.FileName).ToLowerInvariant();
@@ -132,7 +142,6 @@ public class PostsController : Controller
             throw new InvalidOperationException("فرمت صوتی مجاز نیست (فقط MP3, OGG, WAV).");
 
         string uniqueFileName = $"{Guid.NewGuid()}{extension}";
-
         string uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "audios");
 
         if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
@@ -152,7 +161,7 @@ public class PostsController : Controller
         if (file == null || file.Length == 0) return null;
 
         int maxMb = _configuration.GetValue<int>("SiteSettings:MaxAttachmentUploadSizeMB", 50);
-        long maxFileSize = maxMb * 1024 * 1024;
+        long maxFileSize = maxMb * 1024L * 1024L;
 
         if (file.Length > maxFileSize)
             throw new InvalidOperationException($"حجم فایل ضمیمه نباید بیشتر از {maxMb} مگابایت باشد.");
@@ -164,7 +173,6 @@ public class PostsController : Controller
             throw new InvalidOperationException("فرمت فایل ضمیمه مجاز نیست (فقط PDF, ZIP, RAR, DOCX).");
 
         string uniqueFileName = $"{Guid.NewGuid()}{extension}";
-
         string uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "attachments");
 
         if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
@@ -213,6 +221,7 @@ public class PostsController : Controller
 
         var posts = await _context.Posts
             .AsNoTracking()
+            .Where(p => p.Slug != GuideSlug)
             .Include(p => p.Category)
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
@@ -237,10 +246,9 @@ public class PostsController : Controller
     }
 
     [HttpGet]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
-        ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name");
-        ViewBag.ParentPostId = GetParentGuideOptionsAsync().GetAwaiter().GetResult();
+        await PopulateDropdownsAsync();
         return View();
     }
 
@@ -264,6 +272,10 @@ public class PostsController : Controller
         {
             ModelState.AddModelError("Slug", "اسلاگ معتبر نیست. لطفاً یک آدرس معتبر وارد کنید.");
         }
+        else if (string.Equals(post.Slug, GuideSlug, StringComparison.OrdinalIgnoreCase))
+        {
+            ModelState.AddModelError("Slug", "این اسلاگ برای صفحه مادر راهنمای جامع رزرو شده است.");
+        }
 
         if (ModelState.IsValid)
         {
@@ -273,7 +285,7 @@ public class PostsController : Controller
             {
                 ModelState.AddModelError("Slug", "این آدرس (URL) قبلاً ثبت شده یا در تاریخچه ریدایرکت‌ها استفاده شده است.");
                 ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
-                ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
+                await PopulateDropdownsAsync(post.CategoryId);
                 return View(post);
             }
 
@@ -301,9 +313,6 @@ public class PostsController : Controller
                     post.AttachmentFilePath = uploadedAttachmentPath;
                 }
 
-                post.AttachmentTitle = post.AttachmentTitle;
-                post.AttachmentDescription = post.AttachmentDescription;
-
                 post.AverageRating = 0.0;
                 post.TotalVotes = 0;
 
@@ -328,6 +337,7 @@ public class PostsController : Controller
                     TempData["MetaDescriptionWarning"] = metaWarning;
                 }
 
+                TempData["Success"] = "مقاله با موفقیت ذخیره و منتشر شد.";
                 TempData["SuccessMessage"] = "مقاله با موفقیت ذخیره و منتشر شد.";
                 return RedirectToAction("Index", new { t = DateTime.UtcNow.Ticks });
             }
@@ -335,8 +345,7 @@ public class PostsController : Controller
             {
                 ModelState.AddModelError("", ex.Message);
                 ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
-                ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
-                ViewBag.ParentPostId = GetParentGuideOptionsAsync().GetAwaiter().GetResult();
+                await PopulateDropdownsAsync(post.CategoryId);
                 return View(post);
             }
             catch (Exception ex)
@@ -348,13 +357,13 @@ public class PostsController : Controller
                 _logger.LogError(ex, "System Error during Post Create.");
                 ModelState.AddModelError("", "خطای داخلی رخ داد. مجدداً تلاش کنید.");
                 ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
-                ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
+                await PopulateDropdownsAsync(post.CategoryId);
                 return View(post);
             }
         }
 
         ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
-        ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
+        await PopulateDropdownsAsync(post.CategoryId);
         return View(post);
     }
 
@@ -365,8 +374,7 @@ public class PostsController : Controller
         if (post == null) return NotFound();
 
         ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
-        ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
-        ViewBag.ParentPostId = await GetParentGuideOptionsAsync(post.Id);
+        await PopulateDropdownsAsync(post.CategoryId, post.Id);
         return View(post);
     }
 
@@ -389,6 +397,8 @@ public class PostsController : Controller
         ModelState.Remove("Faqs");
         ModelState.Remove("SlugHistories");
         ModelState.Remove("Slug");
+        ModelState.Remove("ParentPost");
+        ModelState.Remove("Children");
 
         bool isGuidePost = string.Equals(existingPost.Slug, GuideSlug, StringComparison.OrdinalIgnoreCase);
 
@@ -424,7 +434,7 @@ public class PostsController : Controller
             {
                 ModelState.AddModelError("Slug", "این آدرس (URL) قبلاً ثبت شده یا در تاریخچه ریدایرکت مقاله دیگری استفاده شده است.");
                 ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
-                ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
+                await PopulateDropdownsAsync(post.CategoryId, post.Id);
                 return View(post);
             }
 
@@ -432,12 +442,14 @@ public class PostsController : Controller
             string nextSlug = post.Slug.Trim().ToLowerInvariant();
             bool slugChanged = !string.Equals(previousSlug, nextSlug, StringComparison.OrdinalIgnoreCase);
             bool wasPublished = existingPost.IsPublished;
+            int? normalizedParentId = isGuidePost || post.ParentPostId == 0 ? null : post.ParentPostId;
 
             bool hasMetadataOrContentChanges =
                 existingPost.Title != post.Title ||
                 slugChanged ||
                 existingPost.Content != post.Content ||
                 existingPost.CategoryId != post.CategoryId ||
+                existingPost.ParentPostId != normalizedParentId ||
                 (existingPost.MetaDescription ?? string.Empty) != (post.MetaDescription ?? string.Empty) ||
                 existingPost.IsPublished != post.IsPublished ||
                 (existingPost.CoverImageAlt ?? string.Empty) != (post.CoverImageAlt ?? string.Empty) ||
@@ -487,17 +499,16 @@ public class PostsController : Controller
             existingPost.MetaDescription = post.MetaDescription;
             existingPost.IsPublished = post.IsPublished;
             existingPost.CoverImageAlt = post.CoverImageAlt;
-
             existingPost.AttachmentTitle = post.AttachmentTitle;
             existingPost.AttachmentDescription = post.AttachmentDescription;
 
-            existingPost.ParentPostId = post.ParentPostId == 0 ? null : post.ParentPostId;
+            existingPost.ParentPostId = normalizedParentId;
             if (existingPost.ParentPostId != null)
             {
                 var parent = await _context.Posts.AsNoTracking().FirstOrDefaultAsync(p => p.Id == existingPost.ParentPostId);
                 if (parent == null || parent.Slug != GuideSlug) existingPost.ParentPostId = null;
             }
-            if (existingPost.Id.ToString() == existingPost.ParentPostId?.ToString()) existingPost.ParentPostId = null;
+            if (existingPost.ParentPostId == existingPost.Id) existingPost.ParentPostId = null;
 
             string? oldImagePathToDelete = null;
             string? newlyUploadedImagePath = null;
@@ -569,16 +580,26 @@ public class PostsController : Controller
                     TempData["MetaDescriptionWarning"] = metaWarning;
                 }
 
-                TempData["SuccessMessage"] = slugChanged && wasPublished
+                if (isGuidePost)
+                {
+                    string guideMsg = "تغییرات صفحه مادر با موفقیت ذخیره شد.";
+                    TempData["Success"] = guideMsg;
+                    TempData["SuccessMessage"] = guideMsg;
+                    return RedirectToAction("PillarPages", "PhaseModules", new { area = "Admin" });
+                }
+
+                string msg = slugChanged && wasPublished
                     ? "تغییرات مقاله ذخیره شد و ریدایرکت 301 از آدرس قبلی به آدرس جدید به صورت خودکار ثبت گردید."
                     : "تغییرات مقاله با موفقیت ذخیره شد.";
+                TempData["Success"] = msg;
+                TempData["SuccessMessage"] = msg;
                 return RedirectToAction("Index", new { t = DateTime.UtcNow.Ticks });
             }
             catch (InvalidOperationException ex)
             {
                 ModelState.AddModelError("", ex.Message);
                 ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
-                ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
+                await PopulateDropdownsAsync(post.CategoryId, post.Id);
                 return View(post);
             }
             catch (Exception ex)
@@ -590,13 +611,13 @@ public class PostsController : Controller
                 _logger.LogError(ex, "Error updating Post ID: {PostId}", existingPost.Id);
                 ModelState.AddModelError("", "خطایی در ذخیره اطلاعات رخ داد.");
                 ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
-                ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
+                await PopulateDropdownsAsync(post.CategoryId, post.Id);
                 return View(post);
             }
         }
 
         ApplyMetaDescriptionWarningToModelState(post.MetaDescription);
-        ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", post.CategoryId);
+        await PopulateDropdownsAsync(post.CategoryId, post.Id);
         return View(post);
     }
 
@@ -607,13 +628,19 @@ public class PostsController : Controller
         var post = await _context.Posts.FindAsync(id);
         if (post != null)
         {
+            if (string.Equals(post.Slug, GuideSlug, StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["Error"] = "صفحه مادر راهنمای جامع محافظت‌شده است و قابل حذف نیست.";
+                return RedirectToAction("PillarPages", "PhaseModules", new { area = "Admin" });
+            }
+
             string? imagePathToDelete = post.CoverImagePath;
             string? audioPathToDelete = post.AudioFilePath;
             string? attachmentPathToDelete = post.AttachmentFilePath;
 
             _context.Posts.Remove(post);
             await _context.SaveChangesAsync();
-                final_p_01.ViewComponents.SiteNavigationCache.Invalidate();
+            final_p_01.ViewComponents.SiteNavigationCache.Invalidate();
 
             await _outputCacheStore.EvictByTagAsync("BlogCache", default);
 
@@ -621,6 +648,7 @@ public class PostsController : Controller
             DeleteSecurely(audioPathToDelete);
             DeleteSecurely(attachmentPathToDelete);
 
+            TempData["Success"] = "مقاله و فایل‌های مرتبط به طور کامل حذف شد.";
             TempData["SuccessMessage"] = "مقاله و فایل‌های مرتبط به طور کامل حذف شد.";
         }
         return RedirectToAction("Index", new { t = DateTime.UtcNow.Ticks });
@@ -655,7 +683,7 @@ public class PostsController : Controller
             if (file == null || file.Length == 0) return BadRequest("فایلی ارسال نشده است.");
 
             int maxMb = _configuration.GetValue<int>("SiteSettings:MaxVideoUploadSizeMB", 50);
-            long maxFileSize = maxMb * 1024 * 1024;
+            long maxFileSize = maxMb * 1024L * 1024L;
 
             if (file.Length > maxFileSize)
                 return BadRequest($"حجم ویدیو نباید بیشتر از {maxMb} مگابایت باشد.");
@@ -667,7 +695,8 @@ public class PostsController : Controller
             if (!allowedExtensions.Contains(extension))
                 return BadRequest("فرمت ویدیو مجاز نیست.");
 
-            if (!file.ContentType.StartsWith("video/")) return BadRequest("نوع محتوای فایل معتبر نیست.");
+            if (!file.ContentType.StartsWith("video/", StringComparison.OrdinalIgnoreCase))
+                return BadRequest("نوع محتوای فایل معتبر نیست.");
 
             using var stream = file.OpenReadStream();
             var buffer = new byte[8];
@@ -690,7 +719,6 @@ public class PostsController : Controller
             stream.Position = 0;
 
             string uniqueFileName = $"{Guid.NewGuid()}{extension}";
-
             string uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "article-videos");
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 

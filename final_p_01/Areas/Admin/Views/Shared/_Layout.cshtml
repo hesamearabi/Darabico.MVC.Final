@@ -6,12 +6,15 @@
         ("/Admin/Projects", "پروژه‌ها", "grid"),
         ("/Admin/Posts", "مقالات", "journal-text"),
         ("/Admin/Categories", "دسته‌بندی‌ها", "folder"),
-        ("/admin/pillar-pages", "راهنماهای جامع", "book"),
+        ("/admin/pillar-pages", "صفحات مادر", "book"),
         ("/admin/city-pages", "صفحات شهرها", "geo-alt"),
         ("/admin/estimator-settings", "تنظیمات برآورد هزینه", "calculator"),
         ("/admin/site-settings", "تنظیمات سایت", "gear"),
         ("/Admin/Settings", "امنیت حساب", "shield-lock")
     };
+    var successMessage = TempData["Success"] as string ?? TempData["SuccessMessage"] as string;
+    var warningMessage = TempData["WarningMessage"] as string;
+    var errorMessage = TempData["Error"] as string;
 }
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
@@ -47,13 +50,17 @@
             <form asp-area="Admin" asp-controller="Auth" asp-action="Logout" method="post"><button class="btn btn-outline-secondary" type="submit">خروج</button></form>
         </header>
         <main id="main-content" class="workspace-content" tabindex="-1">
-            @if (TempData["Success"] is string success)
+            @if (!string.IsNullOrWhiteSpace(successMessage))
             {
-                <div class="workspace-alert workspace-alert--success" role="status">@success</div>
+                <div class="workspace-alert workspace-alert--success" role="status">@successMessage</div>
             }
-            @if (TempData["Error"] is string error)
+            @if (!string.IsNullOrWhiteSpace(warningMessage))
             {
-                <div class="workspace-alert workspace-alert--error" role="alert">@error</div>
+                <div class="alert alert-warning rounded-3 border-0 shadow-sm mb-3" role="status">@warningMessage</div>
+            }
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="workspace-alert workspace-alert--error" role="alert">@errorMessage</div>
             }
             @if (!ViewData.ModelState.IsValid)
             {

@@ -1,10 +1,13 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 using final_p_01.Domain.Entities;
 using final_p_01.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Webp;
 
 namespace final_p_01.Areas.Admin.Controllers;
 
@@ -16,16 +19,149 @@ public class PhaseModulesController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly IOutputCacheStore _outputCacheStore;
+    private readonly IConfiguration _configuration;
+    private readonly IWebHostEnvironment _env;
+    private readonly ILogger<PhaseModulesController> _logger;
 
-    public PhaseModulesController(ApplicationDbContext context, IOutputCacheStore outputCacheStore)
+    public PhaseModulesController(
+        ApplicationDbContext context,
+        IOutputCacheStore outputCacheStore,
+        IConfiguration configuration,
+        IWebHostEnvironment env,
+        ILogger<PhaseModulesController> logger)
     {
         _context = context;
         _outputCacheStore = outputCacheStore;
+        _configuration = configuration;
+        _env = env;
+        _logger = logger;
+    }
+
+    public sealed class PillarFaqInput
+    {
+        public string? Question { get; set; }
+        public string? Answer { get; set; }
     }
 
     private async Task PurgePublicCacheAsync() =>
         await _outputCacheStore.EvictByTagAsync("BlogCache", default);
 
+    private static string GenerateSeoFriendlySlug(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return string.Empty;
+
+        text = text.ToLowerInvariant().Trim();
+        text = Regex.Replace(text, @"\s+", "-");
+        text = Regex.Replace(text, @"[^a-z0-9\u0600-\u06FF\-]+", "");
+        text = Regex.Replace(text, @"-+", "-");
+        return text.Trim('-');
+    }
+
+    private static string? GetMetaDescriptionWarning(string? metaDescription)
+    {
+        if (string.IsNullOrWhiteSpace(metaDescription))
+        {
+            return "هشدار سئو: توضیحات متا (Meta Description) خالی است. توصیه می‌شود متنی اختصاصی بین ۷۰ تا ۱۶۰ کاراکتر وارد کنید.";
+        }
+
+        if (metaDescription.Length > 160)
+        {
+            return $"هشدار سئو: طول توضیحات متا ({metaDescription.Length} کاراکتر) بیشتر از ۱۶۰ کاراکتر است و ممکن است در نتایج گوگل بریده شود.";
+        }
+
+        return null;
+    }
+
+    private async Task<string> ProcessAndSaveImageAsync(IFormFile file, string subFolder)
+    {
+        if (file == null || file.Length == 0)
+            throw new InvalidOperationException("فایلی ارسال نشده است.");
+
+        int maxMb = _configuration.GetValue<int>("SiteSettings:MaxImageUploadSizeMB", 3);
+        long maxFileSize = maxMb * 1024L * 1024L;
+
+        if (file.Length > maxFileSize)
+            throw new InvalidOperationException($"حجم تصویر نباید بیشتر از {maxMb} مگابایت باشد.");
+
+        if (!file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("نوع محتوای فایل معتبر نیست.");
+
+        string uniqueFileName = $"{Guid.NewGuid()}.webp";
+        string uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", subFolder);
+
+        if (!Directory.Exists(uploadsFolder))
+            Directory.CreateDirectory(uploadsFolder);
+
+        string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+        try
+        {
+            using var stream = file.OpenReadStream();
+            using var image = await Image.LoadAsync(stream);
+
+            var encoder = new WebpEncoder { Quality = 80 };
+            await image.SaveAsWebpAsync(filePath, encoder);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "خطا در پردازش تصویر صفحه مادر با ImageSharp");
+            throw new InvalidOperationException("محتوای فایل تصویر نامعتبر یا خراب است.");
+        }
+
+        return $"/uploads/{subFolder}/{uniqueFileName}";
+    }
+
+    private void DeleteSecurely(string? relativePath)
+    {
+        if (string.IsNullOrWhiteSpace(relativePath)) return;
+
+        try
+        {
+            string webRootPath = _env.WebRootPath;
+            string normalizedRelativePath = relativePath.Replace('/', Path.DirectorySeparatorChar)
+                                                        .Replace('\\', Path.DirectorySeparatorChar)
+                                                        .TrimStart(Path.DirectorySeparatorChar);
+
+            string targetPath = Path.GetFullPath(Path.Combine(webRootPath, normalizedRelativePath));
+            string allowedDirectory = Path.GetFullPath(Path.Combine(webRootPath, "uploads")) + Path.DirectorySeparatorChar;
+
+            if (targetPath.StartsWith(allowedDirectory, StringComparison.OrdinalIgnoreCase) && System.IO.File.Exists(targetPath))
+            {
+                System.IO.File.Delete(targetPath);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to securely delete old file at path: {Path}", relativePath);
+        }
+    }
+
+    private static List<Faq> MapValidFaqs(List<PillarFaqInput>? faqs, string pageKey)
+    {
+        if (faqs is null || faqs.Count == 0)
+            return new List<Faq>();
+
+        var result = new List<Faq>();
+        int sortOrder = 0;
+
+        foreach (var item in faqs)
+        {
+            if (string.IsNullOrWhiteSpace(item.Question) || string.IsNullOrWhiteSpace(item.Answer))
+                continue;
+
+            result.Add(new Faq
+            {
+                Question = item.Question.Trim(),
+                Answer = item.Answer.Trim(),
+                PageKey = pageKey,
+                SortOrder = sortOrder++
+            });
+        }
+
+        return result;
+    }
+
+    // ---------- Booking slots ----------
     [HttpGet("admin/booking-slots")]
     public async Task<IActionResult> BookingSlots() => View(await ListBookingSlotsAsync());
 
@@ -163,8 +299,11 @@ public class PhaseModulesController : Controller
         if (!ModelState.IsValid) return View("EstimatorSettings", settings ?? new EstimatorSettings());
         _context.Set<EstimatorMaterialTier>().Add(new EstimatorMaterialTier
         {
-            Title = title.Trim(), Multiplier = multiplier, SortOrder = sortOrder,
-            IsActive = true, EstimatorSettingsId = settings!.Id
+            Title = title.Trim(),
+            Multiplier = multiplier,
+            SortOrder = sortOrder,
+            IsActive = true,
+            EstimatorSettingsId = settings!.Id
         });
         await _context.SaveChangesAsync();
         return RedirectToAction(nameof(EstimatorSettingsForm));
@@ -193,7 +332,10 @@ public class PhaseModulesController : Controller
         if (!ModelState.IsValid) return View("EstimatorSettings", settings ?? new EstimatorSettings());
         _context.Set<EstimatorCityMultiplier>().Add(new EstimatorCityMultiplier
         {
-            City = city.Trim(), Multiplier = multiplier, IsActive = true, EstimatorSettingsId = settings!.Id
+            City = city.Trim(),
+            Multiplier = multiplier,
+            IsActive = true,
+            EstimatorSettingsId = settings!.Id
         });
         await _context.SaveChangesAsync();
         return RedirectToAction(nameof(EstimatorSettingsForm));
@@ -221,65 +363,256 @@ public class PhaseModulesController : Controller
             .OrderBy(c => c.City).ToListAsync();
     }
 
-    // ---------- Pillar pages ----------
+    // ---------- Pillar pages (صفحات مادر) ----------
     [HttpGet("admin/pillar-pages")]
     public async Task<IActionResult> PillarPages() =>
-        View(await _context.PillarPages.AsNoTracking().OrderBy(p => p.SortOrder).ToListAsync());
+        View(await _context.PillarPages.AsNoTracking()
+            .OrderBy(p => p.SortOrder)
+            .ThenByDescending(p => p.UpdatedAtUtc)
+            .ToListAsync());
 
-    [HttpGet("admin/pillar-pages/create")] public IActionResult CreatePillarPage() => View(new PillarPage());
+    [HttpGet("admin/pillar-pages/create")]
+    public IActionResult CreatePillarPage()
+    {
+        ViewBag.Faqs = new List<Faq>();
+        return View(new PillarPage { IsPublished = true });
+    }
 
     [HttpPost("admin/pillar-pages/create"), ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreatePillarPage(PillarPage model)
+    public async Task<IActionResult> CreatePillarPage(
+        PillarPage model,
+        IFormFile? coverImage,
+        List<PillarFaqInput>? faqs)
     {
-        if (!ModelState.IsValid) return View(model);
+        ModelState.Remove(nameof(PillarPage.Slug));
+        ModelState.Remove(nameof(PillarPage.ContentHtml));
 
-        model.Slug = model.Slug.Trim();
-        if (await _context.PillarPages.AnyAsync(p => p.Slug == model.Slug))
+        model.Title = model.Title?.Trim() ?? string.Empty;
+        model.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(model.Slug) ? model.Title : model.Slug);
+        model.ContentHtml ??= string.Empty;
+        model.MetaTitle = string.IsNullOrWhiteSpace(model.MetaTitle) ? null : model.MetaTitle.Trim();
+        model.MetaDescription = string.IsNullOrWhiteSpace(model.MetaDescription) ? null : model.MetaDescription.Trim();
+        model.Canonical = string.IsNullOrWhiteSpace(model.Canonical) ? null : model.Canonical.Trim();
+
+        if (string.IsNullOrWhiteSpace(model.Slug))
         {
-            ModelState.AddModelError(nameof(model.Slug), "این نامک قبلاً استفاده شده است.");
+            ModelState.AddModelError(nameof(model.Slug), "اسلاگ معتبر نیست. لطفاً یک آدرس معتبر وارد کنید.");
+        }
+
+        if (ModelState.IsValid && await _context.PillarPages.AnyAsync(p => p.Slug == model.Slug))
+        {
+            ModelState.AddModelError(nameof(model.Slug), "این آدرس (Slug) قبلاً برای صفحه مادر دیگری ثبت شده است.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            ViewBag.Faqs = MapValidFaqs(faqs, $"pillar:{model.Slug}");
             return View(model);
         }
-        _context.PillarPages.Add(model);
-        await _context.SaveChangesAsync();
-        await PurgePublicCacheAsync();
-        return RedirectToAction(nameof(PillarPages));
+
+        string? uploadedImagePath = null;
+        try
+        {
+            if (coverImage != null && coverImage.Length > 0)
+            {
+                uploadedImagePath = await ProcessAndSaveImageAsync(coverImage, "pillars");
+                model.OgImageUrl = uploadedImagePath;
+            }
+
+            model.UpdatedAtUtc = DateTime.UtcNow;
+            _context.PillarPages.Add(model);
+
+            var validFaqs = MapValidFaqs(faqs, $"pillar:{model.Slug}");
+            if (validFaqs.Count > 0)
+            {
+                _context.Faqs.AddRange(validFaqs);
+            }
+
+            await _context.SaveChangesAsync();
+            await PurgePublicCacheAsync();
+
+            string? metaWarning = GetMetaDescriptionWarning(model.MetaDescription);
+            if (!string.IsNullOrEmpty(metaWarning))
+            {
+                TempData["WarningMessage"] = metaWarning;
+            }
+
+            TempData["Success"] = "صفحه مادر با موفقیت ذخیره و منتشر شد.";
+            return RedirectToAction(nameof(PillarPages));
+        }
+        catch (InvalidOperationException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            ViewBag.Faqs = MapValidFaqs(faqs, $"pillar:{model.Slug}");
+            return View(model);
+        }
+        catch (Exception ex)
+        {
+            if (!string.IsNullOrEmpty(uploadedImagePath))
+                DeleteSecurely(uploadedImagePath);
+
+            _logger.LogError(ex, "System Error during PillarPage Create.");
+            ModelState.AddModelError(string.Empty, "خطای داخلی رخ داد. مجدداً تلاش کنید.");
+            ViewBag.Faqs = MapValidFaqs(faqs, $"pillar:{model.Slug}");
+            return View(model);
+        }
     }
 
     [HttpGet("admin/pillar-pages/edit/{id:int}")]
     public async Task<IActionResult> EditPillarPage(int id)
     {
         var page = await _context.PillarPages.FindAsync(id);
-        return page is null ? NotFound() : View("CreatePillarPage", page);
+        if (page is null) return NotFound();
+
+        ViewBag.Faqs = await _context.Faqs.AsNoTracking()
+            .Where(f => f.PageKey == $"pillar:{page.Slug}")
+            .OrderBy(f => f.SortOrder)
+            .ToListAsync();
+
+        return View("CreatePillarPage", page);
     }
 
     [HttpPost("admin/pillar-pages/edit/{id:int}"), ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditPillarPage(int id, PillarPage model)
+    public async Task<IActionResult> EditPillarPage(
+        int id,
+        PillarPage model,
+        IFormFile? coverImage,
+        List<PillarFaqInput>? faqs)
     {
         if (id != model.Id) return NotFound();
-        if (!ModelState.IsValid) return View("CreatePillarPage", model);
-        model.Slug = model.Slug.Trim();
-        if (await _context.PillarPages.AnyAsync(p => p.Id != id && p.Slug == model.Slug))
-        {
-            ModelState.AddModelError(nameof(model.Slug), "این نامک قبلاً استفاده شده است.");
-            return View("CreatePillarPage", model);
-        }
 
         var page = await _context.PillarPages.FindAsync(id);
         if (page is null) return NotFound();
 
-        page.Title = model.Title;
-        page.Slug = model.Slug.Trim();
-        page.ContentHtml = model.ContentHtml;
-        page.MetaTitle = model.MetaTitle;
-        page.MetaDescription = model.MetaDescription;
-        page.Canonical = model.Canonical;
-        page.OgImageUrl = model.OgImageUrl;
-        page.IsPublished = model.IsPublished;
-        page.SortOrder = model.SortOrder;
-        page.UpdatedAtUtc = DateTime.UtcNow;
+        ModelState.Remove(nameof(PillarPage.Slug));
+        ModelState.Remove(nameof(PillarPage.ContentHtml));
 
-        await _context.SaveChangesAsync();
-        await PurgePublicCacheAsync();
+        model.Title = model.Title?.Trim() ?? string.Empty;
+        model.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(model.Slug) ? model.Title : model.Slug);
+        model.ContentHtml ??= string.Empty;
+        model.MetaTitle = string.IsNullOrWhiteSpace(model.MetaTitle) ? null : model.MetaTitle.Trim();
+        model.MetaDescription = string.IsNullOrWhiteSpace(model.MetaDescription) ? null : model.MetaDescription.Trim();
+        model.Canonical = string.IsNullOrWhiteSpace(model.Canonical) ? null : model.Canonical.Trim();
+
+        if (string.IsNullOrWhiteSpace(model.Slug))
+        {
+            ModelState.AddModelError(nameof(model.Slug), "اسلاگ معتبر نیست. لطفاً یک آدرس معتبر وارد کنید.");
+        }
+
+        if (ModelState.IsValid && await _context.PillarPages.AnyAsync(p => p.Id != id && p.Slug == model.Slug))
+        {
+            ModelState.AddModelError(nameof(model.Slug), "این آدرس (Slug) قبلاً برای صفحه مادر دیگری ثبت شده است.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            model.OgImageUrl ??= page.OgImageUrl;
+            ViewBag.Faqs = MapValidFaqs(faqs, $"pillar:{model.Slug}");
+            return View("CreatePillarPage", model);
+        }
+
+        string oldPageKey = $"pillar:{page.Slug}";
+        string newPageKey = $"pillar:{model.Slug}";
+        string? oldImagePathToDelete = null;
+        string? newlyUploadedImagePath = null;
+
+        try
+        {
+            if (coverImage != null && coverImage.Length > 0)
+            {
+                oldImagePathToDelete = page.OgImageUrl;
+                newlyUploadedImagePath = await ProcessAndSaveImageAsync(coverImage, "pillars");
+                page.OgImageUrl = newlyUploadedImagePath;
+            }
+            else
+            {
+                page.OgImageUrl = string.IsNullOrWhiteSpace(model.OgImageUrl) ? page.OgImageUrl : model.OgImageUrl.Trim();
+            }
+
+            page.Title = model.Title;
+            page.Slug = model.Slug;
+            page.ContentHtml = model.ContentHtml;
+            page.MetaTitle = model.MetaTitle;
+            page.MetaDescription = model.MetaDescription;
+            page.Canonical = model.Canonical;
+            page.IsPublished = model.IsPublished;
+            page.SortOrder = model.SortOrder;
+            page.UpdatedAtUtc = DateTime.UtcNow;
+
+            var existingFaqs = await _context.Faqs
+                .Where(f => f.PageKey == oldPageKey || f.PageKey == newPageKey)
+                .ToListAsync();
+            if (existingFaqs.Count > 0)
+            {
+                _context.Faqs.RemoveRange(existingFaqs);
+            }
+
+            var validFaqs = MapValidFaqs(faqs, newPageKey);
+            if (validFaqs.Count > 0)
+            {
+                _context.Faqs.AddRange(validFaqs);
+            }
+
+            await _context.SaveChangesAsync();
+            await PurgePublicCacheAsync();
+
+            if (!string.IsNullOrEmpty(oldImagePathToDelete))
+                DeleteSecurely(oldImagePathToDelete);
+
+            string? metaWarning = GetMetaDescriptionWarning(model.MetaDescription);
+            if (!string.IsNullOrEmpty(metaWarning))
+            {
+                TempData["WarningMessage"] = metaWarning;
+            }
+
+            TempData["Success"] = "تغییرات صفحه مادر با موفقیت ذخیره شد.";
+            return RedirectToAction(nameof(PillarPages));
+        }
+        catch (InvalidOperationException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            model.OgImageUrl ??= page.OgImageUrl;
+            ViewBag.Faqs = MapValidFaqs(faqs, newPageKey);
+            return View("CreatePillarPage", model);
+        }
+        catch (Exception ex)
+        {
+            if (!string.IsNullOrEmpty(newlyUploadedImagePath))
+                DeleteSecurely(newlyUploadedImagePath);
+
+            _logger.LogError(ex, "Error updating PillarPage ID: {PillarPageId}", id);
+            ModelState.AddModelError(string.Empty, "خطایی در ذخیره اطلاعات رخ داد.");
+            model.OgImageUrl ??= page.OgImageUrl;
+            ViewBag.Faqs = MapValidFaqs(faqs, newPageKey);
+            return View("CreatePillarPage", model);
+        }
+    }
+
+    [HttpPost("admin/pillar-pages/delete/{id:int}"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeletePillarPage(int id)
+    {
+        var page = await _context.PillarPages.FindAsync(id);
+        if (page is not null)
+        {
+            string? imagePathToDelete = page.OgImageUrl;
+            string pageKey = $"pillar:{page.Slug}";
+
+            var relatedFaqs = await _context.Faqs
+                .Where(f => f.PageKey == pageKey)
+                .ToListAsync();
+            if (relatedFaqs.Count > 0)
+            {
+                _context.Faqs.RemoveRange(relatedFaqs);
+            }
+
+            _context.PillarPages.Remove(page);
+            await _context.SaveChangesAsync();
+            await PurgePublicCacheAsync();
+
+            DeleteSecurely(imagePathToDelete);
+            TempData["Success"] = "صفحه مادر و سوالات متداول مرتبط با آن حذف شد.";
+        }
+
         return RedirectToAction(nameof(PillarPages));
     }
 
@@ -354,7 +687,6 @@ public class PhaseModulesController : Controller
         return RedirectToAction(nameof(CityPages));
     }
 
-    // ---------- Leads inbox ----------
     [NonAction]
     public IActionResult Leads(string? type) => RedirectToAction("Index", "Leads", new { area = "Admin", leadType = type });
 

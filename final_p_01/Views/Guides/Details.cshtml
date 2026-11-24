@@ -1,29 +1,175 @@
+@using System.Text.Json
 @model final_p_01.Domain.Entities.PillarPage
 @{
-    ViewData["Title"] = Model.MetaTitle ?? Model.Title;
-    if (!string.IsNullOrEmpty(Model.MetaDescription))
+    ViewData["Title"] = !string.IsNullOrWhiteSpace(Model.MetaTitle) ? Model.MetaTitle : Model.Title;
+    if (!string.IsNullOrWhiteSpace(Model.MetaDescription))
     {
         ViewData["Description"] = Model.MetaDescription;
     }
-    var faqs = (IList<final_p_01.Domain.Entities.Faq>)(ViewData["Faqs"] ?? new List<final_p_01.Domain.Entities.Faq>());
-}
-<main class="container py-5" dir="rtl">
-    <article>
-        <h1>@Model.Title</h1>
-        @Html.Raw(Model.ContentHtml)
-    </article>
-
-    @if (faqs.Count > 0)
+    if (!string.IsNullOrWhiteSpace(Model.Canonical))
     {
-        <section class="mt-5">
-            <h2>سوالات متداول</h2>
-            @foreach (var faq in faqs)
-            {
-                <details class="mb-2">
-                    <summary>@faq.Question</summary>
-                    <p>@faq.Answer</p>
-                </details>
-            }
-        </section>
+        ViewData["Canonical"] = Model.Canonical;
+        ViewData["CanonicalUrl"] = Model.Canonical;
     }
+    if (!string.IsNullOrWhiteSpace(Model.OgImageUrl))
+    {
+        ViewData["OgImage"] = Model.OgImageUrl;
+    }
+
+    var faqs = (IList<final_p_01.Domain.Entities.Faq>)(ViewData["Faqs"] ?? new List<final_p_01.Domain.Entities.Faq>());
+
+    string? faqSchemaJson = null;
+    if (faqs.Count > 0)
+    {
+        var faqSchema = new Dictionary<string, object>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "FAQPage",
+            ["mainEntity"] = faqs.Select(f => new Dictionary<string, object>
+            {
+                ["@type"] = "Question",
+                ["name"] = f.Question,
+                ["acceptedAnswer"] = new Dictionary<string, object>
+                {
+                    ["@type"] = "Answer",
+                    ["text"] = f.Answer
+                }
+            }).ToList()
+        };
+        faqSchemaJson = JsonSerializer.Serialize(faqSchema);
+    }
+}
+
+<style>
+    .pillar-page-shell {
+        max-width: 920px;
+        margin: 0 auto;
+    }
+
+    .pillar-cover-image {
+        width: 100%;
+        max-height: 440px;
+        object-fit: cover;
+        border-radius: 18px;
+        margin-bottom: 2rem;
+        border: 1px solid #e2e8f0;
+    }
+
+    .pillar-article-content {
+        line-height: 1.95;
+        color: #1e293b;
+        font-size: 1.05rem;
+    }
+
+        .pillar-article-content h2,
+        .pillar-article-content h3,
+        .pillar-article-content h4 {
+            color: #0f172a;
+            font-weight: 800;
+            margin-top: 2.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .pillar-article-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 14px;
+            margin: 1.5rem 0;
+        }
+
+        .pillar-article-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.75rem 0;
+            font-size: 0.95rem;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            display: block;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .pillar-article-content thead,
+        .pillar-article-content tbody,
+        .pillar-article-content tr {
+            width: 100%;
+        }
+
+        .pillar-article-content th,
+        .pillar-article-content td {
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            text-align: right;
+            vertical-align: top;
+            white-space: normal;
+        }
+
+        .pillar-article-content th {
+            background-color: #f8fafc;
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        .pillar-article-content tbody tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+    .pillar-faq-item {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 18px;
+        background: #ffffff;
+    }
+
+        .pillar-faq-item summary {
+            font-weight: 700;
+            color: #0f172a;
+            cursor: pointer;
+        }
+
+        .pillar-faq-item p {
+            margin: 10px 0 0;
+            color: #475569;
+            line-height: 1.85;
+        }
+</style>
+
+<main class="container py-5" dir="rtl">
+    <div class="pillar-page-shell">
+        <article>
+            <h1 class="fw-bold mb-4">@Model.Title</h1>
+
+            @if (!string.IsNullOrWhiteSpace(Model.OgImageUrl))
+            {
+                <img src="@Model.OgImageUrl" alt="@Model.Title" class="pillar-cover-image" />
+            }
+
+            <div class="pillar-article-content">
+                @Html.Raw(Model.ContentHtml)
+            </div>
+        </article>
+
+        @if (faqs.Count > 0)
+        {
+            <section class="mt-5" aria-label="سوالات متداول">
+                <h2 class="h4 fw-bold mb-3">سوالات متداول</h2>
+                <div class="d-flex flex-column gap-2">
+                    @foreach (var faq in faqs)
+                    {
+                        <details class="pillar-faq-item">
+                            <summary>@faq.Question</summary>
+                            <p>@faq.Answer</p>
+                        </details>
+                    }
+                </div>
+            </section>
+        }
+    </div>
 </main>
+
+@if (!string.IsNullOrEmpty(faqSchemaJson))
+{
+    <script type="application/ld+json">@Html.Raw(faqSchemaJson)</script>
+}

@@ -70,10 +70,10 @@
 
     var sanitizer = new HtmlSanitizer();
 
-    var allowedTags = new[] { "p", "br", "strong", "em", "u", "b", "i", "ul", "ol", "li", "a", "span", "h2", "h3", "h4", "h5", "h6", "table", "tbody", "thead", "tr", "td", "th", "img", "figure", "figcaption", "blockquote", "iframe", "video", "source", "div" };
+    var allowedTags = new[] { "p", "br", "strong", "em", "u", "b", "i", "ul", "ol", "li", "a", "span", "h2", "h3", "h4", "h5", "h6", "table", "tbody", "thead", "tfoot", "caption", "colgroup", "col", "tr", "td", "th", "img", "figure", "figcaption", "blockquote", "iframe", "video", "source", "div" };
     foreach (var tag in allowedTags) { sanitizer.AllowedTags.Add(tag); }
 
-    var allowedAttributes = new[] { "href", "src", "alt", "title", "allow", "referrerpolicy", "width", "height", "target", "rel", "allowfullscreen", "webkitallowfullscreen", "mozallowfullscreen", "frameborder", "controls", "preload", "style", "class", "id", "dir", "loading", "decoding", "fetchpriority" };
+    var allowedAttributes = new[] { "href", "src", "alt", "title", "allow", "referrerpolicy", "width", "height", "target", "rel", "allowfullscreen", "webkitallowfullscreen", "mozallowfullscreen", "frameborder", "controls", "preload", "style", "class", "id", "dir", "loading", "decoding", "fetchpriority", "colspan", "rowspan", "scope" };
     foreach (var attr in allowedAttributes) { sanitizer.AllowedAttributes.Add(attr); }
 
     sanitizer.FilterUrl += (sender, args) =>
@@ -217,8 +217,13 @@
         ? Regex.Replace(Model.Post.Content ?? "", "\u003C(/?)h1(\\b[^\u003E]*)\u003E", "\u003C$1h2$2\u003E", RegexOptions.IgnoreCase)
         : "";
     string sanitizedRaw = Model?.Post != null ? sanitizer.Sanitize(demotedContent) : "";
-    var reading = final_p_01.Application.Services.ArticleReading.Prepare(ProcessAllVideos(sanitizedRaw));
-    string processedContent = reading.Html;
+    string processedContent = final_p_01.Application.Services.ArticleReading.Prepare(ProcessAllVideos(sanitizedRaw)).Html;
+
+    processedContent = Regex.Replace(
+        processedContent,
+        "\u003Ctable\\b[^\u003E]*\u003E[\\s\\S]*?\u003C/table\u003E",
+        m => $"\u003Cdiv class=\"pd-table-wrap\"\u003E{m.Value}\u003C/div\u003E",
+        RegexOptions.IgnoreCase);
 
     string FormatFaqAnswer(string? rawAnswer)
     {
@@ -442,41 +447,82 @@
                 overflow-wrap: break-word;
             }
 
-                .pd-body h2, .pd-body h3 {
+                .pd-body h2, .pd-body h3, .pd-body h4 {
                     color: var(--pd-text-main);
                     font-weight: 800;
                     margin-top: 2.5rem;
                     margin-bottom: 1.2rem;
                     line-height: 1.4;
+                    scroll-margin-top: 100px;
+                }
+
+                .pd-body .pd-table-wrap {
+                    width: 100%;
+                    overflow-x: auto;
+                    -webkit-overflow-scrolling: touch;
+                    margin: 2rem 0;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 12px;
+                    background: #ffffff;
                 }
 
                 .pd-body table {
+                    display: table !important;
                     width: 100% !important;
-                    display: block;
-                    overflow-x: auto;
-                    -webkit-overflow-scrolling: touch;
                     border-collapse: collapse;
-                    margin: 2rem 0;
+                    border-spacing: 0;
+                    margin: 0;
+                    font-size: 0.95rem;
+                    text-align: right;
+                    direction: rtl;
+                    overflow-wrap: normal;
+                    word-break: normal;
                 }
 
                     .pd-body table th,
                     .pd-body table td {
-                        padding: 0.85rem 1.1rem;
+                        padding: 12px 16px;
                         border: 1px solid #e2e8f0;
                         text-align: right;
                         vertical-align: middle;
                         line-height: 1.75;
+                        color: var(--pd-text-main);
                     }
 
+                    .pd-body table thead th,
                     .pd-body table th {
                         background-color: #f8fafc;
                         color: var(--pd-text-main);
-                        font-weight: 800;
+                        font-weight: 700;
+                        border-bottom: 2px solid #e2e8f0;
                     }
 
                     .pd-body table tbody tr:nth-child(even) td {
-                        background-color: #fcfcfd;
+                        background-color: #f8fafc;
                     }
+
+                    .pd-body table tbody tr:hover td {
+                        background-color: #f1f5f9;
+                    }
+
+                .pd-body .pd-table-wrap table tr:first-child th,
+                .pd-body .pd-table-wrap table tr:first-child td {
+                    border-top: none;
+                }
+
+                .pd-body .pd-table-wrap table tr:last-child td {
+                    border-bottom: none;
+                }
+
+                .pd-body .pd-table-wrap table tr th:first-child,
+                .pd-body .pd-table-wrap table tr td:first-child {
+                    border-right: none;
+                }
+
+                .pd-body .pd-table-wrap table tr th:last-child,
+                .pd-body .pd-table-wrap table tr td:last-child {
+                    border-left: none;
+                }
 
                 .pd-body .pdf-btn {
                     display: inline-flex;
@@ -926,6 +972,12 @@
                     padding: 0 10px;
                 }
 
+                .pd-body table th,
+                .pd-body table td {
+                    padding: 10px 12px;
+                    font-size: 0.9rem;
+                }
+
                 .pdf-premium-card {
                     flex-direction: column;
                     text-align: center;
@@ -1005,24 +1057,8 @@
         </header>
 
         <article class="pd-container">
-            <p class="article-reading-time">زمان مطالعه: @reading.Minutes دقیقه</p>
-            <div class="article-reading">
-                <details class="article-toc" open>
-                    <summary>در این مقاله می‌خوانید</summary>
-                    <nav aria-label="فهرست مقاله">
-                        @foreach (var heading in reading.Headings)
-                        {
-                            <a href="#@heading.Id" data-level="@heading.Level">@heading.Title</a>
-                        }
-                        @if (!reading.Headings.Any())
-                        {
-                            <a href="#article-body">متن مقاله</a>
-                        }
-                    </nav>
-                </details>
-                <div class="pd-body pd-content" id="article-body">
-                    @Html.Raw(processedContent)
-                </div>
+            <div class="pd-body pd-content" id="article-body">
+                @Html.Raw(processedContent)
             </div>
 
             @if (!string.IsNullOrEmpty(Model.Post.AudioFilePath))
@@ -1058,6 +1094,7 @@
             }
 
             <div class="pd-rating-box mt-5 p-4 rounded-4 text-center">
+                @Html.AntiForgeryToken()
                 <h2 class="pd-rating-title">به این مقاله چه امتیازی می‌دهید؟</h2>
                 <div class="pd-stars" style="direction: ltr;">
                     <i class="bi bi-star-fill pd-star-icon" data-value="5"></i>

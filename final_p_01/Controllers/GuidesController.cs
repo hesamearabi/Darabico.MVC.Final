@@ -9,15 +9,19 @@ namespace final_p_01.Controllers;
 [Route("guides")]
 public class GuidesController : Controller
 {
+    private const string MainGuideSlug = "padel-court-construction-guide";
     private readonly ApplicationDbContext _context;
 
     public GuidesController(ApplicationDbContext context) => _context = context;
 
-    [HttpGet("{slug}"), OutputCache(Duration = 1800)]
+    [HttpGet("{slug}"), OutputCache(Duration = 1800, Tags = ["BlogCache"])]
     public async Task<IActionResult> Details(string slug)
     {
         if (string.IsNullOrWhiteSpace(slug))
             return base.NotFound();
+
+        if (slug.Equals(MainGuideSlug, StringComparison.OrdinalIgnoreCase))
+            return RedirectPermanent("/padel-court-construction-guide");
 
         var page = await _context.PillarPages.AsNoTracking()
             .FirstOrDefaultAsync(p => p.Slug == slug && p.IsPublished);

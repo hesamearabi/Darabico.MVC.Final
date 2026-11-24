@@ -253,7 +253,7 @@ namespace final_p_01.Controllers
             return View();
         }
 
-        [Route("Home/{actionName}")]
+        [HttpGet("Home/{actionName}")]
         public IActionResult LegacyRedirect(string actionName)
         {
             if (LegacyRedirects.TryGetValue(actionName, out string? targetPath) && !string.IsNullOrEmpty(targetPath))
@@ -523,7 +523,7 @@ namespace final_p_01.Controllers
             return string.Join("/", segments.Select(Uri.EscapeDataString));
         }
 
-        [HttpPost]
+        [HttpPost("Home/SubmitRating")]
         [ValidateAntiForgeryToken]
         [EnableRateLimiting("RatingRateLimit")]
         public async Task<IActionResult> SubmitRating(int postId, int rating)
@@ -571,7 +571,7 @@ namespace final_p_01.Controllers
                 {
                     Expires = DateTimeOffset.UtcNow.AddDays(365),
                     HttpOnly = true,
-                    Secure = true,
+                    Secure = Request.IsHttps,
                     SameSite = SameSiteMode.Strict
                 };
                 Response.Cookies.Append(cookieName, hashString, cookieOptions);
