@@ -246,10 +246,19 @@ using (var scope = app.Services.CreateScope())
 
         if (!context.Posts.Any(p => p.Slug == "padel-court-construction-guide"))
         {
+            var guideCategory = context.Categories.FirstOrDefault(c => c.Slug == "guides");
+            if (guideCategory == null)
+            {
+                guideCategory = new Category { Name = "راهنماها", Slug = "guides" };
+                context.Categories.Add(guideCategory);
+                context.SaveChanges();
+            }
+
             context.Posts.Add(new Post
             {
                 Title = "راهنمای جامع 0 تا 100 ساخت زمین پدل",
                 Slug = "padel-court-construction-guide",
+                CategoryId = guideCategory.Id,
                 Content = "<p>راهنمای گام‌به‌گام طراحی و اجرای زمین پدل: از انتخاب زمین و پی تا دیواره‌های شیشه‌ای، نورپردازی و تحویل نهایی. فصل‌های تخصصی این راهنما در همین صفحه در دسترس شماست.</p>",
                 MetaTitle = "راهنمای جامع 0 تا 100 ساخت زمین پدل | دارابیکو",
                 MetaDescription = "همه مراحل ساخت زمین پدل از صفر تا صد: انتخاب زمین، پی و آسفالت، دیواره‌ها، ابعاد استاندارد و تجهیزات FIP.",

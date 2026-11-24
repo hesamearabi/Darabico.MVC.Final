@@ -291,6 +291,18 @@ namespace final_p_01.Controllers
                 .Select(p => new { p.Slug, CreatedAt = p.CreatedAtUtc, UpdatedAt = p.UpdatedAtUtc })
                 .ToListAsync(HttpContext.RequestAborted);
 
+            var publishedGuides = await _context.PillarPages
+                .AsNoTracking()
+                .Where(g => g.IsPublished)
+                .Select(g => new { g.Slug, CreatedAt = g.CreatedAtUtc, UpdatedAt = g.UpdatedAtUtc })
+                .ToListAsync(HttpContext.RequestAborted);
+
+            var publishedCityPages = await _context.CityPages
+                .AsNoTracking()
+                .Where(c => c.IsPublished)
+                .Select(c => new { c.Slug, CreatedAt = c.CreatedAtUtc, UpdatedAt = c.UpdatedAtUtc })
+                .ToListAsync(HttpContext.RequestAborted);
+
             var guidePost = allPublishedPosts.FirstOrDefault(p => string.Equals(p.Slug, GuideSlug, StringComparison.OrdinalIgnoreCase));
             var blogPosts = allPublishedPosts
                 .Where(p => !string.Equals(p.Slug, GuideSlug, StringComparison.OrdinalIgnoreCase))
@@ -324,18 +336,22 @@ namespace final_p_01.Controllers
 
             urlset.Add(new XElement(
                 sitemapNs + "url",
-                new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, "/about-us"))));
+                new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, "/about-us")),
+                new XElement(sitemapNs + "lastmod", DateTime.UtcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture))));
 
             urlset.Add(new XElement(
                 sitemapNs + "url",
-                new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, "/contact-us"))));
+                new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, "/contact-us")),
+                new XElement(sitemapNs + "lastmod", DateTime.UtcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture))));
 
             var blogElement = new XElement(
                 sitemapNs + "url",
                 new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, "/blog")));
-            if (newestBlogDate.HasValue)
+            DateTime? newestBlogOrGuideDate = newestBlogDate
+                ?? (guidePost != null ? guidePost.UpdatedAt ?? guidePost.CreatedAt : null);
+            if (newestBlogOrGuideDate.HasValue)
             {
-                blogElement.Add(new XElement(sitemapNs + "lastmod", newestBlogDate.Value.ToString("yyyy-MM-dd")));
+                blogElement.Add(new XElement(sitemapNs + "lastmod", newestBlogOrGuideDate.Value.ToString("yyyy-MM-dd")));
             }
             urlset.Add(blogElement);
 
@@ -389,7 +405,33 @@ namespace final_p_01.Controllers
             foreach (var path in new[] { "/projects", "/estimator", "/inquiry" })
             {
                 urlset.Add(new XElement(sitemapNs + "url",
-                    new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, path))));
+                    new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, path)),
+                    new XElement(sitemapNs + "lastmod", DateTime.UtcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture))));
+            }
+
+            foreach (var guide in publishedGuides)
+            {
+                if (string.IsNullOrWhiteSpace(guide.Slug) ||
+                    guide.Slug.Equals(GuideSlug, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                urlset.Add(new XElement(sitemapNs + "url",
+                    new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, $"/guides/{Uri.EscapeDataString(guide.Slug)}")),
+                    new XElement(sitemapNs + "lastmod", (guide.UpdatedAt ?? guide.CreatedAt).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture))));
+            }
+
+            foreach (var cityPage in publishedCityPages)
+            {
+                if (string.IsNullOrWhiteSpace(cityPage.Slug))
+                {
+                    continue;
+                }
+
+                urlset.Add(new XElement(sitemapNs + "url",
+                    new XElement(sitemapNs + "loc", BuildAbsoluteUrl(baseUrl, $"/city/{Uri.EscapeDataString(cityPage.Slug)}")),
+                    new XElement(sitemapNs + "lastmod", (cityPage.UpdatedAt ?? cityPage.CreatedAt).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture))));
             }
 
             foreach (var project in publishedProjects)

@@ -252,7 +252,7 @@ public sealed class SeoIntegrationTests(SeoApplication app) : IClassFixture<SeoA
         Assert.Contains("تومان", WebUtility.HtmlDecode(estimator));
         Assert.Single(Tags(estimator, "<meta\\b[^>]*name=\"description\"[^>]*>"));
         var home = await Get("/");
-        Assert.Contains("<h2 id=\"estimator-title\">", home);
+        Assert.Contains("<h2 id=\"estimator-title-home\">", home);
         Assert.Single(Tags(home, "<h1\\b[^>]*>"));
         foreach (var html in new[] { estimator, home })
         {
@@ -396,6 +396,60 @@ public sealed class SeoIntegrationTests(SeoApplication app) : IClassFixture<SeoA
         var sitemap = await Get("/sitemap.xml");
         Assert.Contains("/blog/padel-court-walls-test", sitemap);
         Assert.Contains("/padel-court-construction-guide", sitemap);
+    }
+
+    [Theory]
+    [InlineData("/guides", "/padel-court-construction-guide")]
+    [InlineData("/guides/index", "/padel-court-construction-guide")]
+    [InlineData("/guides/padel-court-construction-guide", "/padel-court-construction-guide")]
+    public async Task GuidesRoutes301ToSingleCanonicalPillarUrl(string path, string destination)
+    {
+        using var response = await app.Client.GetAsync(path);
+        Assert.Equal(HttpStatusCode.MovedPermanently, response.StatusCode);
+        Assert.Equal(destination, response.Headers.Location?.ToString());
+    }
+
+    [Fact]
+    public async Task SitemapIncludesPublishedPillarGuidesAndCityPagesWithLastmod()
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        db.PillarPages.Add(new PillarPage
+        {
+            Title = "راهنمای زمین پدل",
+            Slug = "pillar-guide-sitemap-test",
+            ContentHtml = "<p>محتوای راهنما</p>",
+            IsPublished = true,
+            CreatedAtUtc = new DateTime(2025, 3, 1, 0, 0, 0, DateTimeKind.Utc)
+        });
+        db.CityPages.Add(new CityPage
+        {
+            Title = "زمین پدل ساری",
+            Slug = "sari-sitemap-test",
+            ContentHtml = "<p>محتوای شهر</p>",
+            IsPublished = true,
+            CreatedAtUtc = new DateTime(2025, 4, 1, 0, 0, 0, DateTimeKind.Utc)
+        });
+        db.SaveChanges();
+
+        var xml = XDocument.Parse(await Get("/sitemap.xml"));
+        XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
+        var urlElements = xml.Root!.Elements(ns + "url").ToList();
+        Assert.All(urlElements, e => Assert.True(
+            e.Element(ns + "lastmod") != null,
+            $"Missing lastmod on {e.Element(ns + "loc")?.Value}"));
+        var urls = urlElements
+            .Select(e => new
+            {
+                Loc = e.Element(ns + "loc")!.Value,
+                Lastmod = e.Element(ns + "lastmod")!.Value
+            })
+            .ToDictionary(u => u.Loc, u => u.Lastmod);
+
+        Assert.Contains($"{SeoApplication.Origin}/guides/pillar-guide-sitemap-test", urls.Keys);
+        Assert.Equal("2025-03-01", urls[$"{SeoApplication.Origin}/guides/pillar-guide-sitemap-test"]);
+        Assert.Contains($"{SeoApplication.Origin}/city/sari-sitemap-test", urls.Keys);
+        Assert.Equal("2025-04-01", urls[$"{SeoApplication.Origin}/city/sari-sitemap-test"]);
     }
 
     [Theory]

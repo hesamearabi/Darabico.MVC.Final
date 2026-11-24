@@ -354,6 +354,25 @@
           ]
         }
     </script>
+    <script type="application/ld+json">
+        {
+          "@@context": "https://schema.org",
+          "@@type": "Service",
+          "serviceType": "ساخت و تجهیز زمین پدل",
+          "name": "طراحی و ساخت زمین پدل",
+          "url": "@UrlBuilder.Absolute("/")",
+          "description": "طراحی، زیرسازی، ساخت سازه، تولید و نصب شیشه و تجهیزات استاندارد FIP زمین های پدل.",
+          "provider": {
+            "@@type": "GeneralContractor",
+            "name": "دارابی کو - Darabico",
+            "url": "@UrlBuilder.Absolute("/")"
+          },
+          "areaServed": {
+            "@@type": "Country",
+            "name": "Iran"
+          }
+        }
+    </script>
 
     @await RenderSectionAsync("Head", required: false)
     <link rel="stylesheet" href="~/css/workspace.css" asp-append-version="true" />
@@ -507,7 +526,7 @@
         @await RenderSectionAsync("Hero", required: false)
     }
 
-    <main role="main" class="main-content-wrapper">
+    <main role="main" class="main-content-wrapper @(isHomePage ? "" : "inner-page-content")">
         @RenderBody()
     </main>
 

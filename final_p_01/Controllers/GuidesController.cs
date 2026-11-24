@@ -14,6 +14,10 @@ public class GuidesController : Controller
 
     public GuidesController(ApplicationDbContext context) => _context = context;
 
+    [HttpGet("")]
+    [HttpGet("index")]
+    public IActionResult Index() => RedirectPermanent("/padel-court-construction-guide");
+
     [HttpGet("{slug}"), OutputCache(Duration = 1800, Tags = ["BlogCache"])]
     public async Task<IActionResult> Details(string slug)
     {

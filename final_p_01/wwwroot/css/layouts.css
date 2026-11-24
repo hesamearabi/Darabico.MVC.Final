@@ -437,6 +437,17 @@ body {
         border-bottom: 1px solid rgba(197, 166, 107, 0.15);
     }
 
+/* فاصله بالای محتوا فقط در صفحات داخلی؛ هوم عمداً زیر هدر شیشه‌ای است */
+.main-content-wrapper.inner-page-content {
+    padding-top: 96px;
+}
+
+@media (max-width: 991.98px) {
+    .main-content-wrapper.inner-page-content {
+        padding-top: 72px;
+    }
+}
+
 .header-container {
     width: min(92%, 1400px);
     margin: 0 auto;
