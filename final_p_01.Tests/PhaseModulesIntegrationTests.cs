@@ -30,7 +30,10 @@ public class PhaseModulesIntegrationTests : IDisposable
     }
 
     private final_p_01.Areas.Admin.Controllers.PhaseModulesController AdminController() =>
-        new(_context, new CacheStore());
+        new(_context, new CacheStore(),
+            configuration: null!,
+            env: null!,
+            logger: Microsoft.Extensions.Logging.Abstractions.NullLogger<final_p_01.Areas.Admin.Controllers.PhaseModulesController>.Instance);
 
     private sealed class CacheStore : Microsoft.AspNetCore.OutputCaching.IOutputCacheStore
     {
@@ -56,7 +59,7 @@ public class PhaseModulesIntegrationTests : IDisposable
         var controller = AdminController();
         Assert.Equal("CreatePillarPage", Assert.IsType<ViewResult>(await controller.EditPillarPage(page.Id)).ViewName);
         controller.ModelState.AddModelError("Title", "عنوان الزامی است.");
-        Assert.Equal("CreatePillarPage", Assert.IsType<ViewResult>(await controller.EditPillarPage(page.Id, page)).ViewName);
+        Assert.Equal("CreatePillarPage", Assert.IsType<ViewResult>(await controller.EditPillarPage(page.Id, page, coverImage: null, faqs: null)).ViewName);
     }
 
     [Fact]
