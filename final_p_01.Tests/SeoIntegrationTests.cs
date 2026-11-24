@@ -66,7 +66,6 @@ public sealed class SeoApplication : IAsyncLifetime
         App.UseDeveloperExceptionPage();
         final_p_01.Extensions.StaticAssetExtensions.UseLegacyImagePaths(App, App.Environment);
         App.UseStaticFiles();
-        App.UseMiddleware<final_p_01.Middleware.LanguageMiddleware>();
         App.UseRouting();
         App.UseAuthentication();
         App.UseAuthorization();
@@ -402,8 +401,6 @@ public sealed class SeoIntegrationTests(SeoApplication app) : IClassFixture<SeoA
     [Theory]
     [InlineData("/about", "/about-us")]
     [InlineData("/contact", "/contact-us")]
-    [InlineData("/ar/about", "/ar/about-us")]
-    [InlineData("/ar/contact", "/ar/contact-us")]
     public async Task ShortCompanyRoutesRedirectPermanentlyToCanonical(string path, string destination)
     {
         using var response = await app.Client.GetAsync(path);
@@ -479,26 +476,6 @@ public sealed class SeoIntegrationTests(SeoApplication app) : IClassFixture<SeoA
         Assert.Contains("id=\"article-section-2\"", reading.Html);
     }
 
-    [Theory]
-    [InlineData("/ar", "/")]
-    [InlineData("/ar/blog", "/blog")]
-    [InlineData("/ar/projects", "/projects")]
-    [InlineData("/ar/projects/project-1", "/projects/project-1")]
-    [InlineData("/ar/padel-court-construction-guide", "/padel-court-construction-guide")]
-    public async Task ArabicPagesKeepLocaleInCanonicalAndSwitchBackToPersian(string path, string persianPath)
-    {
-        var html = await Get(path);
-        Assert.Equal(SeoApplication.Origin + path, Canonical(html));
-        var switches = Tags(html, "<a\\b[^>]*class=\"[^\"]*lang-switcher[^\"]*\"[^>]*>");
-        Assert.Equal(2, switches.Length);
-        Assert.All(switches, tag =>
-        {
-            Assert.Equal(persianPath, Attribute(tag, "href"));
-            Assert.Equal("fa", Attribute(tag, "hreflang"));
-        });
-        Assert.Contains(">FA</span>", html);
-    }
-
     [Fact]
     public async Task ArticleIconsUseExistingLocalStylesheet()
     {
@@ -510,15 +487,31 @@ public sealed class SeoIntegrationTests(SeoApplication app) : IClassFixture<SeoA
     }
 
     [Fact]
+    public async Task ArabicRoutesAreRetired()
+    {
+        // Arabic support was removed in 116478c: /ar must not serve an Arabic page
+        // (unknown routes fall through to the soft-404 page, so accept any final status).
+        var (_, html) = await GetWithStatus("/ar");
+        Assert.DoesNotContain("<html lang=\"ar\"", html);
+        Assert.DoesNotContain("hreflang=\"ar\"", html);
+    }
+
+    [Fact]
     public async Task NavigationComponentRendersInDesktopDrawerAndFooter()
     {
+        // Classic 5-link nav restored in 116478c; the dynamic workspace-nav-subtree was removed.
         var html = await Get("/");
-        Assert.DoesNotContain("<vc:site-nav", html);
+        Assert.DoesNotContain("workspace-nav-subtree", html);
         var desktop = Regex.Match(html, "<nav class=\"desktop-nav\">(.*?)</nav>", RegexOptions.Singleline).Value;
         var drawer = Regex.Match(html, "<div class=\"mobile-menu\".*?</nav>", RegexOptions.Singleline).Value;
-        var footer = Regex.Match(html, "<footer\\b.*?</footer>", RegexOptions.Singleline).Value;
-        foreach (var section in new[] { desktop, drawer, footer })
-            Assert.Contains("workspace-nav-subtree", section);
+        foreach (var section in new[] { desktop, drawer })
+        {
+            Assert.Contains("href=\"/about-us\"", section);
+            Assert.Contains("href=\"/projects\"", section);
+            Assert.Contains("href=\"/blog\"", section);
+            Assert.Contains("href=\"/padel-court-construction-guide\"", section);
+        }
+        Assert.Equal(5, Regex.Matches(desktop, "<li>").Count);
     }
 
     [Fact]
@@ -529,14 +522,5 @@ public sealed class SeoIntegrationTests(SeoApplication app) : IClassFixture<SeoA
         Assert.Single(Tags(desktop, "<a\\b[^>]*href=\"/padel-court-construction-guide\"[^>]*>"));
         Assert.Single(Tags(desktop, "<a\\b[^>]*href=\"/blog\"[^>]*>"));
         Assert.DoesNotContain("nav-has-mega", desktop);
-    }
-
-    [Fact]
-    public async Task ArabicRouteServesHtmlLangAr()
-    {
-        var (status, html) = await GetWithStatus("/ar");
-        Assert.Equal(HttpStatusCode.OK, status);
-        Assert.Contains("<html lang=\"ar\"", html);
-        Assert.Contains("hreflang=\"ar\"", html);
     }
 }
