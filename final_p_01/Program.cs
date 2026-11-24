@@ -29,6 +29,7 @@ builder.Services.Configure<FormOptions>(options =>
 });
 
 builder.Services.AddSingleton<ISiteUrlBuilder, SiteUrlBuilder>();
+builder.Services.AddSingleton<final_p_01.Services.IRichTextSanitizer, final_p_01.Services.RichTextSanitizer>();
 builder.Services.AddSingleton<ISiteSettingsProvider, SiteSettingsProvider>();
 builder.Services.AddFileStorage();
 
@@ -337,6 +338,7 @@ app.Use(async (context, next) =>
             originalPath.StartsWith("/admin", StringComparison.OrdinalIgnoreCase) ||
             originalPath.StartsWith("/uploads", StringComparison.OrdinalIgnoreCase) ||
             originalPath.StartsWith("/lib", StringComparison.OrdinalIgnoreCase) ||
+            originalPath.StartsWith("/images", StringComparison.OrdinalIgnoreCase) ||
             originalPath.StartsWith("/css-source", StringComparison.OrdinalIgnoreCase) ||
             originalPath.StartsWith("/js-source", StringComparison.OrdinalIgnoreCase) ||
             originalPath.StartsWith("/fonts", StringComparison.OrdinalIgnoreCase) ||

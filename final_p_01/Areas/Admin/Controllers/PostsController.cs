@@ -24,19 +24,22 @@ public class PostsController : Controller
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _env;
     private readonly IOutputCacheStore _outputCacheStore;
+    private readonly final_p_01.Services.IRichTextSanitizer _sanitizer;
 
     public PostsController(
         ApplicationDbContext context,
         ILogger<PostsController> logger,
         IConfiguration configuration,
         IWebHostEnvironment env,
-        IOutputCacheStore outputCacheStore)
+        IOutputCacheStore outputCacheStore,
+        final_p_01.Services.IRichTextSanitizer sanitizer)
     {
         _context = context;
         _logger = logger;
         _configuration = configuration;
         _env = env;
         _outputCacheStore = outputCacheStore;
+        _sanitizer = sanitizer;
     }
 
     private string GenerateSeoFriendlySlug(string text)
@@ -267,6 +270,7 @@ public class PostsController : Controller
         ModelState.Remove("Children");
 
         post.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(post.Slug) ? post.Title : post.Slug);
+        post.Content = _sanitizer.Sanitize(post.Content);
 
         if (string.IsNullOrWhiteSpace(post.Slug))
         {
@@ -383,6 +387,8 @@ public class PostsController : Controller
     public async Task<IActionResult> Edit(int id, Post post, IFormFile? coverImage, IFormFile? audioFile, IFormFile? attachmentFile)
     {
         if (id != post.Id) return NotFound();
+
+        post.Content = _sanitizer.Sanitize(post.Content);
 
         var existingPost = await _context.Posts
             .Include(p => p.Faqs)

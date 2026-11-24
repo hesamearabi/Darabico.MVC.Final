@@ -22,19 +22,22 @@ public class PhaseModulesController : Controller
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<PhaseModulesController> _logger;
+    private readonly final_p_01.Services.IRichTextSanitizer _sanitizer;
 
     public PhaseModulesController(
         ApplicationDbContext context,
         IOutputCacheStore outputCacheStore,
         IConfiguration configuration,
         IWebHostEnvironment env,
-        ILogger<PhaseModulesController> logger)
+        ILogger<PhaseModulesController> logger,
+        final_p_01.Services.IRichTextSanitizer sanitizer)
     {
         _context = context;
         _outputCacheStore = outputCacheStore;
         _configuration = configuration;
         _env = env;
         _logger = logger;
+        _sanitizer = sanitizer;
     }
 
     public sealed class PillarFaqInput
@@ -225,7 +228,7 @@ public class PhaseModulesController : Controller
             settings.WorkshopVideoUrl = model.WorkshopVideoUrl;
             settings.WorkshopVideoPosterUrl = model.WorkshopVideoPosterUrl;
             settings.WorkshopVideoTitle = model.WorkshopVideoTitle;
-            settings.WorkshopVideoDescription = model.WorkshopVideoDescription;
+            settings.WorkshopVideoDescription = _sanitizer.Sanitize(model.WorkshopVideoDescription);
             settings.FeasibilityPdfPath = model.FeasibilityPdfPath;
             settings.FeasibilityPageTitle = model.FeasibilityPageTitle;
             settings.FeasibilityPageIntro = model.FeasibilityPageIntro;
@@ -390,6 +393,7 @@ public class PhaseModulesController : Controller
         model.Title = model.Title?.Trim() ?? string.Empty;
         model.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(model.Slug) ? model.Title : model.Slug);
         model.ContentHtml ??= string.Empty;
+        model.ContentHtml = _sanitizer.Sanitize(model.ContentHtml);
         model.MetaTitle = string.IsNullOrWhiteSpace(model.MetaTitle) ? null : model.MetaTitle.Trim();
         model.MetaDescription = string.IsNullOrWhiteSpace(model.MetaDescription) ? null : model.MetaDescription.Trim();
         model.Canonical = string.IsNullOrWhiteSpace(model.Canonical) ? null : model.Canonical.Trim();
@@ -490,6 +494,7 @@ public class PhaseModulesController : Controller
         model.Title = model.Title?.Trim() ?? string.Empty;
         model.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(model.Slug) ? model.Title : model.Slug);
         model.ContentHtml ??= string.Empty;
+        model.ContentHtml = _sanitizer.Sanitize(model.ContentHtml);
         model.MetaTitle = string.IsNullOrWhiteSpace(model.MetaTitle) ? null : model.MetaTitle.Trim();
         model.MetaDescription = string.IsNullOrWhiteSpace(model.MetaDescription) ? null : model.MetaDescription.Trim();
         model.Canonical = string.IsNullOrWhiteSpace(model.Canonical) ? null : model.Canonical.Trim();
@@ -658,6 +663,7 @@ public class PhaseModulesController : Controller
             return View(model);
         }
 
+        model.ContentHtml = _sanitizer.Sanitize(model.ContentHtml);
         _context.CityPages.Add(model);
         await _context.SaveChangesAsync();
         await PurgePublicCacheAsync();

@@ -105,6 +105,8 @@ public class ImageService(IWebHostEnvironment environment) : IImageService
         if (!AllowedVideoExtensions.Contains(ext))
             throw new InvalidOperationException("فقط فرمت‌های MP4 و WebM مجاز هستند.");
 
+        await ValidateVideoMagicBytesAsync(file, ext, cancellationToken);
+
         var targetDir = EnsureUploadDirectory(subFolder);
         var fileName = $"{Guid.NewGuid():N}{ext}";
         var fullPath = Path.Combine(targetDir, fileName);
@@ -139,5 +141,38 @@ public class ImageService(IWebHostEnvironment environment) : IImageService
             Directory.CreateDirectory(fullDir);
 
         return fullDir;
+    }
+
+    // اعتبارسنجی بایت‌های ابتدایی فایل (magic bytes) تا محتوای جعلی با پسوند ویدیو ذخیره نشود
+    private static async Task ValidateVideoMagicBytesAsync(
+        UploadFile file, string extension, CancellationToken cancellationToken)
+    {
+        var buffer = new byte[12];
+        var stream = file.OpenReadStream();
+        int read = 0;
+        while (read < buffer.Length)
+        {
+            int n = await stream.ReadAsync(buffer.AsMemory(read, buffer.Length - read), cancellationToken);
+            if (n == 0) break;
+            read += n;
+        }
+
+        if (stream.CanSeek) stream.Position = 0;
+        if (extension == ".webm")
+        {
+            // EBML header: 0x1A 0x45 0xDF 0xA3
+            bool isEbml = read >= 4 &&
+                buffer[0] == 0x1A && buffer[1] == 0x45 && buffer[2] == 0xDF && buffer[3] == 0xA3;
+            if (!isEbml)
+                throw new InvalidOperationException("محتوای فایل با فرمت WebM مطابقت ندارد.");
+            return;
+        }
+
+        // MP4: bytes 4..7 are "ftyp"
+        bool isMp4 = read >= 8 &&
+            buffer[4] == (byte)'f' && buffer[5] == (byte)'t' &&
+            buffer[6] == (byte)'y' && buffer[7] == (byte)'p';
+        if (!isMp4)
+            throw new InvalidOperationException("محتوای فایل با فرمت MP4 مطابقت ندارد.");
     }
 }

@@ -23,11 +23,14 @@ public class SettingsController : AdminBaseController
     private readonly ApplicationDbContext _context;
     private readonly PasswordHasher<AdminUser> _passwordHasher;
 
-    public SettingsController(ApplicationDbContext context)
+    public SettingsController(ApplicationDbContext context, final_p_01.Services.IRichTextSanitizer sanitizer)
     {
         _context = context;
         _passwordHasher = new PasswordHasher<AdminUser>();
+        _sanitizer = sanitizer;
     }
+
+    private readonly final_p_01.Services.IRichTextSanitizer _sanitizer;
 
     [HttpGet]
     public async Task<IActionResult> Index()

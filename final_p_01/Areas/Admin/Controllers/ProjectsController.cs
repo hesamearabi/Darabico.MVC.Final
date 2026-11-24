@@ -15,8 +15,10 @@ namespace Darabico.Web.Areas.Admin.Controllers;
 [Route("admin/projects")]
 public class ProjectsController(
     ApplicationDbContext dbContext,
-    IImageService imageService) : Controller
+    IImageService imageService,
+    final_p_01.Services.IRichTextSanitizer sanitizer) : Controller
 {
+    private readonly final_p_01.Services.IRichTextSanitizer _sanitizer = sanitizer;
     [HttpGet("")]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
@@ -62,6 +64,8 @@ public class ProjectsController(
             ModelState.AddModelError(nameof(model.FeaturedImageFile), "آپلود تصویر شاخص الزامی است.");
 
         ValidateNewGalleryItems(model);
+
+        model.Description = _sanitizer.Sanitize(model.Description);
 
         if (!ModelState.IsValid)
             return View(model);
@@ -281,7 +285,7 @@ public class ProjectsController(
             project.CourtType = model.CourtType;
             project.ExecutionYear = model.ExecutionYear;
             project.ExecutionDurationMonths = model.ExecutionDurationMonths;
-            project.Description = model.Description;
+            project.Description = _sanitizer.Sanitize(model.Description);
             project.DisplayOrder = model.DisplayOrder;
             project.IsPublished = model.IsPublished;
             project.MetaTitle = model.MetaTitle?.Trim();

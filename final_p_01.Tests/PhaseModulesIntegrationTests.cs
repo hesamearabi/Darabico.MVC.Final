@@ -33,7 +33,8 @@ public class PhaseModulesIntegrationTests : IDisposable
         new(_context, new CacheStore(),
             configuration: null!,
             env: null!,
-            logger: Microsoft.Extensions.Logging.Abstractions.NullLogger<final_p_01.Areas.Admin.Controllers.PhaseModulesController>.Instance);
+            logger: Microsoft.Extensions.Logging.Abstractions.NullLogger<final_p_01.Areas.Admin.Controllers.PhaseModulesController>.Instance,
+            sanitizer: new final_p_01.Services.RichTextSanitizer());
 
     private sealed class CacheStore : Microsoft.AspNetCore.OutputCaching.IOutputCacheStore
     {
@@ -293,7 +294,7 @@ public class PhaseModulesIntegrationTests : IDisposable
     [Fact]
     public async Task SaveSeo_PersistsTitlesAndUploadedFavicon()
     {
-        var controller = WithTempData(new final_p_01.Areas.Admin.Controllers.SettingsController(_context));
+        var controller = WithTempData(new final_p_01.Areas.Admin.Controllers.SettingsController(_context, new final_p_01.Services.RichTextSanitizer()));
         var model = new final_p_01.Areas.Admin.Models.SiteSeoViewModel
         {
             SeoHomeTitle = "ساخت زمین پدل | دارابیکو",
@@ -314,7 +315,7 @@ public class PhaseModulesIntegrationTests : IDisposable
     [Fact]
     public async Task SaveSeo_PersistsCompanyPageMetadata()
     {
-        var controller = WithTempData(new final_p_01.Areas.Admin.Controllers.SettingsController(_context));
+        var controller = WithTempData(new final_p_01.Areas.Admin.Controllers.SettingsController(_context, new final_p_01.Services.RichTextSanitizer()));
         await controller.SaveSeo(new final_p_01.Areas.Admin.Models.SiteSeoViewModel
         {
             SeoAboutTitle = " About title ", SeoAboutDescription = " About description ",
@@ -330,7 +331,7 @@ public class PhaseModulesIntegrationTests : IDisposable
     [Fact]
     public async Task SaveSeo_RejectsDisallowedFaviconExtension()
     {
-        var controller = WithTempData(new final_p_01.Areas.Admin.Controllers.SettingsController(_context));
+        var controller = WithTempData(new final_p_01.Areas.Admin.Controllers.SettingsController(_context, new final_p_01.Services.RichTextSanitizer()));
         var bytes = new byte[] { 1, 2, 3 };
         var exe = new Microsoft.AspNetCore.Http.FormFile(new MemoryStream(bytes), 0, bytes.Length, "favicon", "favicon.exe");
 

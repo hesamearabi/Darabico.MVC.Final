@@ -257,10 +257,11 @@ public class InquiryTests
                 images.DeleteFile(url);
                 Assert.False(File.Exists(path));
             }
-            var videoStream = new MemoryStream(new byte[] { 1, 2, 3 });
+            var mp4 = new byte[] { 0x00, 0x00, 0x00, 0x18, (byte)'f', (byte)'t', (byte)'y', (byte)'p', (byte)'i', (byte)'s', (byte)'o', (byte)'m', 0x00, 0x00, 0x00, 0x01 };
+            var videoStream = new MemoryStream(mp4);
             var video = await images.SaveVideoAsync(new UploadFile("court.mp4", videoStream.Length, () => videoStream), "projects/videos");
             Assert.False(videoStream.CanRead);
-            Assert.Equal(new byte[] { 1, 2, 3 }, await File.ReadAllBytesAsync(Path.Combine(environment.WebRootPath, video.TrimStart('/'))));
+            Assert.Equal(mp4, await File.ReadAllBytesAsync(Path.Combine(environment.WebRootPath, video.TrimStart('/'))));
             images.DeleteFile(video);
         }
         finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
