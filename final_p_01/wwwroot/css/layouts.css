@@ -437,7 +437,7 @@ body {
         border-bottom: 1px solid rgba(197, 166, 107, 0.15);
     }
 
-/* فاصله بالای محتوا فقط در صفحات داخلی؛ هوم عمداً زیر هدر شیشه‌ای است */
+/* فقط برای صفحات بدون هیرو تمام‌صفحه؛ صفحات درباره/تماس/مقالات با فلگ SuppressInnerPadding خارج می‌شوند */
 .main-content-wrapper.inner-page-content {
     padding-top: 96px;
 }
@@ -1988,3 +1988,16 @@ body:has(.lead-panel) .admin-main .d-flex { flex-wrap: wrap; }
 .guide-chapter-desc { font-size: 14px; line-height: 1.7; color: var(--muted, #555); }
 @media (prefers-reduced-motion: reduce) { .nav-mega, .guide-chapter-card, .lang-switcher { transition: none; } }
 .inquiry-form .form-input, .inquiry-form .form-select, .inquiry-form .form-textarea, .lead-panel .form-input, .lead-panel .form-select { font-variant-numeric: tabular-nums; }
+
+/* دسترس‌پذیری: عناصر فقط-صفحه‌خوان؛ با !important تا توسط هیچ قانونی بازنویسی نشود */
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}

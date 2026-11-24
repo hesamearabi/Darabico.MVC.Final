@@ -11,6 +11,7 @@
 
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["SuppressInnerPadding"] = "true";
 
     string defaultTitle = ViewData["ArticleDefaultTitle"] as string ?? "مقاله ساخت زمین پدل";
     string defaultImgAlt = ViewData["ArticleDefaultImgAlt"] as string ?? "تصویر مقاله";
