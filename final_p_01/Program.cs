@@ -269,6 +269,21 @@ using (var scope = app.Services.CreateScope())
             context.SaveChanges();
         }
 
+        if (!context.PillarPages.Any(p => p.Slug == "padel-court-construction-guide"))
+        {
+            context.PillarPages.Add(new PillarPage
+            {
+                Title = "راهنمای جامع 0 تا 100 ساخت زمین پدل",
+                Slug = "padel-court-construction-guide",
+                ContentHtml = "<p>راهنمای گام‌به‌گام طراحی و اجرای زمین پدل: از انتخاب زمین و پی تا دیواره‌های شیشه‌ای، نورپردازی و تحویل نهایی. فصل‌های تخصصی این راهنما در همین صفحه در دسترس شماست.</p>",
+                MetaTitle = "راهنمای جامع 0 تا 100 ساخت زمین پدل | دارابیکو",
+                MetaDescription = "همه مراحل ساخت زمین پدل از صفر تا صد: انتخاب زمین، پی و آسفالت، دیواره‌ها، ابعاد استاندارد و تجهیزات FIP.",
+                IsPublished = true,
+                SortOrder = 0
+            });
+            context.SaveChanges();
+        }
+
         if (!context.AdminUsers.Any())
         {
             var configuration = services.GetRequiredService<IConfiguration>();
