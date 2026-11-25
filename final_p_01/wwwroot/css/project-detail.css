@@ -13,9 +13,56 @@
 .project-detail .hero-img,.project-detail .gallery-thumb,.project-detail .ba-img{display:block;width:100%;height:100%;object-fit:cover}
 .project-detail .section-heading{font-size:var(--pp-subtitle);color:var(--pp-heading);margin:0 0 var(--pp-s4);padding-bottom:var(--pp-s2);border-bottom:1px solid var(--pp-border)}
 .project-detail :is(.detail-content,.compare-section,.video-section,.gallery-section){margin-bottom:var(--pp-s8)}
-.project-detail .rich-text{line-height:1.85;max-width:75ch;overflow-wrap:anywhere}
-.project-detail .rich-text :is(img,video,iframe){max-width:100%;height:auto}
+.project-detail .rich-text{line-height:1.85;overflow-wrap:anywhere}
+.project-detail .rich-text :is(img,video,iframe,table,.dc-full){margin-inline:auto;max-width:100%}
+.project-detail .rich-text img,.project-detail .rich-text video,.project-detail .rich-text iframe{height:auto}
 .project-detail .rich-text :is(table,pre){display:block;max-width:100%;overflow-x:auto}
+
+/* استایل محتوای غنی TinyMCE در صفحه جزئیات پروژه */
+.project-detail .rich-text h2,.project-detail .rich-text h3,.project-detail .rich-text h4{color:var(--pp-heading);line-height:1.6;margin:var(--pp-s6) 0 var(--pp-s3);font-weight:800}
+.project-detail .rich-text h2{font-size:var(--pp-title);padding-bottom:var(--pp-s2);border-bottom:1px solid var(--pp-border)}
+.project-detail .rich-text h3{font-size:var(--pp-subtitle)}
+.project-detail .rich-text h4{font-size:var(--pp-body)}
+.project-detail .rich-text p{margin:0 0 var(--pp-s4)}
+.project-detail .rich-text a{color:var(--pp-accent);text-decoration:underline;text-underline-offset:3px}
+.project-detail .rich-text ul,.project-detail .rich-text ol{padding-inline-start:1.5em;margin:0 0 var(--pp-s4);display:grid;gap:var(--pp-s2)}
+.project-detail .rich-text ul li{list-style:none;position:relative;padding-inline-start:1.2em}
+.project-detail .rich-text ul li::before{content:'';position:absolute;inset-inline-start:0;top:.6em;width:.45em;height:.45em;border-radius:50%;background:var(--pp-accent)}
+.project-detail .rich-text ol li::marker{color:var(--pp-accent);font-weight:700}
+.project-detail .rich-text blockquote{margin:0 0 var(--pp-s4);padding:var(--pp-s4);border-inline-start:4px solid var(--pp-accent);background:var(--pp-bg);border-radius:var(--pp-radius);color:var(--pp-heading)}
+.project-detail .rich-text table{width:100%;border-collapse:collapse;font-size:var(--pp-small);background:var(--pp-surface)}
+.project-detail .rich-text th,.project-detail .rich-text td{border:1px solid var(--pp-border);padding:var(--pp-s2) var(--pp-s3);text-align:start;vertical-align:top}
+.project-detail .rich-text th{background:var(--pp-bg);color:var(--pp-heading);font-weight:700}
+.project-detail .rich-text thead th{border-bottom:2px solid var(--pp-border)}
+.project-detail .rich-text tr:nth-child(even) td{background:var(--pp-bg)}
+.project-detail .rich-text :is(td,th,table) :is(img,video,iframe){height:auto !important}
+.project-detail .rich-text hr{border:0;border-top:1px solid var(--pp-border);margin:var(--pp-s6) 0}
+/* ساختارهای اختیاری dc-* که ادیتور تولید می‌کند */
+.project-detail .rich-text .dc-grid-2{display:grid;grid-template-columns:1fr;gap:var(--pp-s3);margin:0 0 var(--pp-s4)}
+.project-detail .rich-text .dc-grid-2 > *{max-width:none}
+.project-detail .rich-text .dc-cards{display:grid;grid-template-columns:1fr;gap:var(--pp-s3);margin:0 0 var(--pp-s4)}
+.project-detail .rich-text .dc-cards > *{margin:0;padding:var(--pp-s4);border:1px solid var(--pp-border);border-radius:var(--pp-radius);background:var(--pp-bg);max-width:none}
+.project-detail .rich-text .dc-steps{counter-reset:dcstep;display:grid;gap:var(--pp-s3);margin:0 0 var(--pp-s4);padding:0;list-style:none}
+.project-detail .rich-text .dc-steps > li{counter-increment:dcstep;position:relative;padding:var(--pp-s3) var(--pp-s4) var(--pp-s3) var(--pp-s3);padding-inline-start:3.2em;border:1px solid var(--pp-border);border-radius:var(--pp-radius);background:var(--pp-bg);max-width:none}
+.project-detail .rich-text .dc-steps > li::before{content:counter(dcstep);position:absolute;inset-inline-start:var(--pp-s3);top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:1.8em;height:1.8em;border-radius:50%;background:var(--pp-accent);color:var(--pp-surface);font-weight:700}
+.project-detail .rich-text .dc-panel{padding:var(--pp-s4);border:1px solid var(--pp-border);border-radius:var(--pp-radius);background:var(--pp-bg);margin:0 0 var(--pp-s4)}
+.project-detail .rich-text .dc-panel > :last-child{margin-bottom:0}
+.project-detail .rich-text .dc-intro{font-size:var(--pp-body);color:var(--pp-heading);font-weight:500;margin:0 0 var(--pp-s4)}
+.project-detail .rich-text .dc-faq{margin:0 0 var(--pp-s4)}
+.project-detail .rich-text .dc-faq h3,.project-detail .rich-text .dc-faq h4{margin:var(--pp-s4) 0 var(--pp-s2);color:var(--pp-heading)}
+.project-detail .rich-text .dc-faq > :last-child{margin-bottom:0}
+.project-detail .rich-text .dc-compare{display:grid;grid-template-columns:1fr;gap:var(--pp-s3);margin:0 0 var(--pp-s4)}
+.project-detail .rich-text .dc-compare > *{margin:0;padding:var(--pp-s4);border:1px solid var(--pp-border);border-radius:var(--pp-radius);max-width:none}
+.project-detail .rich-text .dc-compare > :first-child{background:var(--pp-bg)}
+.project-detail .rich-text .dc-case{padding:var(--pp-s4);border-inline-start:4px solid var(--pp-accent);background:var(--pp-bg);border-radius:var(--pp-radius);margin:0 0 var(--pp-s4)}
+.project-detail .rich-text .dc-full{width:100%}
+@media(min-width:768px){
+    .project-detail .rich-text ul:not([class]),.project-detail .rich-text ol:not([class]){grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--pp-s6)}
+    .project-detail .rich-text ul:not([class]) > li,.project-detail .rich-text ol:not([class]) > li{max-width:none}
+    .project-detail .rich-text .dc-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .project-detail .rich-text .dc-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .project-detail .rich-text .dc-compare{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 .project-detail .ba-slider{position:relative;aspect-ratio:3/2;border-radius:var(--pp-radius-lg);overflow:hidden;user-select:none;background:var(--pp-heading);direction:ltr}
 .project-detail .ba-before-wrap{position:absolute;inset:0;clip-path:inset(0 50% 0 0)}
 .project-detail .ba-label{position:absolute;bottom:var(--pp-s4);padding:var(--pp-s1) var(--pp-s3);border-radius:var(--pp-radius);background:var(--pp-heading);color:var(--pp-surface);font-size:var(--pp-small);pointer-events:none}

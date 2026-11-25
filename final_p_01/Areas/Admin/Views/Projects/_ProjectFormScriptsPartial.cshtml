@@ -140,6 +140,13 @@
         tinymce.init({
             selector: '#richDescription',
             directionality: 'rtl',
+            relative_urls: false,
+            remove_script_host: false,
+            convert_urls: false,
+            paste_data_images: false,
+            paste_preprocess: function (editor, args) {
+                args.content = args.content.replace(/\s(height|width)=("[^"]+"|'[^']+')/gi, '');
+            },
             height: 360,
             menubar: false,
             plugins: 'lists link table code',
