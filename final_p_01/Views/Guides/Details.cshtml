@@ -143,12 +143,36 @@
 
             @if (!string.IsNullOrWhiteSpace(Model.OgImageUrl))
             {
-                <img src="@Model.OgImageUrl" alt="@Model.Title" class="pillar-cover-image" width="1200" height="630" />
+                <img src="@Model.OgImageUrl" alt="@(string.IsNullOrWhiteSpace(Model.CoverImageAlt) ? Model.Title : Model.CoverImageAlt)" class="pillar-cover-image" width="1200" height="630" />
             }
 
             <div class="pillar-article-content">
                 @Html.Raw(Model.ContentHtml)
             </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.AudioFilePath))
+            {
+                <section class="mt-5" aria-label="پادکست این صفحه">
+                    <h2 class="h4 fw-bold mb-3">گوش دادن به این صفحه</h2>
+                    <audio controls preload="none" src="@Model.AudioFilePath" style="width:100%; max-width:640px;"></audio>
+                </section>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.AttachmentFilePath))
+            {
+                <section class="mt-5" aria-label="دانلود فایل">
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:1rem;padding:1.25rem;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;">
+                        <div style="flex:1;min-width:220px;">
+                            <h2 class="h6 fw-bold mb-1">@(string.IsNullOrWhiteSpace(Model.AttachmentTitle) ? "دانلود فایل" : Model.AttachmentTitle)</h2>
+                            @if (!string.IsNullOrWhiteSpace(Model.AttachmentDescription))
+                            {
+                                <p class="mb-0 small text-muted">@Model.AttachmentDescription</p>
+                            }
+                        </div>
+                        <a href="@Model.AttachmentFilePath" class="btn btn-primary" download rel="noopener">دانلود (@(System.IO.Path.GetExtension(Model.AttachmentFilePath).TrimStart('.').ToUpperInvariant()))</a>
+                    </div>
+                </section>
+            }
         </article>
 
         @if (faqs.Count > 0)

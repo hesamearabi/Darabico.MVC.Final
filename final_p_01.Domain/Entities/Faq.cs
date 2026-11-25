@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Darabico.Domain.Entities;
 
 namespace final_p_01.Domain.Entities
 {
@@ -14,6 +15,12 @@ namespace final_p_01.Domain.Entities
 
         public int? PostId { get; set; }
         public Post? Post { get; set; }
+
+        public int? ProjectId { get; set; }
+        public Project? Project { get; set; }
+
+        public int? PillarPageId { get; set; }
+        public PillarPage? PillarPage { get; set; }
 
         /// <summary>کلید صفحه برای نمایش آکاردئون در صفحات پیلار یا فرود (مثلا "pillar:slug")</summary>
         [MaxLength(100)]

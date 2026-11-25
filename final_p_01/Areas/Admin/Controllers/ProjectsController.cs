@@ -1,4 +1,5 @@
 ﻿using Darabico.Domain.Entities;
+using final_p_01.Domain.Entities;
 using final_p_01.Infrastructure.Data;
 using Darabico.Web.Helpers;
 using Darabico.Web.Areas.Admin.ViewModels;
@@ -16,9 +17,11 @@ namespace Darabico.Web.Areas.Admin.Controllers;
 public class ProjectsController(
     ApplicationDbContext dbContext,
     IImageService imageService,
-    final_p_01.Services.IRichTextSanitizer sanitizer) : Controller
+    final_p_01.Services.IRichTextSanitizer sanitizer,
+    final_p_01.Services.IMediaUploadService mediaUpload) : Controller
 {
     private readonly final_p_01.Services.IRichTextSanitizer _sanitizer = sanitizer;
+    private readonly final_p_01.Services.IMediaUploadService _mediaUpload = mediaUpload;
     [HttpGet("")]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
@@ -106,6 +109,14 @@ public class ProjectsController(
                 videoUrl = await imageService.SaveVideoAsync(model.VideoFile.ToUploadFile(), "projects/videos", cancellationToken);
             }
 
+            string? audioPath = null;
+            if (model.AudioFile is { Length: > 0 })
+                audioPath = await _mediaUpload.SaveAudioAsync(model.AudioFile);
+
+            string? attachmentPath = null;
+            if (model.AttachmentFile is { Length: > 0 })
+                attachmentPath = await _mediaUpload.SaveAttachmentAsync(model.AttachmentFile);
+
             var project = new Project
             {
                 Title = model.Title.Trim(),
@@ -118,9 +129,14 @@ public class ProjectsController(
                 Description = model.Description,
                 FeaturedImageUrl = featuredResult.ImageUrl,
                 ThumbnailUrl = featuredResult.ThumbnailUrl!,
+                FeaturedImageAlt = model.FeaturedImageAlt?.Trim(),
                 BeforeImageUrl = beforeUrl,
                 AfterImageUrl = afterUrl,
                 VideoUrl = videoUrl,
+                AudioFilePath = audioPath,
+                AttachmentFilePath = attachmentPath,
+                AttachmentTitle = model.AttachmentTitle?.Trim(),
+                AttachmentDescription = model.AttachmentDescription?.Trim(),
                 DisplayOrder = model.DisplayOrder,
                 IsPublished = model.IsPublished,
                 MetaTitle = model.MetaTitle?.Trim(),
@@ -129,6 +145,8 @@ public class ProjectsController(
             };
 
             await AppendNewGalleryImagesAsync(project, model, cancellationToken);
+
+            SyncFaqs(project.Faqs, model.Faqs, f => f.ProjectId = project.Id);
 
             dbContext.Projects.Add(project);
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -165,10 +183,20 @@ public class ProjectsController(
             ExecutionDurationMonths = project.ExecutionDurationMonths,
             Description = project.Description,
             ExistingFeaturedImageUrl = project.FeaturedImageUrl,
+            FeaturedImageAlt = project.FeaturedImageAlt,
             ExistingThumbnailUrl = project.ThumbnailUrl,
             ExistingBeforeImageUrl = project.BeforeImageUrl,
             ExistingAfterImageUrl = project.AfterImageUrl,
             VideoUrl = project.VideoUrl,
+            ExistingAudioUrl = project.AudioFilePath,
+            ExistingAttachmentUrl = project.AttachmentFilePath,
+            AttachmentTitle = project.AttachmentTitle,
+            AttachmentDescription = project.AttachmentDescription,
+            Faqs = project.Faqs.OrderBy(f => f.Id).Select(f => new ProjectFormViewModel.FaqInput
+            {
+                Question = f.Question,
+                Answer = f.Answer
+            }).ToList(),
             DisplayOrder = project.DisplayOrder,
             IsPublished = project.IsPublished,
             MetaTitle = project.MetaTitle,
@@ -191,6 +219,7 @@ public class ProjectsController(
     {
         var project = await dbContext.Projects
             .Include(p => p.Images)
+            .Include(p => p.Faqs)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
         if (project is null)
@@ -204,6 +233,13 @@ public class ProjectsController(
             model.ExistingThumbnailUrl = project.ThumbnailUrl;
             model.ExistingBeforeImageUrl = project.BeforeImageUrl;
             model.ExistingAfterImageUrl = project.AfterImageUrl;
+            model.ExistingAudioUrl = project.AudioFilePath;
+            model.ExistingAttachmentUrl = project.AttachmentFilePath;
+            model.Faqs = project.Faqs.OrderBy(f => f.Id).Select(f => new ProjectFormViewModel.FaqInput
+            {
+                Question = f.Question,
+                Answer = f.Answer
+            }).ToList();
             return View(model);
         }
 
@@ -279,6 +315,36 @@ public class ProjectsController(
                 }
             }
 
+            // مدیریت فایل صوتی پادکست
+            if (model.RemoveAudio)
+            {
+                _mediaUpload.DeleteSecurely(project.AudioFilePath);
+                project.AudioFilePath = null;
+            }
+            else if (model.AudioFile is { Length: > 0 })
+            {
+                var newAudio = await _mediaUpload.SaveAudioAsync(model.AudioFile);
+                _mediaUpload.DeleteSecurely(project.AudioFilePath);
+                project.AudioFilePath = newAudio;
+            }
+
+            // مدیریت فایل دانلود (PDF/ZIP)
+            if (model.RemoveAttachment)
+            {
+                _mediaUpload.DeleteSecurely(project.AttachmentFilePath);
+                project.AttachmentFilePath = null;
+            }
+            else if (model.AttachmentFile is { Length: > 0 })
+            {
+                var newAttachment = await _mediaUpload.SaveAttachmentAsync(model.AttachmentFile);
+                _mediaUpload.DeleteSecurely(project.AttachmentFilePath);
+                project.AttachmentFilePath = newAttachment;
+            }
+
+            project.AttachmentTitle = model.AttachmentTitle?.Trim();
+            project.AttachmentDescription = model.AttachmentDescription?.Trim();
+            project.FeaturedImageAlt = model.FeaturedImageAlt?.Trim();
+
             project.Title = model.Title.Trim();
             project.City = model.City.Trim();
             project.CourtCount = model.CourtCount;
@@ -305,6 +371,8 @@ public class ProjectsController(
 
             // افزودن تصاویر جدید به گالری
             await AppendNewGalleryImagesAsync(project, model, cancellationToken);
+
+            SyncFaqs(project.Faqs, model.Faqs, f => f.ProjectId = project.Id);
 
             await dbContext.SaveChangesAsync(cancellationToken);
             TempData["SuccessMessage"] = "تغییرات پروژه با موفقیت ذخیره شد.";
@@ -467,5 +535,33 @@ public class ProjectsController(
         }
 
         return candidate;
+    }
+
+    internal static void SyncFaqs(
+        ICollection<Faq> existingFaqs,
+        List<ProjectFormViewModel.FaqInput>? incoming,
+        Action<Faq> setOwner)
+    {
+        var cleaned = (incoming ?? new List<ProjectFormViewModel.FaqInput>())
+            .Where(f => !string.IsNullOrWhiteSpace(f.Question) && !string.IsNullOrWhiteSpace(f.Answer))
+            .Select(f => (Question: f.Question!.Trim(), Answer: f.Answer!.Trim()))
+            .ToList();
+
+        var toRemove = existingFaqs
+            .Where(e => !cleaned.Any(c => c.Question == e.Question && c.Answer == e.Answer))
+            .ToList();
+
+        foreach (var item in toRemove)
+            existingFaqs.Remove(item);
+
+        foreach (var (question, answer) in cleaned)
+        {
+            if (existingFaqs.Any(e => e.Question == question && e.Answer == answer))
+                continue;
+
+            var faq = new Faq { Question = question, Answer = answer };
+            setOwner(faq);
+            existingFaqs.Add(faq);
+        }
     }
 }

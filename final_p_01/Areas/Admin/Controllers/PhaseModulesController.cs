@@ -30,7 +30,8 @@ public class PhaseModulesController : Controller
         IConfiguration configuration,
         IWebHostEnvironment env,
         ILogger<PhaseModulesController> logger,
-        final_p_01.Services.IRichTextSanitizer sanitizer)
+        final_p_01.Services.IRichTextSanitizer sanitizer,
+        final_p_01.Services.IMediaUploadService mediaUpload)
     {
         _context = context;
         _outputCacheStore = outputCacheStore;
@@ -38,7 +39,10 @@ public class PhaseModulesController : Controller
         _env = env;
         _logger = logger;
         _sanitizer = sanitizer;
+        _mediaUpload = mediaUpload;
     }
+
+    private readonly final_p_01.Services.IMediaUploadService _mediaUpload;
 
     public sealed class PillarFaqInput
     {
@@ -368,11 +372,16 @@ public class PhaseModulesController : Controller
 
     // ---------- Pillar pages (صفحات مادر) ----------
     [HttpGet("admin/pillar-pages")]
-    public async Task<IActionResult> PillarPages() =>
-        View(await _context.PillarPages.AsNoTracking()
+    public async Task<IActionResult> PillarPages()
+    {
+        ViewBag.GuidePost = await _context.Posts.AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Slug == "padel-court-construction-guide");
+
+        return View(await _context.PillarPages.AsNoTracking()
             .OrderBy(p => p.SortOrder)
             .ThenByDescending(p => p.UpdatedAtUtc)
             .ToListAsync());
+    }
 
     [HttpGet("admin/pillar-pages/create")]
     public IActionResult CreatePillarPage()
@@ -385,10 +394,16 @@ public class PhaseModulesController : Controller
     public async Task<IActionResult> CreatePillarPage(
         PillarPage model,
         IFormFile? coverImage,
+        IFormFile? audioFile,
+        IFormFile? attachmentFile,
+        bool removeAudio,
+        bool removeAttachment,
         List<PillarFaqInput>? faqs)
     {
         ModelState.Remove(nameof(PillarPage.Slug));
         ModelState.Remove(nameof(PillarPage.ContentHtml));
+        ModelState.Remove(nameof(PillarPage.AudioFilePath));
+        ModelState.Remove(nameof(PillarPage.AttachmentFilePath));
 
         model.Title = model.Title?.Trim() ?? string.Empty;
         model.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(model.Slug) ? model.Title : model.Slug);
@@ -422,6 +437,12 @@ public class PhaseModulesController : Controller
                 uploadedImagePath = await ProcessAndSaveImageAsync(coverImage, "pillars");
                 model.OgImageUrl = uploadedImagePath;
             }
+
+            if (audioFile is { Length: > 0 })
+                model.AudioFilePath = await _mediaUpload.SaveAudioAsync(audioFile);
+
+            if (attachmentFile is { Length: > 0 })
+                model.AttachmentFilePath = await _mediaUpload.SaveAttachmentAsync(attachmentFile);
 
             model.UpdatedAtUtc = DateTime.UtcNow;
             _context.PillarPages.Add(model);
@@ -468,6 +489,15 @@ public class PhaseModulesController : Controller
         var page = await _context.PillarPages.FindAsync(id);
         if (page is null) return NotFound();
 
+        // ریدایرکت به ویرایشگر مقاله: منبع حقیقت صفحه راهنمای جامع جدول Posts است
+        if (string.Equals(page.Slug, "padel-court-construction-guide", StringComparison.OrdinalIgnoreCase))
+        {
+            var guidePost = await _context.Posts.AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Slug == "padel-court-construction-guide");
+            if (guidePost != null)
+                return RedirectToAction("Edit", "Posts", new { id = guidePost.Id, area = "Admin" });
+        }
+
         ViewBag.Faqs = await _context.Faqs.AsNoTracking()
             .Where(f => f.PageKey == $"pillar:{page.Slug}")
             .OrderBy(f => f.SortOrder)
@@ -481,6 +511,10 @@ public class PhaseModulesController : Controller
         int id,
         PillarPage model,
         IFormFile? coverImage,
+        IFormFile? audioFile,
+        IFormFile? attachmentFile,
+        bool removeAudio,
+        bool removeAttachment,
         List<PillarFaqInput>? faqs)
     {
         if (id != model.Id) return NotFound();
@@ -488,8 +522,17 @@ public class PhaseModulesController : Controller
         var page = await _context.PillarPages.FindAsync(id);
         if (page is null) return NotFound();
 
+        // اسلاگ صفحه راهنمای جامع رزرو شده است؛ ویرایش محتوای آن از بخش مقالات انجام می‌شود
+        bool isMainGuide = string.Equals(page.Slug, "padel-court-construction-guide", StringComparison.OrdinalIgnoreCase);
+        if (isMainGuide)
+        {
+            TempData["Warning"] = "محتوای صفحه راهنمای جامع از بخش «مقالات» مدیریت می‌شود تا با نسخه زنده سایت یکسان بماند؛ فیلدهای رسانه این صفحه اینجا ذخیره شد.";
+        }
+
         ModelState.Remove(nameof(PillarPage.Slug));
         ModelState.Remove(nameof(PillarPage.ContentHtml));
+        ModelState.Remove(nameof(PillarPage.AudioFilePath));
+        ModelState.Remove(nameof(PillarPage.AttachmentFilePath));
 
         model.Title = model.Title?.Trim() ?? string.Empty;
         model.Slug = GenerateSeoFriendlySlug(string.IsNullOrWhiteSpace(model.Slug) ? model.Title : model.Slug);
@@ -534,9 +577,39 @@ public class PhaseModulesController : Controller
                 page.OgImageUrl = string.IsNullOrWhiteSpace(model.OgImageUrl) ? page.OgImageUrl : model.OgImageUrl.Trim();
             }
 
+            // فایل صوتی پادکست
+            if (removeAudio)
+            {
+                _mediaUpload.DeleteSecurely(page.AudioFilePath);
+                page.AudioFilePath = null;
+            }
+            else if (audioFile is { Length: > 0 })
+            {
+                var newAudio = await _mediaUpload.SaveAudioAsync(audioFile);
+                _mediaUpload.DeleteSecurely(page.AudioFilePath);
+                page.AudioFilePath = newAudio;
+            }
+
+            // فایل دانلود
+            if (removeAttachment)
+            {
+                _mediaUpload.DeleteSecurely(page.AttachmentFilePath);
+                page.AttachmentFilePath = null;
+            }
+            else if (attachmentFile is { Length: > 0 })
+            {
+                var newAttachment = await _mediaUpload.SaveAttachmentAsync(attachmentFile);
+                _mediaUpload.DeleteSecurely(page.AttachmentFilePath);
+                page.AttachmentFilePath = newAttachment;
+            }
+
+            page.AttachmentTitle = model.AttachmentTitle?.Trim();
+            page.AttachmentDescription = model.AttachmentDescription?.Trim();
+            page.CoverImageAlt = model.CoverImageAlt?.Trim();
+
             page.Title = model.Title;
             page.Slug = model.Slug;
-            page.ContentHtml = model.ContentHtml;
+            if (!isMainGuide) page.ContentHtml = model.ContentHtml; // محتوای راهنمای جامع از Posts مدیریت می‌شود
             page.MetaTitle = model.MetaTitle;
             page.MetaDescription = model.MetaDescription;
             page.Canonical = model.Canonical;

@@ -8,5 +8,6 @@ public sealed class GetProjectHandler(IAppDbContext db)
 {
     public Task<Project?> Handle(string slug, CancellationToken cancellationToken = default) =>
         db.Projects.AsNoTracking().Include(p => p.Images.OrderBy(i => i.SortOrder))
+            .Include(p => p.Faqs)
             .FirstOrDefaultAsync(p => p.IsPublished && p.Slug == slug, cancellationToken);
 }

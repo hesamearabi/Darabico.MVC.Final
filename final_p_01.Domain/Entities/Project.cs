@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Darabico.Domain.Entities;
 using Darabico.Domain.Enums;
+using Faq = final_p_01.Domain.Entities.Faq;
 
 namespace Darabico.Domain.Entities;
 
@@ -36,6 +38,23 @@ public class Project
     [Required]
     [MaxLength(500)]
     public string FeaturedImageUrl { get; set; } = string.Empty;
+
+    [MaxLength(200)]
+    public string? FeaturedImageAlt { get; set; }
+
+    [MaxLength(500)]
+    public string? AudioFilePath { get; set; }
+
+    [MaxLength(500)]
+    public string? AttachmentFilePath { get; set; }
+
+    [MaxLength(150)]
+    public string? AttachmentTitle { get; set; }
+
+    [MaxLength(500)]
+    public string? AttachmentDescription { get; set; }
+
+    public ICollection<Faq> Faqs { get; set; } = new List<Faq>();
 
     [Required]
     [MaxLength(500)]

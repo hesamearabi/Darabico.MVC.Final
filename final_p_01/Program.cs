@@ -30,6 +30,7 @@ builder.Services.Configure<FormOptions>(options =>
 
 builder.Services.AddSingleton<ISiteUrlBuilder, SiteUrlBuilder>();
 builder.Services.AddSingleton<final_p_01.Services.IRichTextSanitizer, final_p_01.Services.RichTextSanitizer>();
+builder.Services.AddScoped<final_p_01.Services.IMediaUploadService, final_p_01.Services.MediaUploadService>();
 builder.Services.AddSingleton<ISiteSettingsProvider, SiteSettingsProvider>();
 builder.Services.AddFileStorage();
 
@@ -269,7 +270,16 @@ using (var scope = app.Services.CreateScope())
             context.SaveChanges();
         }
 
-        if (!context.PillarPages.Any(p => p.Slug == "padel-court-construction-guide"))
+        // صفحه پیلار «راهنمای جامع» منبع حقیقت مستقل ندارد؛ محتوای زنده از جدول Posts رندر می‌شود.
+        // ایندکس‌گذاری مجدد PillarPage روی Post واقعی انجام می‌شود تا ادمین همان محتوای زنده را ببیند (بدون بازنویسی محتوا).
+        var guidePostEntity = context.Posts.AsNoTracking().FirstOrDefault(p => p.Slug == "padel-court-construction-guide");
+        var existingGuidePillar = context.PillarPages.FirstOrDefault(p => p.Slug == "padel-court-construction-guide");
+        if (guidePostEntity != null && existingGuidePillar != null)
+        {
+            existingGuidePillar.IsPublished = false; // رندر عمومی از HomeController.PadelGuide (جدول Posts) انجام می‌شود
+            context.SaveChanges();
+        }
+        else if (existingGuidePillar == null && guidePostEntity == null)
         {
             context.PillarPages.Add(new PillarPage
             {

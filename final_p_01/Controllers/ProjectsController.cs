@@ -65,9 +65,19 @@ public class ProjectsController(ListProjectsHandler listProjects, GetProjectHand
             ExecutionDurationMonths = project.ExecutionDurationMonths,
             Description = project.Description,
             FeaturedImageUrl = project.FeaturedImageUrl,
+            FeaturedImageAlt = project.FeaturedImageAlt,
             BeforeImageUrl = project.BeforeImageUrl,
             AfterImageUrl = project.AfterImageUrl,
             VideoUrl = project.VideoUrl,
+            AudioFilePath = project.AudioFilePath,
+            AttachmentFilePath = project.AttachmentFilePath,
+            AttachmentTitle = project.AttachmentTitle,
+            AttachmentDescription = project.AttachmentDescription,
+            Faqs = project.Faqs.OrderBy(f => f.Id).Select(f => new ProjectFaqItemViewModel
+            {
+                Question = f.Question,
+                Answer = f.Answer
+            }).ToList(),
             MetaTitle = !string.IsNullOrWhiteSpace(project.MetaTitle)
                 ? project.MetaTitle
                 : $"{project.Title} | پروژه‌های ساخت زمین پدل دارابیکو",

@@ -69,6 +69,11 @@ public class ProjectConfiguration : IEntityTypeConfiguration<Project>
         builder.Property(p => p.BeforeImageUrl).HasMaxLength(500);
         builder.Property(p => p.AfterImageUrl).HasMaxLength(500);
         builder.Property(p => p.VideoUrl).HasMaxLength(500);
+        builder.Property(p => p.FeaturedImageAlt).HasMaxLength(200);
+        builder.Property(p => p.AudioFilePath).HasMaxLength(500);
+        builder.Property(p => p.AttachmentFilePath).HasMaxLength(500);
+        builder.Property(p => p.AttachmentTitle).HasMaxLength(150);
+        builder.Property(p => p.AttachmentDescription).HasMaxLength(500);
         builder.Property(p => p.MetaTitle).HasMaxLength(160);
         builder.Property(p => p.MetaDescription).HasMaxLength(320);
 
@@ -200,6 +205,11 @@ public class PillarPageConfiguration : IEntityTypeConfiguration<PillarPage>
         builder.Property(p => p.MetaDescription).HasMaxLength(320);
         builder.Property(p => p.Canonical).HasMaxLength(500);
         builder.Property(p => p.OgImageUrl).HasMaxLength(500);
+        builder.Property(p => p.CoverImageAlt).HasMaxLength(200);
+        builder.Property(p => p.AudioFilePath).HasMaxLength(500);
+        builder.Property(p => p.AttachmentFilePath).HasMaxLength(500);
+        builder.Property(p => p.AttachmentTitle).HasMaxLength(150);
+        builder.Property(p => p.AttachmentDescription).HasMaxLength(500);
 
         builder.HasIndex(p => p.Slug).IsUnique();
         builder.HasIndex(p => new { p.IsPublished, p.SortOrder });
@@ -289,6 +299,19 @@ public class FaqConfiguration : IEntityTypeConfiguration<Faq>
                .WithMany(p => p.Faqs)
                .HasForeignKey(f => f.PostId)
                .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(f => f.Project)
+               .WithMany(p => p.Faqs)
+               .HasForeignKey(f => f.ProjectId)
+               .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(f => f.PillarPage)
+               .WithMany()
+               .HasForeignKey(f => f.PillarPageId)
+               .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(f => f.ProjectId);
+        builder.HasIndex(f => f.PillarPageId);
     }
 }
 

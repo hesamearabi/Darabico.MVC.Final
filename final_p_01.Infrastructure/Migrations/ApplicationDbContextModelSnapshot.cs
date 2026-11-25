@@ -34,6 +34,22 @@ namespace final_p_01.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<string>("AttachmentDescription")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("AttachmentFilePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("AttachmentTitle")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("AudioFilePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("BeforeImageUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -64,6 +80,10 @@ namespace final_p_01.Infrastructure.Migrations
 
                     b.Property<int>("ExecutionYear")
                         .HasColumnType("int");
+
+                    b.Property<string>("FeaturedImageAlt")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("FeaturedImageUrl")
                         .IsRequired()
@@ -468,7 +488,13 @@ namespace final_p_01.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int?>("PillarPageId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("PostId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ProjectId")
                         .HasColumnType("int");
 
                     b.Property<string>("Question")
@@ -483,7 +509,11 @@ namespace final_p_01.Infrastructure.Migrations
 
                     b.HasIndex("PageKey");
 
+                    b.HasIndex("PillarPageId");
+
                     b.HasIndex("PostId");
+
+                    b.HasIndex("ProjectId");
 
                     b.ToTable("Faqs", (string)null);
                 });
@@ -701,6 +731,22 @@ namespace final_p_01.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AttachmentDescription")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("AttachmentFilePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("AttachmentTitle")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("AudioFilePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("Canonical")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -708,6 +754,10 @@ namespace final_p_01.Infrastructure.Migrations
                     b.Property<string>("ContentHtml")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CoverImageAlt")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
@@ -996,11 +1046,27 @@ namespace final_p_01.Infrastructure.Migrations
                     b.Property<string>("PaymentTermsHtml")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("SeoAboutDescription")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("SeoAboutTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<string>("SeoBlogDescription")
                         .HasMaxLength(320)
                         .HasColumnType("nvarchar(320)");
 
                     b.Property<string>("SeoBlogTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("SeoContactDescription")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("SeoContactTitle")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
@@ -1011,22 +1077,6 @@ namespace final_p_01.Infrastructure.Migrations
                     b.Property<string>("SeoEstimatorTitle")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("SeoAboutTitle")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("SeoAboutDescription")
-                        .HasMaxLength(320)
-                        .HasColumnType("nvarchar(320)");
-
-                    b.Property<string>("SeoContactTitle")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("SeoContactDescription")
-                        .HasMaxLength(320)
-                        .HasColumnType("nvarchar(320)");
 
                     b.Property<string>("SeoGuideDescription")
                         .HasMaxLength(320)
@@ -1133,12 +1183,26 @@ namespace final_p_01.Infrastructure.Migrations
 
             modelBuilder.Entity("final_p_01.Domain.Entities.Faq", b =>
                 {
+                    b.HasOne("final_p_01.Domain.Entities.PillarPage", "PillarPage")
+                        .WithMany()
+                        .HasForeignKey("PillarPageId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("final_p_01.Domain.Entities.Post", "Post")
                         .WithMany("Faqs")
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade);
 
+                    b.HasOne("Darabico.Domain.Entities.Project", "Project")
+                        .WithMany("Faqs")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("PillarPage");
+
                     b.Navigation("Post");
+
+                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("final_p_01.Domain.Entities.InquiryLead", b =>
@@ -1211,6 +1275,8 @@ namespace final_p_01.Infrastructure.Migrations
 
             modelBuilder.Entity("Darabico.Domain.Entities.Project", b =>
                 {
+                    b.Navigation("Faqs");
+
                     b.Navigation("Images");
                 });
 

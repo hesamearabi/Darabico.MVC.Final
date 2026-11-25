@@ -73,6 +73,12 @@
         </div>
 
         <div class="form-field">
+            <label asp-for="FeaturedImageAlt"></label>
+            <input asp-for="FeaturedImageAlt" class="form-input" placeholder="متن جایگزین تصویر شاخص (برای سئو)" />
+            <span asp-validation-for="FeaturedImageAlt" class="field-error"></span>
+        </div>
+
+        <div class="form-field">
             <label asp-for="VideoFile"></label>
             <input asp-for="VideoFile" type="file" accept="video/mp4,video/webm" class="form-input" />
             <label asp-for="VideoUrl" class="sub-label"></label>
@@ -109,6 +115,62 @@
             }
         </div>
     </div>
+</fieldset>
+
+<fieldset class="media-fieldset">
+    <legend>فایل صوتی پادکست (اختیاری - MP3/OGG حداکثر ۲۰ مگابایت)</legend>
+    <div class="form-field">
+        <label asp-for="AudioFile"></label>
+        <input asp-for="AudioFile" type="file" accept="audio/mpeg,audio/ogg,.mp3,.ogg" class="form-input" />
+        @if (!string.IsNullOrEmpty(Model.ExistingAudioUrl))
+        {
+            <audio controls preload="none" src="@Model.ExistingAudioUrl" style="margin-top:.5rem; max-width:100%;"></audio>
+            <label class="checkbox-label">
+                <input asp-for="RemoveAudio" /> حذف فایل صوتی فعلی
+            </label>
+        }
+    </div>
+</fieldset>
+
+<fieldset class="media-fieldset">
+    <legend>باکس دانلود فایل (اختیاری - PDF/ZIP حداکثر ۵۰ مگابایت)</legend>
+    <div class="form-grid">
+        <div class="form-field">
+            <label asp-for="AttachmentTitle"></label>
+            <input asp-for="AttachmentTitle" class="form-input" placeholder="مثال: کاتالوگ کامل پروژه" />
+        </div>
+        <div class="form-field">
+            <label asp-for="AttachmentDescription"></label>
+            <input asp-for="AttachmentDescription" class="form-input" placeholder="توضیح کوتاه اختیاری" />
+        </div>
+    </div>
+    <div class="form-field">
+        <label asp-for="AttachmentFile"></label>
+        <input asp-for="AttachmentFile" type="file" accept="application/pdf,application/zip,.pdf,.zip" class="form-input" />
+        @if (!string.IsNullOrEmpty(Model.ExistingAttachmentUrl))
+        {
+            <p style="margin:.4rem 0 0; font-size:.85rem;">فایل فعلی: <a href="@Model.ExistingAttachmentUrl" target="_blank" rel="noopener">@Model.ExistingAttachmentUrl</a></p>
+            <label class="checkbox-label">
+                <input asp-for="RemoveAttachment" /> حذف فایل فعلی
+            </label>
+        }
+    </div>
+</fieldset>
+
+<fieldset class="media-fieldset">
+    <legend>سوالات متداول (FAQ Schema)</legend>
+    <div id="faqContainer">
+        @for (int i = 0; i < (Model.Faqs?.Count ?? 0); i++)
+        {
+            var faq = Model.Faqs![i];
+            <div class="faq-admin-row" style="border:1px solid #e2e8f0; border-radius:10px; padding: .75rem; margin-bottom:.75rem; background:#f8fafc;">
+                <input type="text" name="Faqs[@i].Question" value="@faq.Question" placeholder="سوال" class="form-input" style="width:100%; margin-bottom:.5rem;" />
+                <textarea name="Faqs[@i].Answer" rows="2" placeholder="پاسخ" class="form-input" style="width:100%; margin-bottom:.5rem;">@faq.Answer</textarea>
+                <button type="button" class="btn-remove-gallery" onclick="this.parentElement.remove()">حذف سوال</button>
+            </div>
+        }
+    </div>
+    <button type="button" id="btnAddFaqRow" class="btn-secondary">+ افزودن سوال و پاسخ</button>
 </fieldset>
 
 <fieldset class="media-fieldset">

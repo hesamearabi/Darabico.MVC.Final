@@ -1,19 +1,81 @@
+@using final_p_01.Domain.Entities
 @model final_p_01.Domain.Entities.PillarPage
 @{
-    ViewData["Title"] = Model.Id == 0 ? "صفحه پیلار جدید" : "ویرایش صفحه پیلار";
+    ViewData["Title"] = Model.Id == 0 ? "صفحه مادر جدید" : "ویرایش صفحه مادر";
+    var faqs = ViewBag.Faqs as List<Faq> ?? new List<Faq>();
 }
-<div class="container py-4" dir="rtl">
-    <h1>@ViewData["Title"]</h1>
-    <form method="post" class="row g-3">
+<div class="container py-4" dir="rtl" style="max-width: 1000px;">
+    <h1 class="h4 fw-bold mb-4">@ViewData["Title"]</h1>
+    <form method="post" enctype="multipart/form-data" class="row g-3">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Id" />
         <div class="col-md-6"><label class="form-label">عنوان</label><input asp-for="Title" class="form-control" required /></div>
         <div class="col-md-6"><label class="form-label">نامک (Slug)</label><input asp-for="Slug" class="form-control" dir="ltr" required /></div>
-        <div class="col-12"><label class="form-label">محتوای HTML</label><textarea asp-for="ContentHtml" rows="14" class="form-control" dir="ltr"></textarea></div>
-        <div class="col-md-6"><label class="form-label">Meta Title</label><input asp-for="MetaTitle" class="form-control" dir="ltr" /></div>
-        <div class="col-md-6"><label class="form-label">Meta Description</label><input asp-for="MetaDescription" class="form-control" dir="ltr" /></div>
-        <div class="col-md-6"><label class="form-label">Canonical</label><input asp-for="Canonical" class="form-control" dir="ltr" /></div>
-        <div class="col-md-6"><label class="form-label">OG Image URL</label><input asp-for="OgImageUrl" class="form-control" dir="ltr" /></div>
+
+        <div class="col-12">
+            <label class="form-label">محتوای صفحه (ویرایشگر پیشرفته)</label>
+            <textarea asp-for="ContentHtml" id="Content" rows="18" class="form-control"></textarea>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">تصویر کاور (JPG/PNG/WEBP)</label>
+            <input type="file" name="coverImage" accept="image/*" class="form-control" />
+            @if (!string.IsNullOrWhiteSpace(Model.OgImageUrl))
+            {
+                <img src="@Model.OgImageUrl" alt="کاور فعلی" width="150" height="100" class="mt-2 rounded" style="object-fit:cover;" />
+            }
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">توضیح عکس کاور (Alt)</label>
+            <input asp-for="CoverImageAlt" class="form-control" placeholder="متن جایگزین تصویر برای سئو" />
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">فایل صوتی پادکست (MP3/OGG حداکثر ۲۰ مگابایت)</label>
+            <input type="file" name="audioFile" accept="audio/mpeg,audio/ogg,.mp3,.ogg" class="form-control" />
+            @if (!string.IsNullOrWhiteSpace(Model.AudioFilePath))
+            {
+                <audio controls preload="none" src="@Model.AudioFilePath" class="mt-2" style="max-width:100%;"></audio>
+                <div class="form-check mt-1">
+                    <input type="checkbox" name="removeAudio" id="removeAudio" class="form-check-input" />
+                    <label for="removeAudio" class="form-check-label">حذف فایل صوتی فعلی</label>
+                </div>
+            }
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">فایل دانلود (PDF/ZIP حداکثر ۵۰ مگابایت)</label>
+            <input type="file" name="attachmentFile" accept="application/pdf,application/zip,.pdf,.zip" class="form-control" />
+            <input asp-for="AttachmentTitle" class="form-control mt-2" placeholder="عنوان باکس دانلود" />
+            <input asp-for="AttachmentDescription" class="form-control mt-2" placeholder="توضیح کوتاه اختیاری" />
+            @if (!string.IsNullOrWhiteSpace(Model.AttachmentFilePath))
+            {
+                <p class="small text-muted mt-1">فایل فعلی: <a href="@Model.AttachmentFilePath" target="_blank" rel="noopener">@Model.AttachmentFilePath</a></p>
+                <div class="form-check">
+                    <input type="checkbox" name="removeAttachment" id="removeAttachment" class="form-check-input" />
+                    <label for="removeAttachment" class="form-check-label">حذف فایل فعلی</label>
+                </div>
+            }
+        </div>
+
+        <div class="col-12">
+            <label class="form-label fw-bold">سوالات متداول (FAQ Schema)</label>
+            <div id="faqContainer">
+                @for (int i = 0; i < faqs.Count; i++)
+                {
+                    <div class="faq-admin-row border rounded p-2 mb-2 bg-light">
+                        <input type="text" name="faqs[@i].Question" value="@faqs[i].Question" placeholder="سوال" class="form-control mb-2" />
+                        <textarea name="faqs[@i].Answer" rows="2" placeholder="پاسخ" class="form-control mb-2">@faqs[i].Answer</textarea>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.parentElement.remove()">حذف سوال</button>
+                    </div>
+                }
+            </div>
+            <button type="button" id="btnAddFaqRow" class="btn btn-sm btn-outline-secondary mt-1">+ افزودن سوال و پاسخ</button>
+        </div>
+
+        <div class="col-md-4"><label class="form-label">Meta Title</label><input asp-for="MetaTitle" class="form-control" dir="ltr" /></div>
+        <div class="col-md-4"><label class="form-label">Meta Description</label><input asp-for="MetaDescription" class="form-control" dir="ltr" /></div>
+        <div class="col-md-4"><label class="form-label">Canonical</label><input asp-for="Canonical" class="form-control" dir="ltr" /></div>
         <div class="col-md-3"><label class="form-label">ترتیب</label><input asp-for="SortOrder" type="number" class="form-control" /></div>
         <div class="col-md-3 d-flex align-items-end">
             <div class="form-check">
@@ -21,6 +83,35 @@
                 <label asp-for="IsPublished" class="form-check-label">منتشرشده</label>
             </div>
         </div>
-        <div class="col-12"><button class="btn btn-primary">ذخیره</button></div>
+        <div class="col-12"><button class="btn btn-primary px-4">ذخیره</button></div>
     </form>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+    tinymce.init({
+        selector: '#Content',
+        directionality: 'rtl',
+        height: 600,
+        relative_urls: false,
+        remove_script_host: false,
+        convert_urls: false,
+        document_base_url: '/',
+        plugins: 'lists link table image code wordcount',
+        toolbar: 'undo redo | blocks | bold italic underline | alignright aligncenter alignleft | bullist numlist | link table image | code',
+        content_style: 'body { font-family: Tahoma, Arial, sans-serif; font-size: 15px; line-height: 1.9; }'
+    });
+
+    document.getElementById('btnAddFaqRow')?.addEventListener('click', function () {
+        const container = document.getElementById('faqContainer');
+        const idx = container.children.length;
+        const row = document.createElement('div');
+        row.className = 'faq-admin-row border rounded p-2 mb-2 bg-light';
+        row.innerHTML = `
+            <input type="text" name="faqs[${idx}].Question" placeholder="سوال" class="form-control mb-2" />
+            <textarea name="faqs[${idx}].Answer" rows="2" placeholder="پاسخ" class="form-control mb-2"></textarea>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.parentElement.remove()">حذف سوال</button>
+        `;
+        container.appendChild(row);
+    });
+</script>

@@ -64,7 +64,7 @@
         <!-- تصویر اصلی صفحه تک‌پروژه: بدون loading="lazy" برای LCP بهینه -->
         <figure class="hero-figure">
             <img src="@Model.FeaturedImageUrl"
-                 alt="@Model.Title - @Model.City"
+                 alt="@(string.IsNullOrWhiteSpace(Model.FeaturedImageAlt) ? $"{Model.Title} - {Model.City}" : Model.FeaturedImageAlt)"
                  width="1200"
                  height="800"
                  fetchpriority="high"
@@ -159,6 +159,62 @@
                     }
                 </div>
             </section>
+        }
+
+        <!-- باکس دانلود فایل (در صورت وجود) -->
+        @if (!string.IsNullOrWhiteSpace(Model.AttachmentFilePath))
+        {
+            <section class="download-box">
+                <div class="download-box__icon" aria-hidden="true">⇩</div>
+                <div class="download-box__text">
+                    <h2 class="download-box__title">@(string.IsNullOrWhiteSpace(Model.AttachmentTitle) ? "دانلود فایل پروژه" : Model.AttachmentTitle)</h2>
+                    @if (!string.IsNullOrWhiteSpace(Model.AttachmentDescription))
+                    {
+                        <p class="download-box__desc">@Model.AttachmentDescription</p>
+                    }
+                </div>
+                <a href="@Model.AttachmentFilePath" class="download-box__btn" download rel="noopener">
+                    دانلود فایل (@(System.IO.Path.GetExtension(Model.AttachmentFilePath).TrimStart('.').ToUpperInvariant()))
+                </a>
+            </section>
+        }
+
+        <!-- پخش‌کننده صوتی پادکست (در صورت وجود) -->
+        @if (!string.IsNullOrWhiteSpace(Model.AudioFilePath))
+        {
+            <section class="podcast-box">
+                <h2 class="section-heading">گوش دادن به معرفی صوتی پروژه</h2>
+                <audio controls preload="none" src="@Model.AudioFilePath" class="podcast-player"></audio>
+            </section>
+        }
+
+        <!-- سوالات متداول پروژه + اسکیمای FAQPage (در صورت وجود) -->
+        @if (Model.Faqs.Any())
+        {
+            var faqSchema = new Dictionary<string, object>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = "FAQPage",
+                ["mainEntity"] = Model.Faqs.Select(f => new Dictionary<string, object>
+                {
+                    ["@type"] = "Question",
+                    ["name"] = f.Question,
+                    ["acceptedAnswer"] = new Dictionary<string, object> { ["@type"] = "Answer", ["text"] = f.Answer }
+                }).ToList()
+            };
+            <section class="faq-section">
+                <h2 class="section-heading">سوالات متداول درباره این پروژه</h2>
+                <div class="faq-list">
+                    @foreach (var faq in Model.Faqs)
+                    {
+                        <details class="faq-item">
+                            <summary class="faq-item__q">@faq.Question</summary>
+                            <div class="faq-item__a">@Html.Raw(faq.Answer)</div>
+                        </details>
+                    }
+                </div>
+            </section>
+            <script type="application/ld+json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(faqSchema))</script>
         }
 
         <!-- باکس اقدام (CTA) -->

@@ -96,6 +96,38 @@ public class ProjectFormViewModel
     [MaxLength(320)]
     public string? MetaDescription { get; set; }
 
+    [Display(Name = "توضیح عکس شاخص (Alt)")]
+    [MaxLength(200)]
+    public string? FeaturedImageAlt { get; set; }
+
+    [Display(Name = "فایل صوتی پادکست (اختیاری)")]
+    public IFormFile? AudioFile { get; set; }
+    public string? ExistingAudioUrl { get; set; }
+    public bool RemoveAudio { get; set; }
+
+    [Display(Name = "عنوان باکس دانلود")]
+    [MaxLength(150)]
+    public string? AttachmentTitle { get; set; }
+
+    [Display(Name = "توضیح کوتاه دانلود (اختیاری)")]
+    [MaxLength(500)]
+    public string? AttachmentDescription { get; set; }
+
+    [Display(Name = "فایل دانلود (PDF/ZIP)")]
+    public IFormFile? AttachmentFile { get; set; }
+    public string? ExistingAttachmentUrl { get; set; }
+    public bool RemoveAttachment { get; set; }
+
+    public List<FaqInput>? Faqs { get; set; }
+
+    public class FaqInput
+    {
+        [MaxLength(500)]
+        public string? Question { get; set; }
+
+        public string? Answer { get; set; }
+    }
+
     public List<ExistingGalleryImageViewModel> ExistingGalleryImages { get; set; } = [];
 
     public List<IFormFile>? NewGalleryFiles { get; set; }

@@ -34,7 +34,8 @@ public class PhaseModulesIntegrationTests : IDisposable
             configuration: null!,
             env: null!,
             logger: Microsoft.Extensions.Logging.Abstractions.NullLogger<final_p_01.Areas.Admin.Controllers.PhaseModulesController>.Instance,
-            sanitizer: new final_p_01.Services.RichTextSanitizer());
+            sanitizer: new final_p_01.Services.RichTextSanitizer(),
+            mediaUpload: new final_p_01.Services.MediaUploadService(null!, null!, Microsoft.Extensions.Logging.Abstractions.NullLogger<final_p_01.Services.MediaUploadService>.Instance));
 
     private sealed class CacheStore : Microsoft.AspNetCore.OutputCaching.IOutputCacheStore
     {
@@ -60,7 +61,21 @@ public class PhaseModulesIntegrationTests : IDisposable
         var controller = AdminController();
         Assert.Equal("CreatePillarPage", Assert.IsType<ViewResult>(await controller.EditPillarPage(page.Id)).ViewName);
         controller.ModelState.AddModelError("Title", "عنوان الزامی است.");
-        Assert.Equal("CreatePillarPage", Assert.IsType<ViewResult>(await controller.EditPillarPage(page.Id, page, coverImage: null, faqs: null)).ViewName);
+        Assert.Equal("CreatePillarPage", Assert.IsType<ViewResult>(await controller.EditPillarPage(page.Id, page, coverImage: null, audioFile: null, attachmentFile: null, removeAudio: false, removeAttachment: false, faqs: null)).ViewName);
+    }
+
+    [Fact]
+    public async Task ProjectFaq_PersistsWithNullPostId()
+    {
+        var project = new Project { Slug = "faq-regression", Title = "پروژه آزمون" };
+        _context.Projects.Add(project);
+        _context.Faqs.Add(new Faq { Question = "چند زمین پدل دارد؟", Answer = "دو زمین", Project = project, SortOrder = 1 });
+        await _context.SaveChangesAsync();
+
+        var faq = Assert.Single(_context.Faqs.Where(f => f.ProjectId == project.Id).ToList());
+        Assert.Equal("دو زمین", faq.Answer);
+        Assert.Null(faq.PostId);
+        Assert.Null(faq.PillarPageId);
     }
 
     [Fact]

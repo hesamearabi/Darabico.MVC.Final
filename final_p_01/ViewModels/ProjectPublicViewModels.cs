@@ -38,9 +38,15 @@ public class ProjectDetailViewModel
     public int ExecutionDurationMonths { get; set; }
     public string Description { get; set; } = string.Empty;
     public string FeaturedImageUrl { get; set; } = string.Empty;
+    public string? FeaturedImageAlt { get; set; }
     public string? BeforeImageUrl { get; set; }
     public string? AfterImageUrl { get; set; }
     public string? VideoUrl { get; set; }
+    public string? AudioFilePath { get; set; }
+    public string? AttachmentFilePath { get; set; }
+    public string? AttachmentTitle { get; set; }
+    public string? AttachmentDescription { get; set; }
+    public List<ProjectFaqItemViewModel> Faqs { get; set; } = [];
     public string MetaTitle { get; set; } = string.Empty;
     public string MetaDescription { get; set; } = string.Empty;
     public string CanonicalUrl { get; set; } = string.Empty;
@@ -54,4 +60,10 @@ public class ProjectGalleryItemViewModel
     public string AltText { get; set; } = string.Empty;
     public int Width { get; set; }
     public int Height { get; set; }
+}
+
+public class ProjectFaqItemViewModel
+{
+    public string Question { get; set; } = string.Empty;
+    public string Answer { get; set; } = string.Empty;
 }

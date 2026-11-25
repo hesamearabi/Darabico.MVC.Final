@@ -29,6 +29,21 @@ public class PillarPage
     [MaxLength(500)]
     public string? OgImageUrl { get; set; }
 
+    [MaxLength(200)]
+    public string? CoverImageAlt { get; set; }
+
+    [MaxLength(500)]
+    public string? AudioFilePath { get; set; }
+
+    [MaxLength(500)]
+    public string? AttachmentFilePath { get; set; }
+
+    [MaxLength(150)]
+    public string? AttachmentTitle { get; set; }
+
+    [MaxLength(500)]
+    public string? AttachmentDescription { get; set; }
+
     public bool IsPublished { get; set; }
 
     public int SortOrder { get; set; }
